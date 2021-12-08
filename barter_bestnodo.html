@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barter Simple - Rank nodos</title>
+    <link rel="stylesheet" href="jquery-ui.min.css">
+    <script src="../p5.min.js"></script>
+    <style>
+        body{
+            font-size: 16pt;
+        }
+        textarea{
+            text-transform: uppercase;
+            font-size: 16pt;
+            font-weight: bold;
+            padding: 7px;
+            border: 1px solid black;
+            border-radius: 15px;
+        }
+        ul{
+            list-style: none;
+        }
+        input[type="text"]
+        {
+            text-transform: uppercase;
+        }
+        button{
+            padding: 7px;
+            border: 0;
+            background-color: green;
+            color: white;
+            border-radius: 6px;
+            font-size: 17pt;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .columnaA
+        {
+            float: left;
+            width: 50%;
+        }
+        .columnaB
+        {
+            float: right;
+            text-align: center;
+            width: 50%;
+        }
+        #defaultCanvas0
+        {
+            border-radius: 15px;
+        }
+        .cboxsl li{
+            margin: 0;
+            padding: 0;
+        }
+        .cboxsl
+        {
+            margin: 0;
+            padding: 0;
+        }
+        .uml1 span{
+            cursor: pointer;
+
+        }
+        .uml1 span:hover{
+            color: blue;
+        }
+    </style>
+    <script src="jquery-1.9.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="mapa_bestnodo.js"></script>
+    <script>
+        const nodosDic = {};
+        function dist2(x1, y1, x2, y2)
+        {
+            return Math.sqrt((x1-x2) * (x1-x2) +  (y1 - y2) *  (y1 - y2));
+        }
+        function distNodos(n1, n2)
+        {
+            return dist2(n1.x, n1.y, n2.x, n2.y);
+        }
+        class Nodo{
+            constructor(x, y, titulo)
+            {
+                this.x = x;
+                this.y = y;
+                this.titulo = titulo;
+            }
+            distancia(otro)
+            {
+                return distNodos(this, otro);
+            }
+        }
+        function irNodo()
+        {
+            frameRate(5);
+            let inicialN = nodosDic["ILIYA"];
+            let inodo = nodosDic[this.innerText];
+            const xd = (inicialN.x * szFixX + szFixOX) - (inodo.x * szFixX + szFixOX) - 45;
+            const yd = (inicialN.y * szFixY + szFixOY) - (inodo.y * szFixY + szFixOY) - 45;
+            offsetX = xd;
+            offsetY = yd;
+        }
+        let ndata;
+        
+        
+        function buscarMasCercano(nodo, lista)
+        {
+            min = 69423000;
+            let sigNodo;
+            for(let n of lista)
+            {
+                let d = nodo.distancia(n);
+                if(d < min)
+                {
+                    min = d;
+                    sigNodo = n;
+                }
+            }
+            return sigNodo;
+        }
+        window.onload = function()
+        {
+            
+            
+            const materiales = document.getElementById("nodosm");
+            fetch('datos.json')
+            .then(response => response.json())
+            .then(data => {
+                ndata = data;
+                for(let nodo of ndata)
+                {
+                    nodosDic[nodo.titulo] = new Nodo(nodo.x, nodo.y, nodo.titulo);
+
+                }
+                $("#inicial" ).autocomplete({
+                    source: Object.keys(nodosDic)
+                });
+                $("#agregar").autocomplete({
+                    source: Object.keys(nodosDic)
+                })
+            });
+            document.getElementById("agregar").addEventListener("keyup", function(event){
+                if(event.key == "Enter")
+                {
+                    const valor = this.value;
+                    if(materiales.value.charAt(materiales.value.length - 1) != "\n" && materiales.value.length > 2)
+                        materiales.value += "\n";
+                    materiales.value += valor + "\n";
+                    this.value = "";
+
+
+                }
+            });
+            
+            document.getElementById("btnmateriales").onclick = function()
+            {
+                nodosInp = materiales.value;
+                nodosRecorridos = nodosInp.split("\n");
+                const recorrido = [];
+
+                inicial = document.getElementById("inicial").value; //  puede ser custom
+                inicial = inicial.toUpperCase();
+                for(let nodo of nodosRecorridos)
+                {
+                    nodo = nodo.toUpperCase();
+                    if(nodo in nodosDic)
+                        recorrido.push(nodosDic[nodo]);
+                    else
+                        console.error("No existe el nodo: " + nodo);
+                }
+                let elementosQuedan = true;
+                actual = nodosDic[inicial];
+                let txtOut = "";
+                const dom1 = document.getElementById("outputnodos");
+                dom1.innerHTML = "";
+                let i = 0;
+                recNodos = [];
+                recNodos.push(actual);
+                while(elementosQuedan)
+                {
+                    let sig = buscarMasCercano(actual, recorrido);
+                    if(sig.titulo != "")
+                    {
+                        //txtOut += sig.titulo + "\n";
+                        let lit = document.createElement("li");
+                        let cbox = document.createElement("input");
+                        cbox.type = "checkbox";
+                        let spn = document.createElement("span");
+                        
+                        spn.innerText = sig.titulo;
+
+                        spn.onclick = irNodo;
+
+                        lit.append(cbox);
+                        lit.append(spn);
+                        dom1.append(lit);
+
+                        recNodos.push(sig);
+
+                    }
+                    i++;
+                    if(i > 699)
+                    {
+                        elementosQuedan = false;
+                        console.error("Error de loop.");
+                    }
+
+                    let index = recorrido.indexOf(sig);
+                    recorrido.splice(index, 1);
+                    elementosQuedan = recorrido.length > 0;
+                    if(i > 699)
+                    {
+                        elementosQuedan = false;
+                        console.error("Error de loop.");
+                    }
+                    //actual = sig;
+                }
+     
+                document.getElementById("totales").innerText = i;
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2 style="background-color: purple; color: white; padding: 8px; border-radius: 7px; width: fit-content;">Ranking de nodos más cercanos</h2>
+    <div class="columnaA">
+        <ul>
+            <li>
+                Nodo Inicial: <input style="font-weight: bold;" type="text" id="inicial" value="ILIYA"> <br>
+                Agregar Nodo: <input style="color: blue; font-weight: bold;" type="text" id="agregar" value=""> <br>
+                Nodos: <br>
+                <textarea name="nodosm" id="nodosm" cols="30" rows="13"></textarea><br>
+                <button id="btnmateriales">Calcular nodos</button>
+            </li>
+            <li>
+                Orden por distancia (totales: <span id="totales">0</span>):<br>
+                
+                <ul style="list-style: none;" id="outputnodos" class="uml1">
+                   <!--   <textarea  cols="30" rows="13" id="omateriales"></textarea> -->
+                </ul>
+                
+            </li>
+         
+            
+        </ul>
+        <div><a href="barter.html">Calcular rota más corta</a></div>
+    </div>
+    <div class="columnaB">
+        Mapa oceáno: <br>
+        <div id="mapa"></div>
+    </div>
+</body>
+</html>
