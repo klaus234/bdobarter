@@ -224,6 +224,20 @@
                 }
                 return mejorRuta;
             }
+            function colorearNodo()
+            {
+                const nombreNodo = this.parentNode.children[1].innerText;
+                for(let ndo of nodosM)
+                {
+                    if(ndo.titulo === nombreNodo)
+                    {
+                        ndo.seleccionado = !ndo.seleccionado;
+                        return 0;
+                    }
+            
+                }
+                return 1;
+            }
             document.getElementById("btnmateriales").onclick = function()
             {
                 nodosInp = materiales.value;
@@ -256,6 +270,7 @@
                     let lit = document.createElement("li");
                     let cbox = document.createElement("input");
                     cbox.type = "checkbox";
+                    cbox.onclick = colorearNodo;
                     let spn = document.createElement("span");
                     
                     spn.innerText = rnodo.titulo;
