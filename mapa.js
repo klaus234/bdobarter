@@ -28,18 +28,22 @@ class NodoM
         this.y = y;
         this.titulo = "";
         this.terminado = false;
+        this.seleccionado = false;
     }
     dibujar()
     {
         const xd = this.x * szFixX + szFixOX;
         const yd = this.y * szFixY + szFixOY;
-        fill(0, 255, 0);
+        if(!this.seleccionado)
+            fill(0, 0, 255);
+        else
+            fill(0, 255, 0)
         ellipse(xd + offsetX, yd + offsetY, 30, 30);
         textAlign(CENTER);
         fill(0);
         text(this.titulo, xd + offsetX - 3, yd + 30 + offsetY - 3);
         if(!this.terminado)
-            fill(0, 255, 0);
+            fill(0, 0, 255);
         else
             fill(255);
 
