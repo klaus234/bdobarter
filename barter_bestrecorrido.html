@@ -238,8 +238,16 @@
                 }
                 return 1;
             }
+            function resetearNodosColor()
+            {
+                for(let ndo of nodosM)
+                {
+                    ndo.seleccionado = false;
+                }
+            }
             document.getElementById("btnmateriales").onclick = function()
             {
+                resetearNodosColor();
                 nodosInp = materiales.value;
                 nodosRecorridos = nodosInp.split("\n");
                 const recorrido = [];
