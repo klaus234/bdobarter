@@ -123,11 +123,7 @@
         }
         window.onload = function()
         {
-            fetch('nodos.txt')
-            .then(response => response.text())
-            .then(data => {
-               document.getElementById("nodosm").value = data;
-            });
+           
             const nmm = document.getElementById("nodosm");
             nmm.value = localStorage.getItem("NodosR");
             document.getElementById("guardar").onclick = function()
