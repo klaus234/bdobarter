@@ -128,19 +128,12 @@
             .then(data => {
                document.getElementById("nodosm").value = data;
             });
+            const nmm = document.getElementById("nodosm");
+            nmm.value = localStorage.getItem("NodosR");
             document.getElementById("guardar").onclick = function()
             {
-                const nmm = document.getElementById("nodosm");
-                const nodosguard = {nodosg: nmm.value};
-                fetch("guardar.php", {
-                    method: 'POST', // or 'PUT'
-                    body: JSON.stringify(nodosguard), // data can be `string` or {object}!
-                    headers:{
-                        'Content-Type': 'application/json'
-                    }
-                    }).then(res => res.json())
-                    .catch(error => console.error('Error:', error))
-                    .then(response => console.log('Success:', response));
+                
+                localStorage.setItem("NodosR", nmm.value);
             }
             const materiales = document.getElementById("nodosm");
             fetch('datos.json')
@@ -297,7 +290,7 @@
     </script>
 </head>
 <body>
-    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 2.0.1</h2>
+    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 2.0.2</h2>
     <div class="columnaA">
         <ul>
             <li>
