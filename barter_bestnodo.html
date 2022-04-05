@@ -140,6 +140,7 @@
             
             
             const materiales = document.getElementById("nodosm");
+            materiales.value = localStorage.getItem("NodosRCX");
             fetch('datos.json')
             .then(response => response.json())
             .then(data => {
@@ -168,7 +169,10 @@
 
                 }
             });
-            
+            document.getElementById("btnguardar").onclick = function()
+            {
+                localStorage.setItem("NodosRCX", materiales.value);
+            }
             document.getElementById("btnmateriales").onclick = function()
             {
                 nodosInp = materiales.value;
@@ -247,7 +251,8 @@
                 Agregar Nodo: <input style="color: blue; font-weight: bold;" type="text" id="agregar" value=""> <br>
                 Nodos: <br>
                 <textarea name="nodosm" id="nodosm" cols="30" rows="13"></textarea><br>
-                <button id="btnmateriales">Calcular nodos</button>
+                <button id="btnmateriales">Calcular nodos</button> <br>
+                <button id="btnguardar" style="background-color: red;;">Guardar nodos</button>
             </li>
             <li>
                 Orden por distancia (totales: <span id="totales">0</span>):<br>
