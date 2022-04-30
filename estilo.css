@@ -1,0 +1,34 @@
+.contenedor-puntos-principal
+{
+    background-color: rgb(52, 52, 52);
+    width: 450px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 5px;
+    border: 3px solid black;
+    border-radius: 5px;
+}
+#contenedor-puntos
+{
+
+    display: flex;
+    flex-flow: row wrap;
+    color: rgb(170, 242, 255);
+    column-gap: 20px;
+    width: 450px;
+}
+#contenedor-puntos li
+{
+   cursor: pointer;
+}
+
+.puntomenu
+{
+    padding: 2px;
+    border: 2px solid black;
+    margin: 3px;
+}
+.puntomenu:hover{
+    background-color: white;
+    color: rgb(1, 73, 86);
+}
