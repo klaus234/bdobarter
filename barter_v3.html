@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barter Simple V3 - Viajes </title>
+    <link rel="stylesheet" href="jquery-ui.min.css">
+    <link rel="stylesheet" href="estilo.css">
+    <script src="p5.min.js"></script>
+    <style>
+        body{
+            font-size: 16pt;
+            background-color: #242424;
+            color: white;
+        }
+        textarea{
+            text-transform: uppercase;
+            font-size: 16pt;
+            font-weight: bold;
+            padding: 7px;
+            border: 1px solid black;
+            border-radius: 15px;
+        }
+        ul{
+            list-style: none;
+        }
+        input[type="text"]
+        {
+            text-transform: uppercase;
+        }
+        button{
+            padding: 7px;
+            border: 0;
+            background-color: green;
+            color: white;
+            border-radius: 6px;
+            font-size: 17pt;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .columnaA
+        {
+            float: left;
+            width: 50%;
+        }
+        .columnaB
+        {
+            float: right;
+            text-align: center;
+            width: 50%;
+        }
+        #defaultCanvas0
+        {
+            border-radius: 15px;
+        }
+        .cboxsl li{
+            margin: 0;
+            padding: 0;
+        }
+        .cboxsl
+        {
+            margin: 0;
+            padding: 0;
+        }
+        .uml1 span{
+            cursor: pointer;
+
+        }
+        .uml1 span:hover{
+            color: blue;
+        }
+        a{
+            color:aqua;
+        }
+        textarea{
+            background-color: black;
+            color: white;
+        }
+        input
+        {
+            background-color: black;
+            color: white;
+        }
+        .uml1 li
+        {
+            padding-block: 1rem;
+        }
+        .identificadorViaje
+        {
+            font-weight: bold;
+            color: white;
+            background-color: black; padding: 5px; border-radius: 5px;
+            width: 20%;
+            cursor: pointer;
+        }
+        .viajeActivo
+        {
+            background-color: rgb(5, 5, 122);
+        }
+    </style>
+    <script src="jquery-1.9.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="mapa.js"></script>
+    <script>
+        const nodosDic = {};
+        let resultadoViajes = [];
+        function dist2(x1, y1, x2, y2)
+        {
+            return Math.sqrt((x1-x2) * (x1-x2) +  (y1 - y2) *  (y1 - y2));
+        }
+        function distNodos(n1, n2)
+        {
+            return dist2(n1.x, n1.y, n2.x, n2.y);
+        }
+        class Nodo{
+            constructor(x, y, titulo)
+            {
+                this.x = x;
+                this.y = y;
+                this.titulo = titulo;
+            }
+            distancia(otro)
+            {
+                return distNodos(this, otro);
+            }
+        }
+        function irNodo()
+        {
+            frameRate(5);
+            let inicialN = nodosDic["ILIYA"];
+            let inodo = nodosDic[this.innerText];
+            const xd = (inicialN.x * szFixX + szFixOX) - (inodo.x * szFixX + szFixOX) - 45;
+            const yd = (inicialN.y * szFixY + szFixOY) - (inodo.y * szFixY + szFixOY) - 45;
+            offsetX = xd;
+            offsetY = yd;
+        }
+        let ndata;
+        
+        
+        function buscarMasCercano(nodo, lista)
+        {
+            min = 69423000;
+            let sigNodo;
+            for(let n of lista)
+            {
+                let d = nodo.distancia(n);
+                if(d < min)
+                {
+                    min = d;
+                    sigNodo = n;
+                }
+            }
+            return sigNodo;
+        }
+        window.onload = function()
+        {
+           
+            const nmm = document.getElementById("nodosm");
+            nmm.value = localStorage.getItem("NodosR");
+            document.getElementById("guardar").onclick = function()
+            {
+                
+                localStorage.setItem("NodosR", nmm.value);
+            }
+            const materiales = document.getElementById("nodosm");
+            fetch('datos.json')
+            .then(response => response.json())
+            .then(data => {
+                ndata = data;
+                for(let nodo of ndata)
+                {
+                    nodosDic[nodo.titulo] = new Nodo(nodo.x, nodo.y, nodo.titulo);
+
+                }
+                $("#inicial" ).autocomplete({
+                    source: Object.keys(nodosDic)
+                });
+                $("#agregar").autocomplete({
+                    source: Object.keys(nodosDic)
+                })
+            });
+            document.getElementById("agregar").addEventListener("keyup", function(event){
+                if(event.key == "Enter")
+                {
+                    const valor = this.value;
+                    if(materiales.value.charAt(materiales.value.length - 1) != "\n" && materiales.value.length > 2)
+                        materiales.value += "\n";
+                    materiales.value += valor + "\n";
+                    this.value = "";
+
+
+                }
+            });
+            var limite  = 0;
+            function permutator(inputArr) {
+                var results = [];
+
+                function permute(arr, memo) {
+                    var cur, memo = memo || [];
+
+                    for (var i = 0; i < arr.length; i++) {
+                    cur = arr.splice(i, 1);
+                    if (arr.length === 0) {
+                        results.push(memo.concat(cur));
+                    }
+                    permute(arr.slice(), memo.concat(cur));
+                    arr.splice(i, 0, cur[0]);
+                    }
+
+                    return results;
+                }
+
+                return permute(inputArr);
+            }
+            function distanciaTotal(ruta)
+            {
+                let distx = 0;
+                //console.log(ruta);
+                
+                for(let i = 0; i < ruta.length - 2; i++)
+                {
+                    
+                    distx += ruta[i].distancia(ruta[i + 1]);
+                    
+                }
+                return distx;
+
+            }
+            // nuevo v3
+            function llenarCombinacion(posible, maxNodosPViaje, inicial)
+            {
+                let combinacion = [];
+                let auxPosible = [].concat(posible);
+                let tamDX = posible.length; // tamaño total del recorrido, seria mejor pasarlo como parametro tal vez
+                let viajesTotales = Math.ceil(tamDX / maxNodosPViaje);
+
+                for(let i = 0; i< viajesTotales; i++)
+                {
+                    let nuevo = [inicial];
+                    for(let j = 0; j < maxNodosPViaje && auxPosible.length > 0; j++)
+                    {
+                        nuevo.push(auxPosible.pop());
+                    }
+                    nuevo = nuevo.concat(inicial)
+                    combinacion.push(nuevo);
+                }
+                return combinacion;
+            }
+            function distanciaRecorridaTotalViajes(combinacionViajes)
+            {
+                let totalD = 0;
+                for(let i = 0; i < combinacionViajes.length; i++)
+                {
+                    let viaje = combinacionViajes[i];
+                    //console.log(viaje);
+                    for(let j = 0; j < viaje.length - 1; j++)
+                    {
+                        totalD += viaje[j].distancia(viaje[j + 1]);
+                        
+                    }
+                }
+                
+                return totalD;
+            }
+            // fin nuevo v3
+            function mejorRecorrido(posibles, inicial, maxNodosPViaje)
+            {
+                let bdist = Infinity;
+                let mejorRuta = [1, 2];
+                for(let p of posibles) //p es una lista de nodos
+                {
+                    let ruta = llenarCombinacion(p, maxNodosPViaje, inicial); // ruta es una lista de listas de nodos
+                    // ya incluye el inicial al principio y al final...
+                    
+
+                    rdist = distanciaRecorridaTotalViajes(ruta);
+                    if(rdist < bdist)
+                    {
+                        bdist = rdist;
+                        mejorRuta = ruta;
+                    }
+                }
+                //console.log(mejorRuta);
+                return mejorRuta;
+            }
+            function mejorRecorridoold(posibles, inicial)
+            {
+                let bdist = 999999999 * 5;
+                let mejorRuta;
+                for(let p of posibles) //p es una lista de nodos
+                {
+                    let ruta = [inicial];
+                    ruta = ruta.concat(p);
+                    ruta = ruta.concat(inicial);
+                    rdist = distanciaTotal(ruta);
+                    if(rdist < bdist)
+                    {
+                        bdist = rdist;
+                        mejorRuta = ruta;
+                    }
+                }
+                return mejorRuta;
+            }
+            /*
+            function mejorRecorrido(posibles, inicial)
+            {
+                let bdist = 999999999 * 5;
+                let mejorRuta;
+                for(let p of posibles) //p es una lista de nodos
+                {
+                    let ruta = [inicial];
+                    ruta = ruta.concat(p);
+                    ruta = ruta.concat(inicial);
+                    rdist = distanciaTotal(ruta);
+                    if(rdist < bdist)
+                    {
+                        bdist = rdist;
+                        mejorRuta = ruta;
+                    }
+                }
+                return mejorRuta;
+            }
+            */
+            function colorearNodo()
+            {
+                const nombreNodo = this.parentNode.children[1].innerText;
+                for(let ndo of nodosM)
+                {
+                    if(ndo.titulo === nombreNodo)
+                    {
+                        ndo.seleccionado = !ndo.seleccionado;
+                        return 0;
+                    }
+            
+                }
+                return 1;
+            }
+            function resetearNodosColor()
+            {
+                for(let ndo of nodosM)
+                {
+                    ndo.seleccionado = false;
+                }
+            }
+            document.getElementById("btnmateriales").onclick = function()
+            {
+                resetearNodosColor();
+                nodosInp = materiales.value;
+                nodosRecorridos = nodosInp.split("\n");
+                const recorrido = [];
+
+                inicial = document.getElementById("inicial").value; //  puede ser custom
+                inicial = inicial.toUpperCase();
+                for(let nodo of nodosRecorridos)
+                {
+                    nodo = nodo.toUpperCase();
+                    if(nodo in nodosDic)
+                        recorrido.push(nodosDic[nodo]);
+                    else
+                        console.error("No existe el nodo: " + nodo);
+                }
+                let elementosQuedan = true;
+                actual = nodosDic[inicial];
+                let txtOut = "";
+                const dom1 = document.getElementById("outputnodos");
+                dom1.innerHTML = "";
+                let i = 0;
+                recNodos = [];
+                posibles = permutator(recorrido);
+                // recNodos se usa en el mapeo de los nodos
+                resultadoViajes = mejorRecorrido(posibles, actual, document.getElementById("viajes").value);
+                recNodos = resultadoViajes[0];
+               
+                console.log(resultadoViajes); //WAAAA
+                let indiceViaje = 0;
+                for(let rgeneral of resultadoViajes)
+                {
+                    let liGeneral = document.createElement("li");
+                    let identificador = document.createElement("div");
+                    identificador.innerText = "Viaje " + (indiceViaje + 1);
+                    identificador.classList = "identificadorViaje"
+                    identificador.id = "viaje" + indiceViaje;
+                    identificador.validx = indiceViaje;
+                    identificador.onclick = function ()
+                    {
+                        recNodos = resultadoViajes[this.validx]; // con esto mapeamos los nodos segun el viaje
+                    }
+                    liGeneral.append(identificador);
+
+
+                    for(let rnodo of rgeneral.slice(1, rgeneral.length - 1))
+                    {
+                        let lit = document.createElement("div");
+                        let cbox = document.createElement("input");
+                        cbox.type = "checkbox";
+                        cbox.onclick = colorearNodo;
+                        let spn = document.createElement("span");
+                        
+                        spn.innerText = rnodo.titulo;
+
+                        spn.onclick = irNodo;
+
+                        lit.append(cbox);
+                        lit.append(spn);
+                        liGeneral.append(lit);
+                        i++;
+                    }
+                    indiceViaje++;
+                    dom1.append(liGeneral);
+                }
+                /*
+                for(let rnodo of recNodos.slice(1, recNodos.length - 1))
+                {
+                    let lit = document.createElement("li");
+                    let cbox = document.createElement("input");
+                    cbox.type = "checkbox";
+                    cbox.onclick = colorearNodo;
+                    let spn = document.createElement("span");
+                    
+                    spn.innerText = rnodo.titulo;
+
+                    spn.onclick = irNodo;
+
+                    lit.append(cbox);
+                    lit.append(spn);
+                    dom1.append(lit);
+                    i++;
+                }*/
+                document.getElementById("totales").innerText = i;
+                
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 2.0.2</h2>
+    <div class="columnaA">
+        <ul>
+            <li>
+                Nodo Inicial: <input style="font-weight: bold;" type="text" id="inicial" value="ILIYA"> <br>
+                Agregar Nodo: <input style="color: blue; font-weight: bold;" type="text" id="agregar" value=""> <br>
+                Nodos máximos p/viaje: <input style="font-weight: bold;" type="number" id="viajes" value="3" min="1" max="6" step="1"> <br>
+                Nodos: <br>
+                <textarea name="nodosm" id="nodosm" cols="30" rows="13"></textarea><br>
+                <div class="contenedor-puntos-principal">
+                    <ul id="contenedor-puntos">
+                       
+                    </ul>
+                </div>
+                <button id="btnmateriales">Calcular nodos</button>
+            </li>
+            <li>
+                Output (totales: <span id="totales">0</span>):<br>
+                
+                <ul style="list-style: none;" id="outputnodos" class="uml1">
+                   <!--   <textarea  cols="30" rows="13" id="omateriales"></textarea> -->
+                </ul>
+                
+            </li>
+            <li>
+                <button id="guardar">Guardar...</button>
+            </li>
+            
+        </ul>
+        <div><a href="barter_bestnodo.html">Ranking nodos mas cercanos</a></div>
+    </div>
+    <div class="columnaB">
+        Mapa oceáno: <br>
+        <div id="mapa"></div>
+    </div>
+    <script src="puntos_menu.js"></script>
+</body>
+</html>
