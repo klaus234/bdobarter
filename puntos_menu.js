@@ -3,7 +3,7 @@ const menu_puntos = document.getElementById("contenedor-puntos");
 const data_puntos = 
 
 {
-   4 : ["ILIYA", "AJIR", "PUJARA", "NARVO", "BAREMI", "ORFFS", "OBEN", "PADIX", "THEONIL", "RAMEDA"],
+   4 : ["ILIYA", "AJIR", "PUJARA", "NARVO", "BAREMI", "ORFFS", "OBEN", "PADIX", "THEONIL", "RAMEDA", "BALVEGE", "PILAVA"],
    3 : ["ALNAHA", "TULU", "LISZ", "DATON", "TIGRIS", "ALMAI", "SHASHA", "ROSEVAN", "ORISHA", "SHIRNA", "TEYAMAL"]
 }
 function nuevoNivel(num)
