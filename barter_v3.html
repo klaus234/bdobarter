@@ -32,12 +32,16 @@
         button{
             padding: 7px;
             border: 0;
-            background-color: green;
+            background-color: rgb(43, 0, 128);
             color: white;
             border-radius: 6px;
             font-size: 17pt;
             margin-top: 10px;
             margin-bottom: 10px;
+            cursor: pointer;
+        }
+        button:hover{
+            background-color: rgb(0, 128, 38);
         }
         .columnaA
         {
@@ -98,6 +102,14 @@
         {
             background-color: rgb(5, 5, 122);
         }
+        #popupguardando
+        {
+            background-color: rgb(179, 117, 3);
+            border-radius: 5px;
+            padding: 2rem;
+            display: none;
+            
+        }
     </style>
     <script src="jquery-1.9.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -153,6 +165,15 @@
             }
             return sigNodo;
         }
+        function showMessageGuardando ()
+        {
+            setTimeout(function(){
+                $("#popupguardando").fadeIn(1000);
+                setTimeout(function(){
+                    $("#popupguardando").fadeOut(1000);
+                }, 3000);
+            }, 100);
+        }
         window.onload = function()
         {
            
@@ -162,6 +183,7 @@
             {
                 
                 localStorage.setItem("NodosR", nmm.value);
+                showMessageGuardando();
             }
             const materiales = document.getElementById("nodosm");
             fetch('datos.json')
@@ -467,6 +489,9 @@
             <li>
                 <button id="guardar">Guardar...</button>
             </li>
+            <div id="popupguardando">
+                Se han guardado los datos de los nodos.
+            </div>
             
         </ul>
         <div><a href="barter_bestnodo.html">Ranking nodos mas cercanos</a></div>
