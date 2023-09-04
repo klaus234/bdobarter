@@ -84,7 +84,7 @@ function preload()
 }
 function setup()
 {
-    let canvas = createCanvas(640, 480);
+    let canvas = createCanvas(800, 600);
     mouseClickV = createVector(0, 0);
     frameRate(30);
     textSize(16);
@@ -121,16 +121,21 @@ function draw()
         sy = punto.y * szFixY + szFixOY;
 
     }
-    strokeWeight(8);
+    strokeWeight(6);
     stroke(255, 0, 0);
-    let c = 1;
+    let c = 0;
     for(let i = 1; i < recNodos.length; i++)
     {
         let punto = recNodos[i];
         const asx = punto.x * szFixX + szFixOX;
         const asy = punto.y * szFixY + szFixOY;
+        stroke(255, 0, 0);
         line(sx + offsetX, sy + offsetY, asx + offsetX, asy +  + offsetY);
-        text(c, sx + offsetX, sy + offsetY + 5);
+        stroke(0, 0, 0);
+        textSize(20)
+        if (c != 0)
+            text(c, sx + offsetX, sy + offsetY + 5);
+        textSize(16)
         sx = asx;
         sy = asy;
         c++;
