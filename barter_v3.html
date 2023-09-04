@@ -60,7 +60,8 @@
         }
         .cboxsl li{
             margin: 0;
-            padding: 0;
+            padding: 1rem;
+
         }
         .cboxsl
         {
@@ -72,7 +73,7 @@
 
         }
         .uml1 span:hover{
-            color: blue;
+            color: rgb(1, 1, 105);
         }
         a{
             color:aqua;
@@ -109,6 +110,16 @@
             padding: 2rem;
             display: none;
             
+        }
+        input[type="checkbox"]
+        {
+            cursor: pointer;
+            height: 1.3rem;
+            width: 1.3rem;
+        }
+        .cboxnodo
+        {
+            padding-block: 0.3rem;
         }
     </style>
     <script src="jquery-1.9.1.min.js"></script>
@@ -402,6 +413,9 @@
                     let identificador = document.createElement("div");
                     identificador.innerText = "Viaje " + (indiceViaje + 1);
                     identificador.classList = "identificadorViaje"
+                    if (indiceViaje == 0)
+                        identificador.classList.add("viajeActivo");
+                    
                     identificador.id = "viaje" + indiceViaje;
                     identificador.validx = indiceViaje;
                     identificador.onclick = function ()
@@ -413,13 +427,15 @@
                             k.classList.remove("viajeActivo");
                         }
                         this.classList.add("viajeActivo");
+                        identificador.firstNodoSpan.click();
                     }
                     liGeneral.append(identificador);
 
-
+                    let firstNodoSpan = undefined;
                     for(let rnodo of rgeneral.slice(1, rgeneral.length - 1))
                     {
                         let lit = document.createElement("div");
+                        lit.className = "cboxnodo";
                         let cbox = document.createElement("input");
                         cbox.type = "checkbox";
                         cbox.onclick = colorearNodo;
@@ -428,12 +444,14 @@
                         spn.innerText = rnodo.titulo;
 
                         spn.onclick = irNodo;
-
+                        if(firstNodoSpan == undefined)
+                            firstNodoSpan = spn;
                         lit.append(cbox);
                         lit.append(spn);
                         liGeneral.append(lit);
                         i++;
                     }
+                    identificador.firstNodoSpan = firstNodoSpan;
                     indiceViaje++;
                     dom1.append(liGeneral);
                 }
