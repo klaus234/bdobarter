@@ -121,6 +121,35 @@
         {
             padding-block: 0.3rem;
         }
+        .btn_slide_container {
+            position: relative;
+            border-radius: 2rem;
+            background-color:none;
+            border: 3px solid rgba(255, 0, 0, 0.5);
+            width: 9rem;
+            padding: 0.4rem;
+            padding-block: 0.7rem;
+            text-align: center;
+            height: 2.5rem;
+        }
+        #slider_erase
+        {
+            position: absolute;
+            left: 16px;
+            
+            --size_box:2.5rem;
+            background-color: rgba(255, 0, 0, 0.5);;
+            width: var(--size_box);
+            height: var(--size_box);
+            border-radius: 2rem;
+            cursor: pointer;
+            /* draggeable for firefox*/
+            -moz-user-select: none;
+            -webkit-user-drag: element;
+            -moz-user-drag: element;
+            
+
+        }
     </style>
     <script src="jquery-1.9.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -187,7 +216,35 @@
         }
         window.onload = function()
         {
-           
+            /* drag erase button */
+            let currentXErase = 0;
+            document.getElementById("slider_erase").ondragstart = function(event)
+            {
+                currentXErase = event.clientX;
+            }
+            document.getElementById("slider_erase").ondrag = function(event)
+            {
+                const offsetX_er = 69;
+                if(currentXErase != 0)
+                {
+                    if(event.clientX > currentXErase + 100)
+                    {
+                        document.getElementById("nodosm").value = "";
+                    }
+                    let pos = (event.clientX - offsetX_er);
+                    if (pos < 0)
+                        pos = 16;
+                    this.style.left = pos  + "px";
+                }
+            }
+            
+            /* end */
+            document.getElementById("btnplay").onclick = function ()
+            {
+                setTimeout(function(){
+                    $("#alarm1")[0].play();
+                }, 4000);
+            }
             const nmm = document.getElementById("nodosm");
             nmm.value = localStorage.getItem("NodosR");
             document.getElementById("guardar").onclick = function()
@@ -480,7 +537,7 @@
     </script>
 </head>
 <body>
-    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 3.0.1</h2>
+    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 3.0.2</h2>
     <div class="columnaA">
         <ul>
             <li>
@@ -489,6 +546,11 @@
                 Nodos máximos p/viaje: <input style="font-weight: bold;" type="number" id="viajes" value="3" min="1" max="6" step="1"> <br>
                 Nodos: <br>
                 <textarea name="nodosm" id="nodosm" cols="30" rows="13"></textarea><br>
+                <!-- Slide to confirm button-->
+
+                <div class="btn_slide_container">
+                    <div draggable="true" class="slider" id="slider_erase"></div>
+                </div>
                 <div class="contenedor-puntos-principal">
                     <ul id="contenedor-puntos">
                        
@@ -512,7 +574,11 @@
             </div>
             
         </ul>
-        <div><a href="barter_bestnodo.html">Ranking nodos mas cercanos</a></div>
+        
+        <button id="btnplay">Play</button>
+        <audio id="alarm1">
+            <source src="alarm_1.ogg" type="audio/ogg">
+        </audio>
     </div>
     <div class="columnaB">
         Mapa oceáno: <br>
