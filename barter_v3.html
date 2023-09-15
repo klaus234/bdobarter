@@ -392,26 +392,7 @@
                 }
                 return mejorRuta;
             }
-            /*
-            function mejorRecorrido(posibles, inicial)
-            {
-                let bdist = 999999999 * 5;
-                let mejorRuta;
-                for(let p of posibles) //p es una lista de nodos
-                {
-                    let ruta = [inicial];
-                    ruta = ruta.concat(p);
-                    ruta = ruta.concat(inicial);
-                    rdist = distanciaTotal(ruta);
-                    if(rdist < bdist)
-                    {
-                        bdist = rdist;
-                        mejorRuta = ruta;
-                    }
-                }
-                return mejorRuta;
-            }
-            */
+            
             function colorearNodo()
             {
                 const nombreNodo = this.parentNode.children[1].innerText;
@@ -433,23 +414,105 @@
                     ndo.seleccionado = false;
                 }
             }
+            let ignoreCache = false;
             document.getElementById("btnmateriales").onclick = function()
             {
                 resetearNodosColor();
                 nodosInp = materiales.value;
                 nodosRecorridos = nodosInp.split("\n");
                 const recorrido = [];
-
+                const recorrido_titulo = []
                 inicial = document.getElementById("inicial").value; //  puede ser custom
                 inicial = inicial.toUpperCase();
                 for(let nodo of nodosRecorridos)
                 {
                     nodo = nodo.toUpperCase();
                     if(nodo in nodosDic)
+                    {
                         recorrido.push(nodosDic[nodo]);
+                        recorrido_titulo.push(nodo);
+                    }
                     else
                         console.error("No existe el nodo: " + nodo);
                 }
+                // ordeno los nodos de menor a mayor.
+                recorrido_titulo.sort();
+                let clavetitulo = recorrido_titulo.join(", ");
+                
+                if(recorrido_titulo.length > 9 && !ignoreCache)
+                {
+                    // intentamos buscar una solucion en cache_nodes_v1.json
+                    fetch('cache_nodes_v1.json').then(response => response.json().then(data =>
+                    {
+                        if(clavetitulo in data[recorrido_titulo.length])
+                        {
+                            const resultadoViajes = data[recorrido_titulo.length][clavetitulo];
+                            let indiceViaje = 0;
+                            let i = 0;
+                            recNodos = []
+                            const dom1 = document.getElementById("outputnodos");
+                            dom1.innerHTML = "";
+                            recNodos = resultadoViajes[0];
+                            for(let rgeneral of resultadoViajes)
+                            {
+                                let liGeneral = document.createElement("li");
+                                let identificador = document.createElement("div");
+                                identificador.innerText = "Viaje " + (indiceViaje + 1);
+                                identificador.classList = "identificadorViaje"
+                                if (indiceViaje == 0)
+                                    identificador.classList.add("viajeActivo");
+                                
+                                identificador.id = "viaje" + indiceViaje;
+                                identificador.validx = indiceViaje;
+                                identificador.onclick = function ()
+                                {
+                                    recNodos = resultadoViajes[this.validx]; // con esto mapeamos los nodos segun el viaje
+                                    const kz = document.getElementsByClassName("identificadorViaje")
+                                    for(let k of kz)
+                                    {
+                                        k.classList.remove("viajeActivo");
+                                    }
+                                    this.classList.add("viajeActivo");
+                                    identificador.firstNodoSpan.click();
+                                }
+                                liGeneral.append(identificador);
+
+                                let firstNodoSpan = undefined;
+                                for(let rnodo of rgeneral.slice(1, rgeneral.length - 1))
+                                {
+                                    let lit = document.createElement("div");
+                                    lit.className = "cboxnodo";
+                                    let cbox = document.createElement("input");
+                                    cbox.type = "checkbox";
+                                    cbox.onclick = colorearNodo;
+                                    let spn = document.createElement("span");
+                                    
+                                    spn.innerText = rnodo.titulo;
+
+                                    spn.onclick = irNodo;
+                                    if(firstNodoSpan == undefined)
+                                        firstNodoSpan = spn;
+                                    lit.append(cbox);
+                                    lit.append(spn);
+                                    liGeneral.append(lit);
+                                    i++;
+                                }
+                                identificador.firstNodoSpan = firstNodoSpan;
+                                indiceViaje++;
+                                dom1.append(liGeneral);
+                            }
+                        
+                            document.getElementById("totales").innerText = i + " [cached]";
+                        }else{
+                            ignoreCache = true;
+                            this.click();
+                        }
+                    }));
+                    return 0;
+                    
+                    
+                }
+                ignoreCache = false;
                 let elementosQuedan = true;
                 actual = nodosDic[inicial];
                 let txtOut = "";
@@ -512,24 +575,7 @@
                     indiceViaje++;
                     dom1.append(liGeneral);
                 }
-                /*
-                for(let rnodo of recNodos.slice(1, recNodos.length - 1))
-                {
-                    let lit = document.createElement("li");
-                    let cbox = document.createElement("input");
-                    cbox.type = "checkbox";
-                    cbox.onclick = colorearNodo;
-                    let spn = document.createElement("span");
-                    
-                    spn.innerText = rnodo.titulo;
-
-                    spn.onclick = irNodo;
-
-                    lit.append(cbox);
-                    lit.append(spn);
-                    dom1.append(lit);
-                    i++;
-                }*/
+               
                 document.getElementById("totales").innerText = i;
                 
             }
@@ -537,7 +583,7 @@
     </script>
 </head>
 <body>
-    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 3.0.3</h2>
+    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 3.0.4C</h2>
     <div class="columnaA">
         <ul>
             <li>
