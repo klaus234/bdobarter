@@ -1,5 +1,5 @@
 const menu_puntos = document.getElementById("contenedor-puntos");
-
+let fload = true;
 const data_puntos = 
 
 {
@@ -54,5 +54,13 @@ function mostrarNiveles()
     menu_puntos.appendChild(nuevoNivel(2));
     menu_puntos.appendChild(nuevoNivel(3));
     menu_puntos.appendChild(nuevoNivel(4));
+    if (fload)
+    {
+        for(d of Object.keys(data_puntos))
+        {
+            data_puntos[d].sort();
+        }
+        fload = false;
+    }
 }
 mostrarNiveles();
