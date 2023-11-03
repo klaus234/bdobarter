@@ -144,7 +144,7 @@
             border-radius: 2rem;
             cursor: pointer;
             /* draggeable for firefox*/
-            -moz-user-select: none;
+            
             -webkit-user-drag: element;
             -moz-user-drag: element;
             
@@ -517,12 +517,13 @@
                 actual = nodosDic[inicial];
                 let txtOut = "";
                 const dom1 = document.getElementById("outputnodos");
-                dom1.innerHTML = "";
+                dom1.innerHTML = "Cargando...";
                 let i = 0;
                 recNodos = [];
                 posibles = permutator(recorrido);
                 // recNodos se usa en el mapeo de los nodos
                 resultadoViajes = mejorRecorrido(posibles, actual, document.getElementById("viajes").value);
+                dom1.innerHTML = "";
                 recNodos = resultadoViajes[0];
                
                 console.log(resultadoViajes); //WAAAA
@@ -583,7 +584,7 @@
     </script>
 </head>
 <body>
-    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 3.0.4C</h2>
+    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 3.0.5</h2>
     <div class="columnaA">
         <ul>
             <li>
