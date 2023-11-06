@@ -129,6 +129,7 @@
             width: 9rem;
             padding: 0.4rem;
             padding-block: 0.7rem;
+            margin-block: 0.6rem;
             text-align: center;
             height: 2.5rem;
         }
@@ -218,6 +219,7 @@
         {
             /* drag erase button */
             let currentXErase = 0;
+            /*
             document.getElementById("slider_erase").ondragstart = function(event)
             {
                 currentXErase = event.clientX;
@@ -237,7 +239,51 @@
                     this.style.left = pos  + "px";
                 }
             }
-            
+            */
+           const slideErase = document.getElementById("slider_erase");
+
+            document.getElementById("slider_erase").onmousedown = function(event)
+            {
+                currentXErase = event.clientX;
+            }
+            const movMouseFnc = function(event)
+            {
+                const offsetX_er = 69;
+                if(currentXErase != 0)
+                {
+                    if(event.clientX > currentXErase + 100)
+                    {
+                        document.getElementById("nodosm").value = "";
+                    }
+                    let pos = (event.clientX - offsetX_er);
+                    if (pos < 0)
+                        pos = 17;
+                    
+                }
+            };
+            const movGUIFnc = function(e)
+            {
+                e = e || window.event;
+                e.preventDefault();
+                e.target.onmousemove = movGUIFnc;
+                let posx = e.clientX;
+                if (posx > 180)
+                {
+                    posx = 180;
+                    document.getElementById("nodosm").value = "";
+                }
+                e.target.style.left = -69 + posx + "px";
+            };
+            slideErase.onmousedown = movGUIFnc;
+            const movFncE = function(e)
+            {
+                e.target.onmousemove = undefined;
+                e.target.style.left = "";
+            }
+            slideErase.onmouseleave = movFncE;
+            slideErase.onmouseup = movFncE;
+            document.getElementById("slider_erase").ondragend = movMouseFnc;
+
             /* end */
             document.getElementById("btnplay").onclick = function ()
             {
@@ -596,7 +642,7 @@
                 <!-- Slide to confirm button-->
 
                 <div class="btn_slide_container">
-                    <div draggable="true" class="slider" id="slider_erase"></div>
+                    <div class="slider" id="slider_erase"></div>
                 </div>
                 <div class="contenedor-puntos-principal">
                     <ul id="contenedor-puntos">
