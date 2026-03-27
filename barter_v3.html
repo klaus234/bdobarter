@@ -9,177 +9,432 @@
     <link rel="stylesheet" href="estilo.css">
     <script src="p5.min.js"></script>
     <style>
-        body{
-            font-size: 16pt;
-            background-color: #242424;
-            color: white;
+        :root {
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent-gold: #d4af37;
+            --accent-red: #e74c3c;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --text-light: #ecf0f1;
+            --border-accent: #0f3460;
+            --shadow: 0 8px 32px 0 rgba(212, 175, 55, 0.1);
         }
-        textarea{
-            text-transform: uppercase;
-            font-size: 16pt;
-            font-weight: bold;
-            padding: 7px;
-            border: 1px solid black;
-            border-radius: 15px;
-        }
-        ul{
-            list-style: none;
-        }
-        input[type="text"]
-        {
-            text-transform: uppercase;
-        }
-        button{
-            padding: 7px;
-            border: 0;
-            background-color: rgb(43, 0, 128);
-            color: white;
-            border-radius: 6px;
-            font-size: 17pt;
-            margin-top: 10px;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-        button:hover{
-            background-color: rgb(0, 128, 38);
-        }
-        .columnaA
-        {
-            float: left;
-            width: 50%;
-        }
-        .columnaB
-        {
-            float: right;
-            text-align: center;
-            width: 50%;
-        }
-        #defaultCanvas0
-        {
-            border-radius: 15px;
-        }
-        .cboxsl li{
-            margin: 0;
-            padding: 1rem;
 
+        * {
+            box-sizing: border-box;
         }
-        .cboxsl
-        {
+
+        body {
+            font-size: 14px;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 15px;
+            min-height: 100vh;
+        }
+
+        h2 {
+            color: var(--accent-gold);
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .layout-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .columnaA, .columnaB {
+            flex: 1;
+            min-width: 350px;
+        }
+
+        .columnaB {
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            color: var(--accent-gold);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"] {
+            background-color: rgba(15, 52, 96, 0.6);
+            color: var(--accent-blue);
+            border: 2px solid var(--border-accent);
+            padding: 10px 12px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            background-color: rgba(15, 52, 96, 0.8);
+        }
+
+        textarea {
+            background-color: rgba(15, 52, 96, 0.6);
+            color: var(--text-light);
+            border: 2px solid var(--border-accent);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            resize: vertical;
+            transition: all 0.3s ease;
+            min-height: 150px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+            background-color: rgba(15, 52, 96, 0.8);
+        }
+
+        ul {
+            list-style: none;
             margin: 0;
             padding: 0;
         }
-        .uml1 span{
-            cursor: pointer;
 
-        }
-        .uml1 span:hover{
-            color: rgb(1, 1, 105);
-        }
-        a{
-            color:aqua;
-        }
-        textarea{
-            background-color: black;
-            color: white;
-        }
-        input
-        {
-            background-color: black;
-            color: white;
-        }
-        .uml1 li
-        {
-            padding-block: 1rem;
-        }
-        .identificadorViaje
-        {
+        button {
+            background: linear-gradient(135deg, var(--border-accent) 0%, #0a1f33 100%);
+            color: var(--accent-gold);
+            border: 2px solid var(--accent-gold);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: bold;
-            color: white;
-            background-color: black; padding: 5px; border-radius: 5px;
-            width: 20%;
+            margin: 10px 0;
             cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            width: 100%;
         }
-        .viajeActivo
-        {
-            background-color: rgb(5, 5, 122);
+
+        button:hover {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #c09d2a 100%);
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
         }
-        #popupguardando
-        {
-            background-color: rgb(179, 117, 3);
-            border-radius: 5px;
-            padding: 2rem;
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        a:hover {
+            color: var(--accent-gold);
+            text-decoration: underline;
+        }
+
+        #defaultCanvas0 {
+            border: 3px solid var(--accent-gold);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .uml1 {
+            margin-top: 15px;
+        }
+
+        .uml1 li {
+            padding-block: 8px;
+            border-left: 3px solid var(--accent-gold);
+            padding-left: 10px;
+            margin-bottom: 8px;
+            background: rgba(212, 175, 55, 0.05);
+            padding: 10px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .uml1 li:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-left-color: var(--accent-blue);
+        }
+
+        .uml1 span {
+            cursor: pointer;
+            color: var(--accent-blue);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .uml1 span:hover {
+            color: var(--accent-gold);
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        }
+
+        .identificadorViaje {
+            font-weight: bold;
+            color: var(--text-light);
+            background-color: rgba(52, 152, 219, 0.2);
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--accent-blue);
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .identificadorViaje:hover {
+            background-color: rgba(52, 152, 219, 0.4);
+            border-color: var(--accent-gold);
+        }
+
+        .viajeActivo {
+            background-color: linear-gradient(135deg, rgba(52, 152, 219, 0.5) 0%, rgba(46, 204, 113, 0.3) 100%);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        #popupguardando {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #229954 100%);
+            border-radius: 8px;
+            padding: 20px;
             display: none;
-            
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(39, 174, 96, 0.3);
+            animation: slideIn 0.4s ease-out;
         }
-        input[type="checkbox"]
-        {
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        input[type="checkbox"] {
             cursor: pointer;
-            height: 1.3rem;
-            width: 1.3rem;
+            height: 18px;
+            width: 18px;
+            margin-right: 8px;
+            accent-color: var(--accent-gold);
         }
-        .cboxnodo
-        {
-            padding-block: 0.3rem;
+
+        .cboxnodo {
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
         }
+
+        .cboxnodo:hover {
+            transform: translateX(3px);
+        }
+
         .btn_slide_container {
             position: relative;
             border-radius: 2rem;
-            background-color:none;
-            border: 3px solid rgba(255, 0, 0, 0.5);
-            width: 9rem;
+            border: 3px solid var(--accent-red);
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+            width: 100%;
             padding: 0.4rem;
             padding-block: 0.7rem;
             margin-block: 0.6rem;
             text-align: center;
             height: 2.5rem;
+            cursor: grab;
         }
-        #slider_erase
-        {
+
+        .btn_slide_container:active {
+            cursor: grabbing;
+        }
+
+        #slider_erase {
             position: absolute;
-            left: 16px;
-            
-            --size_box:2.5rem;
-            background-color: rgba(255, 0, 0, 0.5);;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            --size_box: 2.5rem;
+            background: linear-gradient(135deg, var(--accent-red), #c0392b);
             width: var(--size_box);
             height: var(--size_box);
             border-radius: 2rem;
-            cursor: pointer;
-            /* draggeable for firefox*/
-            
+            cursor: grab;
             -webkit-user-drag: element;
             -moz-user-drag: element;
-            
+            transition: left 0.3s ease;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
 
+        #slider_erase:active {
+            cursor: grabbing;
+        }
+
+        #zoomer {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(15, 52, 96, 0.6);
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--border-accent);
+        }
+
+        #zoomer span {
+            color: var(--accent-gold);
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .zoomBTN {
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: var(--border-accent);
+            border: 2px solid var(--accent-gold);
+            margin: 0 4px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .zoomBTN:hover {
+            background-color: var(--accent-gold);
+            color: var(--primary-dark);
+        }
+
+        .lbl {
+            color: var(--accent-gold);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1024px) {
+            .layout-container {
+                flex-direction: column;
+            }
+
+            .columnaA, .columnaB {
+                width: 100%;
+            }
         }
     </style>
     <script src="jquery-1.9.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <script src="mapa.js"></script>
+    <script src="mapa_zoom.js"></script>
     <script>
+        // ============================================
+        // CONFIGURACIÓN Y ESTADO GLOBAL
+        // ============================================
         const nodosDic = {};
         let resultadoViajes = [];
-        function dist2(x1, y1, x2, y2)
-        {
-            return Math.sqrt((x1-x2) * (x1-x2) +  (y1 - y2) *  (y1 - y2));
-        }
-        function distNodos(n1, n2)
-        {
-            return dist2(n1.x, n1.y, n2.x, n2.y);
-        }
-        class Nodo{
-            constructor(x, y, titulo)
-            {
+        let ndata;
+        let ignoreCache = false;
+
+        // ============================================
+        // CLASES
+        // ============================================
+        class Nodo {
+            constructor(x, y, titulo) {
                 this.x = x;
                 this.y = y;
                 this.titulo = titulo;
             }
-            distancia(otro)
-            {
-                return distNodos(this, otro);
+
+            distancia(otro) {
+                return Math.sqrt(
+                    Math.pow(this.x - otro.x, 2) + Math.pow(this.y - otro.y, 2)
+                );
             }
         }
-        function irNodo()
-        {
+
+        // ============================================
+        // FUNCIONES UTILITARIAS
+        // ============================================
+        function dist2(x1, y1, x2, y2) {
+            return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+        }
+
+        function distNodos(n1, n2) {
+            return n1.distancia(n2);
+        }
+
+        function showMessageGuardando() {
+            setTimeout(function () {
+                $("#popupguardando").fadeIn(1000);
+                setTimeout(function () {
+                    $("#popupguardando").fadeOut(1000);
+                }, 3000);
+            }, 100);
+        }
+
+        function resetearNodosColor() {
+            for (let ndo of nodosM) {
+                ndo.seleccionado = false;
+            }
+        }
+
+        function irNodo() {
             frameRate(5);
             let inicialN = nodosDic["ILIYA"];
             let inodo = nodosDic[this.innerText];
@@ -188,495 +443,394 @@
             offsetX = xd;
             offsetY = yd;
         }
-        let ndata;
-        
-        
-        function buscarMasCercano(nodo, lista)
-        {
-            min = 69423000;
-            let sigNodo;
-            for(let n of lista)
-            {
-                let d = nodo.distancia(n);
-                if(d < min)
-                {
-                    min = d;
-                    sigNodo = n;
+
+        function colorearNodo() {
+            const nombreNodo = this.parentNode.children[1].innerText;
+            for (let ndo of nodosM) {
+                if (ndo.titulo === nombreNodo) {
+                    ndo.seleccionado = !ndo.seleccionado;
+                    return 0;
                 }
             }
-            return sigNodo;
+            return 1;
         }
-        function showMessageGuardando ()
-        {
-            setTimeout(function(){
-                $("#popupguardando").fadeIn(1000);
-                setTimeout(function(){
-                    $("#popupguardando").fadeOut(1000);
-                }, 3000);
-            }, 100);
-        }
-        window.onload = function()
-        {
-            /* drag erase button */
-            let currentXErase = 0;
-            /*
-            document.getElementById("slider_erase").ondragstart = function(event)
-            {
-                currentXErase = event.clientX;
-            }
-            document.getElementById("slider_erase").ondrag = function(event)
-            {
-                const offsetX_er = 69;
-                if(currentXErase != 0)
-                {
-                    if(event.clientX > currentXErase + 100)
-                    {
-                        document.getElementById("nodosm").value = "";
-                    }
-                    let pos = (event.clientX - offsetX_er);
-                    if (pos < 0)
-                        pos = 16;
-                    this.style.left = pos  + "px";
-                }
-            }
-            */
-           const slideErase = document.getElementById("slider_erase");
 
-            document.getElementById("slider_erase").onmousedown = function(event)
-            {
-                currentXErase = event.clientX;
-            }
-            const movMouseFnc = function(event)
-            {
-                const offsetX_er = 69;
-                if(currentXErase != 0)
-                {
-                    if(event.clientX > currentXErase + 100)
-                    {
-                        document.getElementById("nodosm").value = "";
-                    }
-                    let pos = (event.clientX - offsetX_er);
-                    if (pos < 0)
-                        pos = 17;
-                    
-                }
-            };
-            const movGUIFnc = function(e)
-            {
-                e = e || window.event;
-                e.preventDefault();
-                e.target.onmousemove = movGUIFnc;
-                let posx = e.clientX;
-                if (posx > 180)
-                {
-                    posx = 180;
-                    document.getElementById("nodosm").value = "";
-                }
-                e.target.style.left = -69 + posx + "px";
-            };
-            slideErase.onmousedown = movGUIFnc;
-            const movFncE = function(e)
-            {
-                e.target.onmousemove = undefined;
-                e.target.style.left = "";
-            }
-            slideErase.onmouseleave = movFncE;
-            slideErase.onmouseup = movFncE;
-            document.getElementById("slider_erase").ondragend = movMouseFnc;
+        // ============================================
+        // ALGORITMO DE CÁLCULO DE RUTAS
+        // ============================================
+        function permutator(inputArr) {
+            const results = [];
 
-            /* end */
-            document.getElementById("btnplay").onclick = function ()
-            {
-                setTimeout(function(){
-                    $("#alarm1")[0].play();
-                }, 4000);
-            }
-            const nmm = document.getElementById("nodosm");
-            nmm.value = localStorage.getItem("NodosR");
-            document.getElementById("guardar").onclick = function()
-            {
-                
-                localStorage.setItem("NodosR", nmm.value);
-                showMessageGuardando();
-            }
-            const materiales = document.getElementById("nodosm");
-            fetch('datos.json')
-            .then(response => response.json())
-            .then(data => {
-                ndata = data;
-                for(let nodo of ndata)
-                {
-                    nodosDic[nodo.titulo] = new Nodo(nodo.x, nodo.y, nodo.titulo);
-
-                }
-                $("#inicial" ).autocomplete({
-                    source: Object.keys(nodosDic)
-                });
-                $("#agregar").autocomplete({
-                    source: Object.keys(nodosDic)
-                })
-            });
-            document.getElementById("agregar").addEventListener("keyup", function(event){
-                if(event.key == "Enter")
-                {
-                    const valor = this.value;
-                    if(materiales.value.charAt(materiales.value.length - 1) != "\n" && materiales.value.length > 2)
-                        materiales.value += "\n";
-                    materiales.value += valor + "\n";
-                    this.value = "";
-
-
-                }
-            });
-            var limite  = 0;
-            function permutator(inputArr) {
-                var results = [];
-
-                function permute(arr, memo) {
-                    var cur, memo = memo || [];
-
-                    for (var i = 0; i < arr.length; i++) {
-                    cur = arr.splice(i, 1);
+            function permute(arr, memo = []) {
+                for (let i = 0; i < arr.length; i++) {
+                    const cur = arr.splice(i, 1);
                     if (arr.length === 0) {
                         results.push(memo.concat(cur));
                     }
                     permute(arr.slice(), memo.concat(cur));
                     arr.splice(i, 0, cur[0]);
-                    }
-
-                    return results;
                 }
-
-                return permute(inputArr);
+                return results;
             }
-            function distanciaTotal(ruta)
-            {
-                let distx = 0;
-                //console.log(ruta);
+
+            return permute(inputArr);
+        }
+
+        function distanciaTotal(ruta) {
+            let distx = 0;
+            for (let i = 0; i < ruta.length - 2; i++) {
+                distx += ruta[i].distancia(ruta[i + 1]);
+            }
+            return distx;
+        }
+
+        function llenarCombinacion(posible, maxNodosPViaje, inicial) {
+            const combinacion = [];
+            const auxPosible = [].concat(posible);
+            const tamDX = posible.length;
+            const viajesTotales = Math.ceil(tamDX / maxNodosPViaje);
+
+            for (let i = 0; i < viajesTotales; i++) {
+                const nuevo = [inicial];
+                for (let j = 0; j < maxNodosPViaje && auxPosible.length > 0; j++) {
+                    nuevo.push(auxPosible.pop());
+                }
+                nuevo.push(inicial);
+                combinacion.push(nuevo);
+            }
+            return combinacion;
+        }
+
+        function distanciaRecorridaTotalViajes(combinacionViajes) {
+            let totalD = 0;
+            for (let i = 0; i < combinacionViajes.length; i++) {
+                const viaje = combinacionViajes[i];
+                for (let j = 0; j < viaje.length - 1; j++) {
+                    totalD += viaje[j].distancia(viaje[j + 1]);
+                }
+            }
+            return totalD;
+        }
+
+        function mejorRecorrido(posibles, inicial, maxNodosPViaje) {
+            let bdist = Infinity;
+            let mejorRuta = [1, 2];
+            for (let p of posibles) {
+                const ruta = llenarCombinacion(p, maxNodosPViaje, inicial);
+                const rdist = distanciaRecorridaTotalViajes(ruta);
+                if (rdist < bdist) {
+                    bdist = rdist;
+                    mejorRuta = ruta;
+                }
+            }
+            return mejorRuta;
+        }
+
+        // ============================================
+        // RENDERIZADOR DE VIAJES
+        // ============================================
+        function renderizarViajes(viajes, contenedor) {
+            contenedor.innerHTML = "";
+            let indiceViaje = 0;
+            let totalNodos = 0;
+
+            for (let rgeneral of viajes) {
+                const liGeneral = document.createElement("li");
+                const identificador = document.createElement("div");
+                identificador.innerText = `Viaje ${indiceViaje + 1}`;
+                identificador.className = "identificadorViaje";
                 
-                for(let i = 0; i < ruta.length - 2; i++)
-                {
-                    
-                    distx += ruta[i].distancia(ruta[i + 1]);
-                    
+                if (indiceViaje === 0) {
+                    identificador.classList.add("viajeActivo");
                 }
-                return distx;
 
-            }
-            // nuevo v3
-            function llenarCombinacion(posible, maxNodosPViaje, inicial)
-            {
-                let combinacion = [];
-                let auxPosible = [].concat(posible);
-                let tamDX = posible.length; // tamaño total del recorrido, seria mejor pasarlo como parametro tal vez
-                let viajesTotales = Math.ceil(tamDX / maxNodosPViaje);
+                identificador.id = `viaje${indiceViaje}`;
+                identificador.validx = indiceViaje;
 
-                for(let i = 0; i< viajesTotales; i++)
-                {
-                    let nuevo = [inicial];
-                    for(let j = 0; j < maxNodosPViaje && auxPosible.length > 0; j++)
-                    {
-                        nuevo.push(auxPosible.pop());
-                    }
-                    nuevo = nuevo.concat(inicial)
-                    combinacion.push(nuevo);
-                }
-                return combinacion;
-            }
-            function distanciaRecorridaTotalViajes(combinacionViajes)
-            {
-                let totalD = 0;
-                for(let i = 0; i < combinacionViajes.length; i++)
-                {
-                    let viaje = combinacionViajes[i];
-                    //console.log(viaje);
-                    for(let j = 0; j < viaje.length - 1; j++)
-                    {
-                        totalD += viaje[j].distancia(viaje[j + 1]);
-                        
-                    }
-                }
-                
-                return totalD;
-            }
-            // fin nuevo v3
-            function mejorRecorrido(posibles, inicial, maxNodosPViaje)
-            {
-                let bdist = Infinity;
-                let mejorRuta = [1, 2];
-                for(let p of posibles) //p es una lista de nodos
-                {
-                    let ruta = llenarCombinacion(p, maxNodosPViaje, inicial); // ruta es una lista de listas de nodos
-                    // ya incluye el inicial al principio y al final...
-                    
-
-                    rdist = distanciaRecorridaTotalViajes(ruta);
-                    if(rdist < bdist)
-                    {
-                        bdist = rdist;
-                        mejorRuta = ruta;
-                    }
-                }
-                //console.log(mejorRuta);
-                return mejorRuta;
-            }
-            function mejorRecorridoold(posibles, inicial)
-            {
-                let bdist = 999999999 * 5;
-                let mejorRuta;
-                for(let p of posibles) //p es una lista de nodos
-                {
-                    let ruta = [inicial];
-                    ruta = ruta.concat(p);
-                    ruta = ruta.concat(inicial);
-                    rdist = distanciaTotal(ruta);
-                    if(rdist < bdist)
-                    {
-                        bdist = rdist;
-                        mejorRuta = ruta;
-                    }
-                }
-                return mejorRuta;
-            }
-            
-            function colorearNodo()
-            {
-                const nombreNodo = this.parentNode.children[1].innerText;
-                for(let ndo of nodosM)
-                {
-                    if(ndo.titulo === nombreNodo)
-                    {
-                        ndo.seleccionado = !ndo.seleccionado;
-                        return 0;
-                    }
-            
-                }
-                return 1;
-            }
-            function resetearNodosColor()
-            {
-                for(let ndo of nodosM)
-                {
-                    ndo.seleccionado = false;
-                }
-            }
-            let ignoreCache = false;
-            document.getElementById("btnmateriales").onclick = function()
-            {
-                resetearNodosColor();
-                nodosInp = materiales.value;
-                nodosRecorridos = nodosInp.split("\n");
-                const recorrido = [];
-                const recorrido_titulo = []
-                inicial = document.getElementById("inicial").value; //  puede ser custom
-                inicial = inicial.toUpperCase();
-                for(let nodo of nodosRecorridos)
-                {
-                    nodo = nodo.toUpperCase();
-                    if(nodo in nodosDic)
-                    {
-                        recorrido.push(nodosDic[nodo]);
-                        recorrido_titulo.push(nodo);
-                    }
-                    else
-                        console.error("No existe el nodo: " + nodo);
-                }
-                // ordeno los nodos de menor a mayor.
-                recorrido_titulo.sort();
-                let clavetitulo = recorrido_titulo.join(", ");
-                
-                if(recorrido_titulo.length > 9 && !ignoreCache)
-                {
-                    // intentamos buscar una solucion en cache_nodes_v1.json
-                    fetch('cache_nodes_v1.json').then(response => response.json().then(data =>
-                    {
-                        if(clavetitulo in data[recorrido_titulo.length])
-                        {
-                            const resultadoViajes = data[recorrido_titulo.length][clavetitulo];
-                            let indiceViaje = 0;
-                            let i = 0;
-                            recNodos = []
-                            const dom1 = document.getElementById("outputnodos");
-                            dom1.innerHTML = "";
-                            recNodos = resultadoViajes[0];
-                            for(let rgeneral of resultadoViajes)
-                            {
-                                let liGeneral = document.createElement("li");
-                                let identificador = document.createElement("div");
-                                identificador.innerText = "Viaje " + (indiceViaje + 1);
-                                identificador.classList = "identificadorViaje"
-                                if (indiceViaje == 0)
-                                    identificador.classList.add("viajeActivo");
-                                
-                                identificador.id = "viaje" + indiceViaje;
-                                identificador.validx = indiceViaje;
-                                identificador.onclick = function ()
-                                {
-                                    recNodos = resultadoViajes[this.validx]; // con esto mapeamos los nodos segun el viaje
-                                    const kz = document.getElementsByClassName("identificadorViaje")
-                                    for(let k of kz)
-                                    {
-                                        k.classList.remove("viajeActivo");
-                                    }
-                                    this.classList.add("viajeActivo");
-                                    identificador.firstNodoSpan.click();
-                                }
-                                liGeneral.append(identificador);
-
-                                let firstNodoSpan = undefined;
-                                for(let rnodo of rgeneral.slice(1, rgeneral.length - 1))
-                                {
-                                    let lit = document.createElement("div");
-                                    lit.className = "cboxnodo";
-                                    let cbox = document.createElement("input");
-                                    cbox.type = "checkbox";
-                                    cbox.onclick = colorearNodo;
-                                    let spn = document.createElement("span");
-                                    
-                                    spn.innerText = rnodo.titulo;
-
-                                    spn.onclick = irNodo;
-                                    if(firstNodoSpan == undefined)
-                                        firstNodoSpan = spn;
-                                    lit.append(cbox);
-                                    lit.append(spn);
-                                    liGeneral.append(lit);
-                                    i++;
-                                }
-                                identificador.firstNodoSpan = firstNodoSpan;
-                                indiceViaje++;
-                                dom1.append(liGeneral);
-                            }
-                        
-                            document.getElementById("totales").innerText = i + " [cached]";
-                        }else{
-                            ignoreCache = true;
-                            this.click();
-                        }
-                    }));
-                    return 0;
-                    
-                    
-                }
-                ignoreCache = false;
-                let elementosQuedan = true;
-                actual = nodosDic[inicial];
-                let txtOut = "";
-                const dom1 = document.getElementById("outputnodos");
-                dom1.innerHTML = "Cargando...";
-                let i = 0;
-                recNodos = [];
-                posibles = permutator(recorrido);
-                // recNodos se usa en el mapeo de los nodos
-                resultadoViajes = mejorRecorrido(posibles, actual, document.getElementById("viajes").value);
-                dom1.innerHTML = "";
-                recNodos = resultadoViajes[0];
-               
-                console.log(resultadoViajes); //WAAAA
-                let indiceViaje = 0;
-                for(let rgeneral of resultadoViajes)
-                {
-                    let liGeneral = document.createElement("li");
-                    let identificador = document.createElement("div");
-                    identificador.innerText = "Viaje " + (indiceViaje + 1);
-                    identificador.classList = "identificadorViaje"
-                    if (indiceViaje == 0)
-                        identificador.classList.add("viajeActivo");
-                    
-                    identificador.id = "viaje" + indiceViaje;
-                    identificador.validx = indiceViaje;
-                    identificador.onclick = function ()
-                    {
-                        recNodos = resultadoViajes[this.validx]; // con esto mapeamos los nodos segun el viaje
-                        const kz = document.getElementsByClassName("identificadorViaje")
-                        for(let k of kz)
-                        {
-                            k.classList.remove("viajeActivo");
-                        }
-                        this.classList.add("viajeActivo");
+                identificador.onclick = function () {
+                    recNodos = viajes[this.validx];
+                    const allIds = document.querySelectorAll(".identificadorViaje");
+                    allIds.forEach(k => k.classList.remove("viajeActivo"));
+                    this.classList.add("viajeActivo");
+                    if (identificador.firstNodoSpan) {
                         identificador.firstNodoSpan.click();
                     }
-                    liGeneral.append(identificador);
+                };
 
-                    let firstNodoSpan = undefined;
-                    for(let rnodo of rgeneral.slice(1, rgeneral.length - 1))
-                    {
-                        let lit = document.createElement("div");
-                        lit.className = "cboxnodo";
-                        let cbox = document.createElement("input");
-                        cbox.type = "checkbox";
-                        cbox.onclick = colorearNodo;
-                        let spn = document.createElement("span");
-                        
-                        spn.innerText = rnodo.titulo;
+                liGeneral.append(identificador);
 
-                        spn.onclick = irNodo;
-                        if(firstNodoSpan == undefined)
-                            firstNodoSpan = spn;
-                        lit.append(cbox);
-                        lit.append(spn);
-                        liGeneral.append(lit);
-                        i++;
+                let firstNodoSpan = undefined;
+                for (let rnodo of rgeneral.slice(1, rgeneral.length - 1)) {
+                    const lit = document.createElement("div");
+                    lit.className = "cboxnodo";
+                    
+                    const cbox = document.createElement("input");
+                    cbox.type = "checkbox";
+                    cbox.onclick = colorearNodo;
+                    
+                    const spn = document.createElement("span");
+                    spn.innerText = rnodo.titulo;
+                    spn.onclick = irNodo;
+
+                    if (firstNodoSpan === undefined) {
+                        firstNodoSpan = spn;
                     }
-                    identificador.firstNodoSpan = firstNodoSpan;
-                    indiceViaje++;
-                    dom1.append(liGeneral);
+
+                    lit.append(cbox);
+                    lit.append(spn);
+                    liGeneral.append(lit);
+                    totalNodos++;
                 }
-               
-                document.getElementById("totales").innerText = i;
-                
+
+                identificador.firstNodoSpan = firstNodoSpan;
+                indiceViaje++;
+                contenedor.append(liGeneral);
             }
+
+            return totalNodos;
         }
+
+        // ============================================
+        // MANEJADOR PRINCIPAL DE CÁLCULO
+        // ============================================
+        function calcularNodos() {
+            resetearNodosColor();
+            const nodosInp = document.getElementById("nodosm").value;
+            const nodosRecorridos = nodosInp.split("\n");
+            const recorrido = [];
+            const recorrido_titulo = [];
+            
+            let inicial = document.getElementById("inicial").value.toUpperCase();
+            
+            for (let nodo of nodosRecorridos) {
+                nodo = nodo.toUpperCase();
+                if (nodo in nodosDic) {
+                    recorrido.push(nodosDic[nodo]);
+                    recorrido_titulo.push(nodo);
+                } else if (nodo.trim() !== "") {
+                    console.warn(`Nodo no encontrado: ${nodo}`);
+                }
+            }
+
+            if (recorrido.length === 0) {
+                alert("⚠️ Por favor, ingresa al menos un nodo válido.");
+                return;
+            }
+
+            recorrido_titulo.sort();
+            const clavetitulo = recorrido_titulo.join(", ");
+            const dom1 = document.getElementById("outputnodos");
+            const maxNodosPViaje = parseInt(document.getElementById("viajes").value);
+
+            // Intentar cargar del cache
+            if (recorrido_titulo.length > 9 && !ignoreCache) {
+                fetch('cache_nodes_v1.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (clavetitulo in data[recorrido_titulo.length]) {
+                            const resultadoViajes = data[recorrido_titulo.length][clavetitulo];
+                            recNodos = resultadoViajes[0];
+                            dom1.innerHTML = "";
+                            const totalNodos = renderizarViajes(resultadoViajes, dom1);
+                            document.getElementById("totales").innerText = `${totalNodos} [cached]`;
+                        } else {
+                            ignoreCache = true;
+                            calcularNodos();
+                        }
+                    })
+                    .catch(() => {
+                        ignoreCache = true;
+                        calcularNodos();
+                    });
+                return;
+            }
+
+            ignoreCache = false;
+            dom1.innerHTML = "<em style='color: var(--accent-blue);'>Calculando rutas...</em>";
+
+            let actual = nodosDic[inicial];
+            const posibles = permutator(recorrido);
+            resultadoViajes = mejorRecorrido(posibles, actual, maxNodosPViaje);
+            
+            recNodos = resultadoViajes[0];
+            const totalNodos = renderizarViajes(resultadoViajes, dom1);
+            document.getElementById("totales").innerText = totalNodos;
+        }
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        window.onload = function () {
+            // Cargar datos de nodos
+            fetch('datos.json')
+                .then(response => response.json())
+                .then(data => {
+                    ndata = data;
+                    for (let nodo of ndata) {
+                        nodosDic[nodo.titulo] = new Nodo(nodo.x, nodo.y, nodo.titulo);
+                    }
+                    
+                    $("#inicial").autocomplete({
+                        source: Object.keys(nodosDic)
+                    });
+                    
+                    $("#agregar").autocomplete({
+                        source: Object.keys(nodosDic)
+                    });
+                });
+
+            // Recuperar datos guardados
+            const nmm = document.getElementById("nodosm");
+            nmm.value = localStorage.getItem("NodosR") || "";
+
+            // Eventos de textarea
+            document.getElementById("agregar").addEventListener("keyup", function (event) {
+                if (event.key === "Enter") {
+                    const valor = this.value.toUpperCase();
+                    if (nmm.value && nmm.value.charAt(nmm.value.length - 1) !== "\n") {
+                        nmm.value += "\n";
+                    }
+                    nmm.value += valor + "\n";
+                    this.value = "";
+                }
+            });
+
+            // Botones principales
+            document.getElementById("btnmateriales").onclick = calcularNodos;
+            
+            document.getElementById("guardar").onclick = function () {
+                localStorage.setItem("NodosR", nmm.value);
+                showMessageGuardando();
+            };
+
+            // Zoom controls
+            const zoomPER = document.getElementById("zoomPER");
+            const btnzooms = document.getElementsByClassName("zoomBTN");
+
+            for (let btnzoom of btnzooms) {
+                btnzoom.onclick = function () {
+                    if (this.innerText === "+") {
+                        zoomValue += 0.05;
+                    } else {
+                        zoomValue -= 0.05;
+                    }
+                    
+                    zoomValue = Math.max(0.5, Math.min(2, zoomValue));
+                    zoomPER.innerText = Math.round(zoomValue * 100) + "%";
+                };
+            }
+
+            // Mouse wheel zoom
+            document.getElementById("mapa").addEventListener("wheel", function (e) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomValue += 0.025;
+                } else {
+                    zoomValue -= 0.025;
+                }
+                
+                zoomValue = Math.max(0.5, Math.min(2, zoomValue));
+                zoomPER.innerText = Math.round(zoomValue * 100) + "%";
+            });
+
+            // Slider erase button
+            const slideErase = document.getElementById("slider_erase");
+            const slideContainer = slideErase.parentElement;
+            let currentXErase = 0;
+            let isDragging = false;
+
+            slideErase.onmousedown = function (e) {
+                isDragging = true;
+                currentXErase = e.clientX - slideErase.offsetLeft;
+                slideErase.style.transition = "none";
+            };
+
+            const movGUIFnc = function (e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                const maxX = slideContainer.offsetWidth - slideErase.offsetWidth - 8;
+                let posx = e.clientX - currentXErase;
+
+                if (posx < 4) posx = 4;
+                if (posx >= maxX) {
+                    document.getElementById("nodosm").value = "";
+                }
+                slideErase.style.left = posx + "px";
+            };
+
+            const movFncE = function (e) {
+                if (!isDragging) return;
+                isDragging = false;
+                slideErase.style.transition = "left 0.3s ease";
+                slideErase.style.left = "4px";
+            };
+
+            document.addEventListener('mousemove', movGUIFnc);
+            document.addEventListener('mouseup', movFncE);
+
+            // Play alarm (hidden button)
+            document.getElementById("btnplay").onclick = function () {
+                setTimeout(function () {
+                    document.getElementById("alarm1").play();
+                }, 4000);
+            };
+        };
     </script>
 </head>
 <body>
-    <h2 style="background: rgb(131,58,180); background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); color: white; padding: 8px; border-radius: 7px; width: fit-content;">Calcular ruta más corta V 3.0.5</h2>
-    <div class="columnaA">
-        <ul>
-            <li>
-                Nodo Inicial: <input style="font-weight: bold;" type="text" id="inicial" value="ILIYA"> <br>
-                Agregar Nodo: <input style="color: blue; font-weight: bold;" type="text" id="agregar" value=""> <br>
-                Nodos máximos p/viaje: <input style="font-weight: bold;" type="number" id="viajes" value="3" min="1" max="6" step="1"> <br>
-                Nodos: <br>
-                <textarea name="nodosm" id="nodosm" cols="30" rows="13"></textarea><br>
-                <!-- Slide to confirm button-->
-
-                <div class="btn_slide_container">
-                    <div class="slider" id="slider_erase"></div>
-                </div>
-                <div class="contenedor-puntos-principal">
-                    <ul id="contenedor-puntos">
-                       
-                    </ul>
-                </div>
-                <button id="btnmateriales">Calcular nodos</button>
-            </li>
-            <li>
-                Output (totales: <span id="totales">0</span>):<br>
-                
-                <ul style="list-style: none;" id="outputnodos" class="uml1">
-                   <!--   <textarea  cols="30" rows="13" id="omateriales"></textarea> -->
-                </ul>
-                
-            </li>
-            <li>
-                <button id="guardar">Guardar...</button>
-            </li>
-            <div id="popupguardando">
-                Se han guardado los datos de los nodos.
+    <h2>🗺️ Calcular Ruta Óptima v3.1.5</h2>
+    <div class="layout-container">
+        <div class="columnaA">
+            <div class="input-group">
+                <label for="inicial">🎯 Nodo Inicial:</label>
+                <input type="text" id="inicial" placeholder="Ej: ILIYA" value="ILIYA">
             </div>
             
-        </ul>
+            <div class="input-group">
+                <label for="agregar">➕ Agregar Nodo:</label>
+                <input type="text" id="agregar" placeholder="Escribe nombre del nodo...">
+            </div>
+            
+            <div class="input-group">
+                <label for="viajes">📦 Máx Nodos por Viaje:</label>
+                <input type="number" id="viajes" value="3" min="1" max="6" step="1">
+            </div>
+            
+            <label class="lbl">📋 Ruta Planeada:</label>
+            <textarea name="nodosm" id="nodosm" placeholder="Aquí aparecerán los nodos seleccionados..." cols="30" rows="13"></textarea>
+
+            <div class="btn_slide_container" title="Desliza hacia la derecha para limpiar">
+                <div class="slider" id="slider_erase"></div>
+            </div>
+            
+            <div class="contenedor-puntos-principal">
+                <h3>🎲 Selector de Nodos por Nivel</h3>
+                <ul id="contenedor-puntos"></ul>
+            </div>
+            
+            <button id="btnmateriales">⚡ Calcular Ruta Óptima</button>
+            
+            <label class="lbl">📊 Rutas Calculadas (Total: <span id="totales">0</span>):</label>
+            <ul id="outputnodos" class="uml1"></ul>
+            
+            <button id="guardar">💾 Guardar Estado</button>
+        </div>
         
-        <button id="btnplay">Play</button>
-        <audio id="alarm1">
-            <source src="alarm_1.ogg" type="audio/ogg">
-        </audio>
+        <div class="columnaB">
+            <label class="lbl">🌊 Mapa del Océano:</label>
+            <div id="mapa"></div>
+            <div id="zoomer">
+                <span>ZOOM:</span> 
+                <span id="zoomPER">100%</span> 
+                <a class="zoomBTN" href="#">+</a> 
+                <a class="zoomBTN" href="#">−</a>
+            </div>
+        </div>
     </div>
-    <div class="columnaB">
-        Mapa oceáno: <br>
-        <div id="mapa"></div>
-    </div>
+    
+    <div id="popupguardando">✅ Se han guardado los datos de los nodos.</div>
+    <button id="btnplay" style="display: none;">Play</button>
+    <audio id="alarm1"><source src="alarm_1.ogg" type="audio/ogg"></audio>
     <script src="puntos_menu.js"></script>
 </body>
 </html>

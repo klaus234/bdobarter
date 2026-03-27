@@ -1,34 +1,73 @@
-.contenedor-puntos-principal
-{
-    background-color: rgb(52, 52, 52);
-    width: 450px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    padding: 5px;
-    border: 3px solid black;
-    border-radius: 5px;
+:root {
+    --primary-color: #1a1a2e;
+    --secondary-color: #16213e;
+    --accent-gold: #d4af37;
+    --accent-red: #e74c3c;
+    --accent-blue: #3498db;
+    --accent-green: #2ecc71;
+    --text-light: #ecf0f1;
+    --text-dark: #2c3e50;
+    --border-color: #0f3460;
+    --hover-bg: #0f3460;
+    --success-green: #27ae60;
 }
-#contenedor-puntos
-{
 
+.contenedor-puntos-principal {
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+    padding: 15px;
+    border: 2px solid var(--accent-gold);
+    border-radius: 12px;
+    margin: 15px 0;
+    box-shadow: 0 8px 32px 0 rgba(212, 175, 55, 0.1);
+}
+
+.contenedor-puntos-principal h3 {
+    color: var(--accent-gold);
+    margin: 0 0 10px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#contenedor-puntos {
     display: flex;
-    flex-flow: row wrap;
-    color: rgb(170, 242, 255);
-    column-gap: 20px;
-    width: 450px;
-}
-#contenedor-puntos li
-{
-   cursor: pointer;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-.puntomenu
-{
-    padding: 2px;
-    border: 2px solid black;
-    margin: 3px;
+.puntomenu {
+    background-color: rgba(52, 152, 219, 0.2);
+    color: var(--accent-blue);
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--accent-blue);
+    font-size: 10pt;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
-.puntomenu:hover{
-    background-color: white;
-    color: rgb(1, 73, 86);
+
+.puntomenu:hover {
+    background-color: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-gold);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.puntomenu[style*="red"] {
+    color: var(--accent-red) !important;
+    border: 1px solid var(--accent-red);
+    background-color: rgba(231, 76, 60, 0.2) !important;
+}
+
+.puntomenu[style*="red"]:hover {
+    background-color: var(--accent-red) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4) !important;
 }
