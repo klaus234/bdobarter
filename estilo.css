@@ -38,6 +38,20 @@
     margin: 0;
 }
 
+#contenedor-puntos>li {
+    cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--accent-blue);
+    font-size: 10pt;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+
 .puntomenu {
     background-color: rgba(52, 152, 219, 0.2);
     color: var(--accent-blue);

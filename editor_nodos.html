@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Visual de Nodos - BDO Barter</title>
+    <script src="p5.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #ecf0f1;
+        }
+
+        .titulo-principal {
+            text-align: center;
+            color: #d4af37;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(22, 33, 62, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 25px;
+            border: 2px solid #0f3460;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        .panel h2 {
+            color: #d4af37;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        #canvasContainer {
+            position: relative;
+            background: #0a1428;
+            border-radius: 8px;
+            border: 3px solid #d4af37;
+            overflow: hidden;
+        }
+
+        #mapa {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .modo-info {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .modo-info.activo {
+            background: rgba(46, 204, 113, 0.2);
+            border-left-color: #2ecc71;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 16px;
+            border: 2px solid #d4af37;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #0f3460 0%, #0a1f33 100%);
+            color: #d4af37;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #d4af37 0%, #c09d2a 100%);
+            color: #1a1a2e;
+            transform: translateY(-2px);
+        }
+
+        button.activo {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            border-color: #2ecc71;
+            color: white;
+        }
+
+        button.danger {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #d4af37;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #0f3460;
+            border-radius: 4px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            background-color: rgba(15, 52, 96, 0.6);
+            color: #3498db;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #d4af37;
+            background-color: rgba(15, 52, 96, 0.8);
+        }
+
+        textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 200px;
+            resize: vertical;
+        }
+
+        .nodo-item {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid #0f3460;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nodo-item:hover {
+            border-color: #3498db;
+            box-shadow: 0 3px 10px rgba(52, 152, 219, 0.2);
+        }
+
+        .nodo-info {
+            flex: 1;
+        }
+
+        .nodo-titulo {
+            font-weight: bold;
+            color: #d4af37;
+            margin-bottom: 5px;
+        }
+
+        .nodo-coords {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .nodo-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-small {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .lista-nodos {
+            max-height: 50vh;
+            overflow-y: auto;
+            padding-right: 5px;
+            border: 2px solid #0f3460;
+            border-radius: 4px;
+            padding: 10px;
+            background: rgba(15, 52, 96, 0.3);
+        }
+
+        .lista-nodos::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .lista-nodos::-webkit-scrollbar-track {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 4px;
+        }
+
+        .lista-nodos::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 4px;
+        }
+
+        .lista-nodos::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+
+        .stats {
+            background: rgba(52, 152, 219, 0.2);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            border-left: 4px solid #3498db;
+        }
+
+        .stats strong {
+            color: #d4af37;
+        }
+
+        .mensaje {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+            border-left: 4px solid;
+        }
+
+        .mensaje.success {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border-left-color: #2ecc71;
+            display: block;
+        }
+
+        .mensaje.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border-left-color: #f44336;
+            display: block;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 8px;
+            border: 2px solid #d4af37;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            min-width: 300px;
+        }
+
+        .modal-content h3 {
+            color: #d4af37;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .json-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="titulo-principal">🗺️ Editor Visual de Nodos</h1>
+
+    <div class="container">
+        <!-- Panel Izquierdo: Mapa y Controles -->
+        <div class="panel">
+            <h2>Mapa Interactivo</h2>
+
+            <div class="modo-info" id="modoInfo">
+                🔍 Modo Normal - Arrastra para mover, rueda para zoom
+            </div>
+
+            <div class="button-group">
+                <button id="btnModoAgregar" class="btn-add">
+                    ➕ Modo Agregar Nodo
+                </button>
+                <button id="btnCancelarModo" style="display:none;">
+                    ❌ Cancelar
+                </button>
+            </div>
+
+            <div class="stats">
+                Nodos en el mapa: <strong id="cantidadNodos">0</strong>
+            </div>
+
+            <div id="canvasContainer">
+                <div id="mapa"></div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: rgba(52, 152, 219, 0.1); border-radius: 4px; border-left: 4px solid #3498db;">
+                <p style="font-size: 13px; color: #95a5a6; margin-bottom: 10px;">
+                    <strong>Controles del Mapa:</strong><br>
+                    🖱️ Clic + Arrastrar = Mover<br>
+                    🔄 Rueda del Ratón = Zoom<br>
+                    ➕ Modo Agregar = Haz click en el mapa para agregar nodos
+                </p>
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Lista de Nodos y JSON -->
+        <div class="panel">
+            <h2>Gestión de Nodos</h2>
+
+            <div id="mensaje" class="mensaje"></div>
+
+            <div style="margin-bottom: 20px;">
+                <label>📥 Cargar JSON Existente:</label>
+                <textarea id="importJSON" placeholder='[{"titulo":"ILIYA", "x":622, "y":441}, ...]' style="height: 100px;"></textarea>
+                <button id="btnImportar" style="width: 100%; margin-top: 10px;">
+                    📥 Importar JSON
+                </button>
+            </div>
+
+            <h3 style="color: #d4af37; margin: 20px 0 15px 0; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                📋 Nodos Actuales
+            </h3>
+
+            <div class="lista-nodos" id="listaNodos">
+                <!-- Se llenará dinámicamente -->
+            </div>
+
+            <h3 style="color: #d4af37; margin: 20px 0 15px 0; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                📤 JSON Generado
+            </h3>
+
+            <textarea id="jsonOutput" readonly></textarea>
+
+            <div class="json-actions">
+                <button id="btnCopiar">
+                    📋 Copiar JSON
+                </button>
+                <button id="btnDescargar">
+                    ⬇️ Descargar
+                </button>
+                <button id="btnLimpiar" class="danger">
+                    🗑️ Limpiar Todo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para nombre de nodo -->
+    <div id="modalNodo" class="modal">
+        <div class="modal-content">
+            <h3>Ingresa el Nombre del Nodo</h3>
+            <form id="formNuevoNodo">
+                <div class="form-group">
+                    <label for="nuevoNodoTitulo">Título: *</label>
+                    <input type="text" id="nuevoNodoTitulo" placeholder="Ej: ILIYA" required autofocus>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" style="flex: 1;">✅ Confirmar</button>
+                    <button type="button" id="btnCancelarModal" style="flex: 1;">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        let nodos = [];
+        let modoAgregar = false;
+        let ultimasCoordenadasClick = { x: 0, y: 0 };
+        
+        // Variables del mapa (p5.js)
+        let offsetX = 0;
+        let offsetY = 0;
+        let zoomValue = 1;
+        let moveDown = false;
+        let mouseMove = false;
+        let mouseClickV;
+        let mox = 0;
+        let moy = 0;
+        let datosNodos = [];
+        let nodosM = [];
+        let szFixX = 0.866;
+        let szFixY = 0.866;
+        let szFixOX = -170;
+        let szFixOY = -80;
+        
+        // Clase NodoM
+        class NodoM {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.titulo = "";
+                this.terminado = false;
+                this.seleccionado = false;
+                this.esNuevo = false;
+            }
+
+            dibujar() {
+                const xd = (this.x * szFixX + szFixOX) * zoomValue;
+                const yd = (this.y * szFixY + szFixOY) * zoomValue;
+                
+                if (!this.seleccionado)
+                    fill(52, 152, 219); // Azul
+                else
+                    fill(46, 204, 113); // Verde (para nodos nuevos)
+
+                ellipse(xd + offsetX, yd + offsetY, 30 * zoomValue, 30 * zoomValue);
+
+                textAlign(CENTER);
+                fill(0, 0, 0, 100);
+                textSize(12);
+                text(this.titulo, xd + offsetX - 2, yd + 32 + offsetY - 2);
+
+                if (!this.terminado)
+                    fill(52, 152, 219);
+                else
+                    fill(255);
+
+                text(this.titulo, xd + offsetX, yd + 30 + offsetY);
+            }
+        }
+
+        // ============================================
+        // SETUP DE P5.JS
+        // ============================================
+        function setup() {
+            let container = document.getElementById('mapa');
+            let canvas = createCanvas(container.offsetWidth, 500);
+            canvas.parent('mapa');
+            
+            mouseClickV = createVector(0, 0);
+            frameRate(30);
+            textSize(14);
+            textStyle(BOLD);
+            
+            cargarDatosNodos();
+        }
+
+        // ============================================
+        // DIBUJO - LOOP PRINCIPAL
+        // ============================================
+        function draw() {
+            background(10, 20, 40);
+            
+            stroke(20, 40, 80, 100);
+            strokeWeight(1);
+            
+            for (let y = offsetY % 40; y < height; y += 40) {
+                line(0, y, width, y);
+            }
+            for (let x = offsetX % 40; x < width; x += 40) {
+                line(x, 0, x, height);
+            }
+            
+            fill(50, 100, 150, 50);
+            noStroke();
+            randomSeed(42);
+            for (let i = 0; i < 30; i++) {
+                let px = random(width);
+                let py = random(height);
+                ellipse(px, py, random(2, 8), random(2, 8));
+            }
+            
+            if (mouseMove) {
+                offsetX = mox + (mouseX - mouseClickV.x);
+                offsetY = moy + (mouseY - mouseClickV.y);
+            }
+
+            for (let nodo of nodosM)
+                nodo.dibujar();
+
+            noStroke();
+        }
+
+        // ============================================
+        // EVENTOS DEL RATÓN EN P5
+        // ============================================
+        function mousePressed() {
+            if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
+            
+            if (modoAgregar) {
+                // Convertir coordenadas de pantalla a coordenadas del mapa
+                ultimasCoordenadasClick = pantallaMapa({ x: mouseX, y: mouseY });
+                mostrarModalNodo();
+                return;
+            }
+            
+            mouseMove = true;
+            mouseClickV.x = mouseX;
+            mouseClickV.y = mouseY;
+            mox = offsetX;
+            moy = offsetY;
+            frameRate(30);
+        }
+
+        function mouseReleased() {
+            if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
+            mouseMove = false;
+            frameRate(5);
+        }
+
+        function mouseWheel(event) {
+            if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) return;
+            event.preventDefault();
+            
+            if (event.delta < 0) {
+                zoomValue += 0.05;
+            } else {
+                zoomValue -= 0.05;
+            }
+            zoomValue = Math.max(0.5, Math.min(2, zoomValue));
+            return false;
+        }
+
+        // ============================================
+        // FUNCIONES AUXILIARES
+        // ============================================
+        function pantallaMapa(pantalla) {
+            const x = (pantalla.x - offsetX) / zoomValue;
+            const y = (pantalla.y - offsetY) / zoomValue;
+            const mapX = (x - szFixOX) / szFixX;
+            const mapY = (y - szFixOY) / szFixY;
+            return { x: Math.round(mapX), y: Math.round(mapY) };
+        }
+
+        function cargarDatosNodos() {
+            fetch('datos.json')
+                .then(response => response.json())
+                .then(data => {
+                    datosNodos = data;
+                    nodosM = [];
+                    for (let dnodo of data) {
+                        let nnodo = new NodoM(dnodo.x, dnodo.y);
+                        nnodo.titulo = dnodo.titulo;
+                        nnodo.terminado = true;
+                        nodosM.push(nnodo);
+                    }
+                    nodos = JSON.parse(JSON.stringify(data));
+                    actualizarLista();
+                    actualizarJSON();
+                })
+                .catch(err => mostrarMensaje('Error cargando datos.json: ' + err, 'error'));
+        }
+
+        // ============================================
+        // ELEMENTOS DEL DOM
+        // ============================================
+        const btnModoAgregar = document.getElementById('btnModoAgregar');
+        const btnCancelarModo = document.getElementById('btnCancelarModo');
+        const listaNodosDiv = document.getElementById('listaNodos');
+        const jsonOutput = document.getElementById('jsonOutput');
+        const btnCopiar = document.getElementById('btnCopiar');
+        const btnDescargar = document.getElementById('btnDescargar');
+        const btnLimpiar = document.getElementById('btnLimpiar');
+        const btnImportar = document.getElementById('btnImportar');
+        const importJSON = document.getElementById('importJSON');
+        const cantidadNodosSpan = document.getElementById('cantidadNodos');
+        const mensajeDiv = document.getElementById('mensaje');
+        const modoInfo = document.getElementById('modoInfo');
+        const modalNodo = document.getElementById('modalNodo');
+        const formNuevoNodo = document.getElementById('formNuevoNodo');
+        const nuevoNodoTitulo = document.getElementById('nuevoNodoTitulo');
+        const btnCancelarModal = document.getElementById('btnCancelarModal');
+
+        // ============================================
+        // EVENTOS
+        // ============================================
+        btnModoAgregar.addEventListener('click', () => {
+            modoAgregar = true;
+            btnModoAgregar.style.display = 'none';
+            btnCancelarModo.style.display = 'block';
+            modoInfo.classList.add('activo');
+            modoInfo.innerHTML = '🖌️ Modo Agregar Activado - Haz click en el mapa para agregar un nodo';
+        });
+
+        btnCancelarModo.addEventListener('click', () => {
+            modoAgregar = false;
+            btnModoAgregar.style.display = 'block';
+            btnCancelarModo.style.display = 'none';
+            modoInfo.classList.remove('activo');
+            modoInfo.innerHTML = '🔍 Modo Normal - Arrastra para mover, rueda para zoom';
+        });
+
+        formNuevoNodo.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const titulo = nuevoNodoTitulo.value.trim().toUpperCase();
+            if (!titulo) {
+                mostrarMensaje('Por favor ingresa un título', 'error');
+                return;
+            }
+            
+            const nuevoNodo = {
+                titulo: titulo,
+                x: ultimasCoordenadasClick.x,
+                y: ultimasCoordenadasClick.y
+            };
+            
+            nodos.push(nuevoNodo);
+            
+            // Agregar a nodosM
+            let nnodo = new NodoM(nuevoNodo.x, nuevoNodo.y);
+            nnodo.titulo = nuevoNodo.titulo;
+            nnodo.terminado = false;
+            nnodo.seleccionado = true;
+            nnodo.esNuevo = true;
+            nodosM.push(nnodo);
+            
+            mostrarMensaje('Nodo agregado ✓');
+            modalNodo.classList.remove('active');
+            nuevoNodoTitulo.value = '';
+            actualizarLista();
+            actualizarJSON();
+        });
+
+        btnCancelarModal.addEventListener('click', () => {
+            modalNodo.classList.remove('active');
+            nuevoNodoTitulo.value = '';
+        });
+
+        btnCopiar.addEventListener('click', () => {
+            jsonOutput.select();
+            document.execCommand('copy');
+            mostrarMensaje('JSON copiado al portapapeles ✓');
+        });
+
+        btnDescargar.addEventListener('click', () => {
+            const dataStr = JSON.stringify(nodos, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'datos.json';
+            link.click();
+            mostrarMensaje('Archivo descargado ✓');
+        });
+
+        btnLimpiar.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres eliminar TODOS los nodos?')) {
+                nodos = [];
+                nodosM = [];
+                actualizarLista();
+                actualizarJSON();
+                mostrarMensaje('Lista limpiada ✓');
+            }
+        });
+
+        btnImportar.addEventListener('click', () => {
+            try {
+                const jsonText = importJSON.value.trim();
+                if (!jsonText) {
+                    mostrarMensaje('Pega un JSON válido', 'error');
+                    return;
+                }
+                const nuevosNodos = JSON.parse(jsonText);
+                if (Array.isArray(nuevosNodos)) {
+                    nodos = nuevosNodos;
+                    nodosM = [];
+                    for (let dnodo of nuevosNodos) {
+                        let nnodo = new NodoM(dnodo.x, dnodo.y);
+                        nnodo.titulo = dnodo.titulo;
+                        nnodo.terminado = true;
+                        nodosM.push(nnodo);
+                    }
+                    importJSON.value = '';
+                    actualizarLista();
+                    actualizarJSON();
+                    mostrarMensaje('JSON importado correctamente ✓');
+                } else {
+                    mostrarMensaje('El JSON debe ser un array', 'error');
+                }
+            } catch (e) {
+                mostrarMensaje('JSON inválido: ' + e.message, 'error');
+            }
+        });
+
+        // ============================================
+        // FUNCIONES DE INTERFAZ
+        // ============================================
+        function mostrarMensaje(texto, tipo = 'success') {
+            mensajeDiv.textContent = texto;
+            mensajeDiv.className = 'mensaje ' + tipo;
+            setTimeout(() => {
+                mensajeDiv.className = 'mensaje';
+            }, 3000);
+        }
+
+        function mostrarModalNodo() {
+            nuevoNodoTitulo.value = '';
+            modalNodo.classList.add('active');
+            nuevoNodoTitulo.focus();
+        }
+
+        function eliminarNodo(indice) {
+            if (confirm('¿Eliminar el nodo "' + nodos[indice].titulo + '"?')) {
+                nodos.splice(indice, 1);
+                nodosM.splice(indice, 1);
+                actualizarLista();
+                actualizarJSON();
+                mostrarMensaje('Nodo eliminado ✓');
+            }
+        }
+
+        function actualizarLista() {
+            listaNodosDiv.innerHTML = '';
+            nodos.forEach((nodo, indice) => {
+                const div = document.createElement('div');
+                div.className = 'nodo-item';
+                div.innerHTML = `
+                    <div class="nodo-info">
+                        <div class="nodo-titulo">${nodo.titulo}</div>
+                        <div class="nodo-coords">📍 X: ${nodo.x}, Y: ${nodo.y}</div>
+                    </div>
+                    <div class="nodo-actions">
+                        <button class="btn-small danger" onclick="eliminarNodo(${indice})">🗑️</button>
+                    </div>
+                `;
+                listaNodosDiv.appendChild(div);
+            });
+            cantidadNodosSpan.textContent = nodos.length;
+        }
+
+        function actualizarJSON() {
+            // Ordenar por titulo para consistencia
+            const nodosOrdenados = nodos.map(n => ({ titulo: n.titulo, x: n.x, y: n.y }));
+            jsonOutput.value = JSON.stringify(nodosOrdenados, null, 2);
+        }
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // p5.js se inicializa automáticamente
+            actualizarLista();
+            actualizarJSON();
+        });
+    </script>
+</body>
+</html>

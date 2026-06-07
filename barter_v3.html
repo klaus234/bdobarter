@@ -438,8 +438,8 @@
             frameRate(5);
             let inicialN = nodosDic["ILIYA"];
             let inodo = nodosDic[this.innerText];
-            const xd = (inicialN.x * szFixX + szFixOX) - (inodo.x * szFixX + szFixOX) - 45;
-            const yd = (inicialN.y * szFixY + szFixOY) - (inodo.y * szFixY + szFixOY) - 45;
+            const xd = (inicialN.x * szFixX + szFixOX) - (inodo.x * szFixX + szFixOX) * zoomValue - 45;
+            const yd = (inicialN.y * szFixY + szFixOY) - (inodo.y * szFixY + szFixOY) * zoomValue - 45;
             offsetX = xd;
             offsetY = yd;
         }
@@ -455,6 +455,104 @@
             return 1;
         }
 
+
+        // Rutas V2.
+        // ============================================
+// ALGORITMO 100% PERFECTO (Programación Dinámica / Held-Karp Modificado)
+// ============================================
+        function calcularRutaPerfectaDP(nodosPendientes, inicial, maxNodosPViaje) {
+            const N = nodosPendientes.length;
+            if (N === 0) return [];
+
+            // Precalcular matriz de distancias para máxima velocidad
+            // Índice 0 es la base (inicial), Índices 1 a N son las islas pendientes
+            const todos = [inicial, ...nodosPendientes];
+            const dist = Array(N + 1).fill(0).map(() => Array(N + 1).fill(0));
+            for (let i = 0; i <= N; i++) {
+                for (let j = 0; j <= N; j++) {
+                    dist[i][j] = todos[i].distancia(todos[j]);
+                }
+            }
+
+            // Mapa para memorizar estados y evitar recalcular (Aquí está la magia contra el O(N!))
+            const memo = new Map();
+
+            // Función recursiva con Memoización
+            // mask: Islas ya visitadas (en bits)
+            // curr: Dónde está el barco ahora mismo (índice)
+            // load: Cuántos intercambios lleva en el viaje actual
+            function resolver(mask, curr, load) {
+                // Caso base: Si ya visitamos todos los nodos, hay que volver a la base
+                if (mask === (1 << N) - 1) {
+                    return { cost: dist[curr][0], path: [0] };
+                }
+
+                // Crear una clave única para este estado
+                const stateKey = `${mask}-${curr}-${load}`;
+                if (memo.has(stateKey)) return memo.get(stateKey);
+
+                let bestCost = Infinity;
+                let bestPath = [];
+
+                // Opción 1: El barco se llenó. OBLIGATORIO volver a la base y empezar un viaje nuevo.
+                if (load === maxNodosPViaje) {
+                    let res = resolver(mask, 0, 0); 
+                    let cost = dist[curr][0] + res.cost;
+                    if (cost < bestCost) {
+                        bestCost = cost;
+                        bestPath = [0, ...res.path];
+                    }
+                } 
+                // Opción 2: El barco tiene espacio. Revisamos todas las islas no visitadas.
+                else {
+                    for (let i = 1; i <= N; i++) {
+                        // Comprobamos bit a bit si la isla 'i' NO ha sido visitada
+                        if ((mask & (1 << (i - 1))) === 0) {
+                            // Marcamos la isla como visitada añadiéndola a la máscara de bits
+                            let nextMask = mask | (1 << (i - 1));
+                            let res = resolver(nextMask, i, load + 1);
+                            
+                            let cost = dist[curr][i] + res.cost;
+                            if (cost < bestCost) {
+                                bestCost = cost;
+                                bestPath = [i, ...res.path];
+                            }
+                        }
+                    }
+                }
+
+                const result = { cost: bestCost, path: bestPath };
+                memo.set(stateKey, result);
+                return result;
+            }
+
+            // Ejecutamos el algoritmo saliendo desde la Base (0), con 0 islas visitadas y carga 0
+            const finalResult = resolver(0, 0, 0);
+
+            // --- Reconstrucción de los Viajes para el Renderizador ---
+            let rutaFinal = [];
+            let viajeActual = [inicial];
+            
+            for (let i = 0; i < finalResult.path.length; i++) {
+                let idx = finalResult.path[i];
+                let nodo = todos[idx];
+                
+                if (idx === 0) { // Si el paso es volver a la base
+                    viajeActual.push(inicial);
+                    rutaFinal.push(viajeActual);
+                    // Si no es el último viaje, preparamos el siguiente barco
+                    if (i !== finalResult.path.length - 1) {
+                        viajeActual = [inicial];
+                    }
+                } else {
+                    viajeActual.push(nodo); // Si es una isla, la agregamos al viaje
+                }
+            }
+
+            return rutaFinal;
+        }
+
+        // FIN Rutas v2
         // ============================================
         // ALGORITMO DE CÁLCULO DE RUTAS
         // ============================================
@@ -649,10 +747,18 @@
             dom1.innerHTML = "<em style='color: var(--accent-blue);'>Calculando rutas...</em>";
 
             let actual = nodosDic[inicial];
+            /* V1 viejo
             const posibles = permutator(recorrido);
             resultadoViajes = mejorRecorrido(posibles, actual, maxNodosPViaje);
+            */
+            if(recorrido.length > 9) {
+                resultadoViajes = calcularRutaPerfectaDP(recorrido, actual, maxNodosPViaje);
+                recNodos = resultadoViajes[0];
+            }else{
+                const posibles = permutator(recorrido);
+                resultadoViajes = mejorRecorrido(posibles, actual, maxNodosPViaje);
+            }
             
-            recNodos = resultadoViajes[0];
             const totalNodos = renderizarViajes(resultadoViajes, dom1);
             document.getElementById("totales").innerText = totalNodos;
         }
