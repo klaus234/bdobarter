@@ -59,6 +59,46 @@
 
         .columnaB {
             text-align: center;
+            position: sticky;
+            top: 12px;
+            align-self: flex-start;
+        }
+
+        #leyenda {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            justify-content: center;
+            margin-top: 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #leyenda span {
+            display: flex;
+            align-items: center;
+        }
+
+        #leyenda i {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        #leyenda i.anillo {
+            background: transparent;
+            border: 2px solid var(--accent-gold);
+            width: 7px;
+            height: 7px;
+        }
+
+        #ayudaMapa {
+            font-size: 11px;
+            color: rgba(236, 240, 241, 0.55);
+            margin-top: 8px;
         }
 
         .input-group {
@@ -223,7 +263,7 @@
         }
 
         .viajeActivo {
-            background-color: linear-gradient(135deg, rgba(52, 152, 219, 0.5) 0%, rgba(46, 204, 113, 0.3) 100%);
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.5) 0%, rgba(46, 204, 113, 0.3) 100%);
             border-color: var(--accent-gold);
             color: var(--accent-gold);
             box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
@@ -377,6 +417,10 @@
             .columnaA, .columnaB {
                 width: 100%;
             }
+
+            .columnaB {
+                position: static;
+            }
         }
     </style>
     <script src="jquery-1.9.1.min.js"></script>
@@ -420,6 +464,16 @@
             return n1.distancia(n2);
         }
 
+        // Distancia total de un viaje. Usa dist2 sobre x/y para que también
+        // funcione con los viajes del cache (objetos planos sin métodos).
+        function distanciaViajeXY(viaje) {
+            let total = 0;
+            for (let i = 0; i < viaje.length - 1; i++) {
+                total += dist2(viaje[i].x, viaje[i].y, viaje[i + 1].x, viaje[i + 1].y);
+            }
+            return total;
+        }
+
         function showMessageGuardando() {
             setTimeout(function () {
                 $("#popupguardando").fadeIn(1000);
@@ -436,13 +490,9 @@
         }
 
         function irNodo() {
-            frameRate(5);
-            let inicialN = nodosDic["ILIYA"];
-            let inodo = nodosDic[this.innerText];
-            const xd = (inicialN.x * szFixX + szFixOX) - (inodo.x * szFixX + szFixOX) * zoomValue - 45;
-            const yd = (inicialN.y * szFixY + szFixOY) - (inodo.y * szFixY + szFixOY) * zoomValue - 45;
-            offsetX = xd;
-            offsetY = yd;
+            const inodo = nodosDic[this.innerText];
+            if (!inodo) return;
+            centrarEnNodo(inodo); // definido en mapa_zoom.js: deja el nodo en el centro del canvas
         }
 
         function colorearNodo() {
@@ -784,11 +834,14 @@
             contenedor.innerHTML = "";
             let indiceViaje = 0;
             let totalNodos = 0;
+            let distTotal = 0;
 
             for (let rgeneral of viajes) {
+                const distViaje = distanciaViajeXY(rgeneral);
+                distTotal += distViaje;
                 const liGeneral = document.createElement("li");
                 const identificador = document.createElement("div");
-                identificador.innerText = `Viaje ${indiceViaje + 1}`;
+                identificador.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)}`;
                 identificador.className = "identificadorViaje";
                 
                 if (indiceViaje === 0) {
@@ -838,7 +891,7 @@
                 contenedor.append(liGeneral);
             }
 
-            return totalNodos;
+            return { nodos: totalNodos, dist: distTotal };
         }
 
         // ============================================
@@ -884,8 +937,8 @@
                             const resultadoViajes = data[recorrido_titulo.length][clavetitulo];
                             recNodos = resultadoViajes[0];
                             dom1.innerHTML = "";
-                            const totalNodos = renderizarViajes(resultadoViajes, dom1);
-                            document.getElementById("totales").innerText = `${totalNodos} [cached]`;
+                            const res = renderizarViajes(resultadoViajes, dom1);
+                            document.getElementById("totales").innerText = `${res.nodos} nodos · dist ${Math.round(res.dist)} [cache]`;
                         } else {
                             ignoreCache = true;
                             calcularNodos();
@@ -920,8 +973,8 @@
                 resultadoViajes = mejorRecorrido(posibles, actual, maxNodosPViaje);
             }
             
-            const totalNodos = renderizarViajes(resultadoViajes, dom1);
-            document.getElementById("totales").innerText = totalNodos;
+            const res = renderizarViajes(resultadoViajes, dom1);
+            document.getElementById("totales").innerText = `${res.nodos} nodos · dist ${Math.round(res.dist)}`;
         }
 
         // ============================================
@@ -970,34 +1023,37 @@
                 showMessageGuardando();
             };
 
-            // Zoom controls
-            const zoomPER = document.getElementById("zoomPER");
-            const btnzooms = document.getElementsByClassName("zoomBTN");
+            // Zoom controls (aplicarZoom ancla el zoom para que no se desplace)
+            document.getElementById("btnZoomIn").onclick = function (e) {
+                e.preventDefault();
+                aplicarZoom(zoomValue * 1.2); // ancla: centro del canvas
+            };
+            document.getElementById("btnZoomOut").onclick = function (e) {
+                e.preventDefault();
+                aplicarZoom(zoomValue / 1.2);
+            };
+            document.getElementById("btnCentrar").onclick = function (e) {
+                e.preventDefault();
+                const nodo = nodosDic[document.getElementById("inicial").value.toUpperCase().trim()];
+                if (nodo) centrarEnNodo(nodo);
+            };
+            document.getElementById("btnVerTodo").onclick = function (e) {
+                e.preventDefault();
+                ajustarVista();
+            };
 
-            for (let btnzoom of btnzooms) {
-                btnzoom.onclick = function () {
-                    if (this.innerText === "+") {
-                        zoomValue += 0.05;
-                    } else {
-                        zoomValue -= 0.05;
-                    }
-                    
-                    zoomValue = Math.max(0.5, Math.min(2, zoomValue));
-                    zoomPER.innerText = Math.round(zoomValue * 100) + "%";
-                };
-            }
-
-            // Mouse wheel zoom
+            // Mouse wheel zoom, anclado a la posición del puntero
             document.getElementById("mapa").addEventListener("wheel", function (e) {
                 e.preventDefault();
-                if (e.deltaY < 0) {
-                    zoomValue += 0.025;
-                } else {
-                    zoomValue -= 0.025;
+                let ax, ay;
+                const canvas = document.getElementById("defaultCanvas0");
+                if (canvas) {
+                    const rect = canvas.getBoundingClientRect();
+                    ax = (e.clientX - rect.left) * (width / rect.width);
+                    ay = (e.clientY - rect.top) * (height / rect.height);
                 }
-                
-                zoomValue = Math.max(0.5, Math.min(2, zoomValue));
-                zoomPER.innerText = Math.round(zoomValue * 100) + "%";
+                const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+                aplicarZoom(zoomValue * factor, ax, ay);
             });
 
             // Slider erase button
@@ -1045,7 +1101,7 @@
     </script>
 </head>
 <body>
-    <h2>🗺️ Calcular Ruta Óptima v4.0.0</h2>
+    <h2>🗺️ Calcular Ruta Óptima v4.1.0</h2>
     <div class="layout-container">
         <div class="columnaA">
             <div class="input-group">
@@ -1092,11 +1148,22 @@
             <label class="lbl">🌊 Mapa del Océano:</label>
             <div id="mapa"></div>
             <div id="zoomer">
-                <span>ZOOM:</span> 
-                <span id="zoomPER">100%</span> 
-                <a class="zoomBTN" href="#">+</a> 
-                <a class="zoomBTN" href="#">−</a>
+                <span>ZOOM:</span>
+                <span id="zoomPER">100%</span>
+                <a class="zoomBTN" id="btnZoomIn" href="#" title="Acercar">+</a>
+                <a class="zoomBTN" id="btnZoomOut" href="#" title="Alejar">−</a>
+                <a class="zoomBTN" id="btnCentrar" href="#" title="Centrar en el nodo inicial">⌖</a>
+                <a class="zoomBTN" id="btnVerTodo" href="#" title="Ver todo el mapa">🗺️</a>
             </div>
+            <div id="leyenda">
+                <span><i style="background:#3498db"></i> Nodo</span>
+                <span><i style="background:#e67e22"></i> Nivel 5</span>
+                <span><i style="background:#9b59b6"></i> Nivel 6</span>
+                <span><i class="anillo"></i> Ruta planeada</span>
+                <span><i style="background:#2ecc71"></i> Marcado</span>
+                <span><i style="background:#e74c3c;border-radius:2px;height:4px;margin-top:4px"></i> Viaje activo</span>
+            </div>
+            <p id="ayudaMapa">💡 Click en un nodo del mapa para agregarlo o quitarlo de la ruta planeada · rueda del mouse para zoom · arrastrar para mover</p>
         </div>
     </div>
     

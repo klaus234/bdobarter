@@ -5,12 +5,13 @@ let offsetX = 0;
 let offsetY = 0;
 let mox = 0;
 let moy = 0;
-let moveDown = false;
-let moveUp = false;
-let moveLeft = false;
-let moveRight = false;
 let mouseMove = false;
 let mouseClickV;
+let ultimoMovimiento = 0;
+let hoverNodo = null;
+
+const ZOOM_MIN = 0.08;
+const ZOOM_MAX = 3;
 
 // ============================================
 // DATOS Y NODOS
@@ -24,6 +25,54 @@ let szFixOY = -80;
 let zoomValue = 1;
 let recNodos = [];
 
+// Colores
+const COLOR_NODO = [52, 152, 219];      // azul: nodo comun
+const COLOR_SELECCION = [46, 204, 113]; // verde: marcado en la ruta calculada
+const COLOR_RUTA = [231, 76, 60];       // rojo: linea del viaje activo
+const COLOR_NIVEL = {
+    5: [230, 126, 34],  // naranja: intercambio nivel 5
+    6: [155, 89, 182]   // violeta: intercambio nivel 6
+};
+
+// nivel de intercambio segun el selector (puntos_menu.js)
+function nivelDeNodo(titulo) {
+    if (typeof data_puntos === "undefined") return 0;
+    if ((data_puntos[6] || []).indexOf(titulo) !== -1) return 6;
+    if ((data_puntos[5] || []).indexOf(titulo) !== -1) return 5;
+    return 0;
+}
+
+// nombre limpio de una linea de la ruta planeada (soporta marcadores #o_/#d_)
+function nombreDeLinea(linea) {
+    for (let parte of linea.split("#")) {
+        const p = parte.trim().toUpperCase();
+        if (p !== "" && !p.startsWith("O_") && !p.startsWith("D_")) return p;
+    }
+    return "";
+}
+
+// nodos escritos en la ruta planeada (textarea), para marcarlos en el mapa
+function nodosPlaneados() {
+    const s = new Set();
+    const area = document.getElementById("nodosm");
+    if (!area) return s;
+    for (let linea of area.value.split("\n")) {
+        const n = nombreDeLinea(linea);
+        if (n !== "") s.add(n);
+    }
+    return s;
+}
+
+// agrega el nodo a la ruta planeada, o lo quita si ya estaba
+function toggleNodoPlaneado(titulo) {
+    const area = document.getElementById("nodosm");
+    if (!area) return;
+    const lineas = area.value.split("\n").filter(l => l.trim() !== "");
+    const sinNodo = lineas.filter(l => nombreDeLinea(l) !== titulo);
+    if (sinNodo.length === lineas.length) sinNodo.push(titulo);
+    area.value = sinNodo.length ? sinNodo.join("\n") + "\n" : "";
+}
+
 // ============================================
 // CLASE PARA NODOS DEL MAPA
 // ============================================
@@ -34,34 +83,106 @@ class NodoM {
         this.titulo = "";
         this.terminado = false;
         this.seleccionado = false;
+        this.nivel = 0;
     }
 
-    dibujar() {
-        const xd = (this.x * szFixX + szFixOX) * zoomValue;
-        const yd = (this.y * szFixY + szFixOY) * zoomValue;
-        
-        // Dibujar círculo
-        if (!this.seleccionado)
-            fill(52, 152, 219); // Azul
-        else
-            fill(46, 204, 113); // Verde
+    pantallaX() { return (this.x * szFixX + szFixOX) * zoomValue + offsetX; }
+    pantallaY() { return (this.y * szFixY + szFixOY) * zoomValue + offsetY; }
+    diametro() { return Math.max(9, 30 * zoomValue); }
 
-        ellipse(xd + offsetX, yd + offsetY, 30 * zoomValue, 30 * zoomValue);
+    bajoMouse() {
+        const dx = mouseX - this.pantallaX();
+        const dy = mouseY - this.pantallaY();
+        const r = this.diametro() / 2 + 4;
+        return dx * dx + dy * dy <= r * r;
+    }
 
-        // Dibujar sombra de texto
-        textAlign(CENTER);
-        fill(0, 0, 0, 100);
-        textSize(12);
-        text(this.titulo, xd + offsetX - 2, yd + 32 + offsetY - 2);
+    dibujar(hover, planeado) {
+        const xd = this.pantallaX();
+        const yd = this.pantallaY();
+        const d = this.diametro() * (hover ? 1.25 : 1);
 
-        // Dibujar texto
-        if (!this.terminado)
-            fill(52, 152, 219);
-        else
+        // halo dorado si esta en la ruta planeada
+        if (planeado) {
+            noFill();
+            stroke(212, 175, 55, 220);
+            strokeWeight(Math.max(2, d * 0.12));
+            ellipse(xd, yd, d + 9, d + 9);
+        }
+
+        const base = this.seleccionado ? COLOR_SELECCION : (COLOR_NIVEL[this.nivel] || COLOR_NODO);
+        if (hover) { stroke(255); strokeWeight(2); }
+        else { stroke(10, 20, 40, 160); strokeWeight(1); }
+        fill(base[0], base[1], base[2]);
+        ellipse(xd, yd, d, d);
+
+        // numero de nivel dentro del circulo
+        if (this.nivel && d >= 13) {
+            noStroke();
             fill(255);
+            textAlign(CENTER, CENTER);
+            textSize(Math.max(8, d * 0.42));
+            text(this.nivel, xd, yd + 1);
+        }
 
-        text(this.titulo, xd + offsetX, yd + 30 + offsetY);
+        // etiqueta (se ocultan con el mapa alejado para no superponerse)
+        if (hover || this.seleccionado || planeado || zoomValue >= 0.35) {
+            textAlign(CENTER, TOP);
+            textSize(hover ? 13 : 12);
+            noStroke();
+            fill(0, 0, 0, 150);
+            text(this.titulo, xd + 1, yd + d / 2 + 5);
+            if (hover) fill(212, 175, 55);
+            else if (this.seleccionado) fill(46, 204, 113);
+            else fill(235);
+            text(this.titulo, xd, yd + d / 2 + 4);
+        }
     }
+}
+
+// ============================================
+// CONTROL DE VISTA (zoom / centrado)
+// ============================================
+
+// Zoom anclado: el punto (ax, ay) del canvas queda fijo al escalar.
+// Sin ancla, usa el centro del canvas.
+function aplicarZoom(nuevoZoom, ax, ay) {
+    nuevoZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, nuevoZoom));
+    if (ax === undefined) ax = width / 2;
+    if (ay === undefined) ay = height / 2;
+    const factor = nuevoZoom / zoomValue;
+    offsetX = ax - (ax - offsetX) * factor;
+    offsetY = ay - (ay - offsetY) * factor;
+    zoomValue = nuevoZoom;
+    ultimoMovimiento = millis();
+    const lbl = document.getElementById("zoomPER");
+    if (lbl) lbl.innerText = Math.round(zoomValue * 100) + "%";
+}
+
+function centrarEnNodo(nodo) {
+    offsetX = width / 2 - (nodo.x * szFixX + szFixOX) * zoomValue;
+    offsetY = height / 2 - (nodo.y * szFixY + szFixOY) * zoomValue;
+    ultimoMovimiento = millis();
+}
+
+// Encuadra todos los nodos en el canvas
+function ajustarVista() {
+    if (nodosM.length === 0) return;
+    let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+    for (const n of nodosM) {
+        const wx = n.x * szFixX + szFixOX;
+        const wy = n.y * szFixY + szFixOY;
+        minx = Math.min(minx, wx); maxx = Math.max(maxx, wx);
+        miny = Math.min(miny, wy); maxy = Math.max(maxy, wy);
+    }
+    const margen = 70;
+    const z = Math.min((width - 2 * margen) / (maxx - minx), (height - 2 * margen) / (maxy - miny));
+    zoomValue = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+    offsetX = width / 2 - ((minx + maxx) / 2) * zoomValue;
+    offsetY = height / 2 - ((miny + maxy) / 2) * zoomValue;
+    ultimoMovimiento = millis();
+    const lbl = document.getElementById("zoomPER");
+    if (lbl) lbl.innerText = Math.round(zoomValue * 100) + "%";
 }
 
 // ============================================
@@ -69,10 +190,10 @@ class NodoM {
 // ============================================
 function mouseReleased(event) {
     if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
-    if (event.buttons === 0) {
-        mouseMove = false;
-    }
-    frameRate(5);
+    const fueClick = mouseClickV && dist(mouseX, mouseY, mouseClickV.x, mouseClickV.y) < 6;
+    mouseMove = false;
+    if (fueClick && hoverNodo) toggleNodoPlaneado(hoverNodo.titulo);
+    ultimoMovimiento = millis();
 }
 
 function mousePressed(event) {
@@ -84,7 +205,16 @@ function mousePressed(event) {
         mox = offsetX;
         moy = offsetY;
     }
-    frameRate(30);
+    ultimoMovimiento = millis();
+}
+
+function mouseMoved() {
+    if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height)
+        ultimoMovimiento = millis();
+}
+
+function mouseDragged() {
+    ultimoMovimiento = millis();
 }
 
 // ============================================
@@ -110,88 +240,88 @@ function setup() {
         let nnodo = new NodoM(dnodo["x"], dnodo["y"]);
         nnodo.titulo = dnodo["titulo"];
         nnodo.terminado = true;
+        nnodo.nivel = nivelDeNodo(nnodo.titulo);
         nodosM.push(nnodo);
     }
+
+    // Vista inicial centrada en el nodo de partida por defecto
+    const inicial = nodosM.find(n => n.titulo === "ILIYA") || nodosM[0];
+    if (inicial) centrarEnNodo(inicial);
 }
 
 // ============================================
 // DIBUJO - LOOP PRINCIPAL
 // ============================================
 function draw() {
-    // Dibujar fondo de océano estilizado
-    background(10, 20, 40); // Azul marino oscuro
-    
-    // Agregar efecto de agua con líneas sutiles
+    // framerate adaptativo: fluido al interactuar, liviano en reposo
+    if (mouseMove || millis() - ultimoMovimiento < 1800) frameRate(30);
+    else frameRate(8);
+
+    // Fondo de océano estilizado
+    background(10, 20, 40);
     stroke(20, 40, 80, 100);
     strokeWeight(1);
-    
-    // Líneas de onda horizontales para efecto de agua
-    for (let y = offsetY % 40; y < height; y += 40) {
-        line(0, y, width, y);
-    }
-    // Líneas verticales para efecto de agua
-    for (let x = offsetX % 40; x < width; x += 40) {
-        line(x, 0, x, height);
-    }
-    
-    // Agregar algunos puntos de luz (como reflejos de luz en el agua)
+    for (let y = offsetY % 40; y < height; y += 40) line(0, y, width, y);
+    for (let x = offsetX % 40; x < width; x += 40) line(x, 0, x, height);
+
+    // Reflejos de luz en el agua
     fill(50, 100, 150, 50);
     noStroke();
-    randomSeed(42); // Para que los puntos sean consistentes
+    randomSeed(42);
     for (let i = 0; i < 30; i++) {
-        let px = random(width);
-        let py = random(height);
-        ellipse(px, py, random(2, 8), random(2, 8));
+        ellipse(random(width), random(height), random(2, 8), random(2, 8));
     }
-    
+
     // Actualizar offset si se está arrastrando
     if (mouseMove) {
         offsetX = mox + (mouseX - mouseClickV.x);
         offsetY = moy + (mouseY - mouseClickV.y);
     }
 
-    // Dibujar todos los nodos
-    for (nodo of nodosM)
-        nodo.dibujar();
+    const px = (p) => (p.x * szFixX + szFixOX) * zoomValue + offsetX;
+    const py = (p) => (p.y * szFixY + szFixOY) * zoomValue + offsetY;
 
-    // Dibujar ruta si existe
+    // 1) Líneas del viaje activo (debajo de los nodos)
     if (recNodos.length > 1) {
-        let sx = 0;
-        let sy = 0;
-        
-        let punto = recNodos[0];
-        sx = (punto.x * szFixX + szFixOX) * zoomValue;
-        sy = (punto.y * szFixY + szFixOY) * zoomValue;
-
-        strokeWeight(6);
-        let c = 0;
+        stroke(COLOR_RUTA[0], COLOR_RUTA[1], COLOR_RUTA[2], 190);
+        strokeWeight(Math.max(3, 6 * zoomValue));
         for (let i = 1; i < recNodos.length; i++) {
-            let punto = recNodos[i];
-            const asx = (punto.x * szFixX + szFixOX) * zoomValue;
-            const asy = (punto.y * szFixY + szFixOY) * zoomValue;
-            
-            stroke(231, 76, 60); // Rojo
-            line(sx + offsetX, sy + offsetY, asx + offsetX, asy + offsetY);
-            
-            // Dibujar número de orden
-            noStroke();
-            textSize(14);
-            textStyle(NORMAL);
-            fill(255);
-            textAlign(CENTER, CENTER);
-            if (c !== 0) {
-                text(c, sx + offsetX, sy + offsetY);
-            }
-            
-            sx = asx;
-            sy = asy;
-            c++;
+            line(px(recNodos[i - 1]), py(recNodos[i - 1]), px(recNodos[i]), py(recNodos[i]));
         }
     }
 
-    // Ocultar cursor si está fuera
-    if (mouseX < 0 || mouseY < 0 || mouseX > width || mouseY > height)
-        mouseMove = false;
-    
+    // 2) Nodos (hover + marca de planeados)
+    const dentro = mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height;
+    hoverNodo = null;
+    if (dentro && !mouseMove) {
+        for (let i = nodosM.length - 1; i >= 0; i--) {
+            if (nodosM[i].bajoMouse()) { hoverNodo = nodosM[i]; break; }
+        }
+    }
+    const planeados = nodosPlaneados();
+    for (let nodo of nodosM) {
+        if (nodo !== hoverNodo) nodo.dibujar(false, planeados.has(nodo.titulo));
+    }
+    if (hoverNodo) hoverNodo.dibujar(true, planeados.has(hoverNodo.titulo));
+
+    // 3) Números de orden del viaje activo
+    if (recNodos.length > 2) {
+        textAlign(CENTER, CENTER);
+        textSize(11);
+        const sep = Math.max(9, 30 * zoomValue) * 0.9 + 4;
+        for (let j = 1; j < recNodos.length - 1; j++) {
+            noStroke();
+            fill(10, 20, 40, 230);
+            ellipse(px(recNodos[j]), py(recNodos[j]) - sep, 18, 18);
+            fill(231, 76, 60);
+            text(j, px(recNodos[j]), py(recNodos[j]) - sep + 1);
+        }
+    }
+
+    cursor(hoverNodo ? HAND : (mouseMove ? "grabbing" : ARROW));
+
+    // Cancelar arrastre si el mouse salió del canvas
+    if (!dentro) mouseMove = false;
+
     noStroke();
 }

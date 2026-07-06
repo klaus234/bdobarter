@@ -1,10 +1,12 @@
 const menu_puntos = document.getElementById("contenedor-puntos");
 let fload = true;
-const data_puntos = 
+const data_puntos =
 
 {
+   3 : ["ALNAHA", "TULU", "LISZ", "DATON", "TIGRIS", "ALMAI", "SHASHA", "ROSEVAN", "ORISHA", "SHIRNA", "TEYAMAL"],
    4 : ["ILIYA", "AJIR", "PUJARA", "NARVO", "BAREMI", "ORFFS", "OBEN", "PADIX", "THEONIL", "RAMEDA", "BALVEGE", "PILAVA"],
-   3 : ["ALNAHA", "TULU", "LISZ", "DATON", "TIGRIS", "ALMAI", "SHASHA", "ROSEVAN", "ORISHA", "SHIRNA", "TEYAMAL"]
+   5 : ["AREHAZA", "DALLAE", "GRANDIHA", "HAEMO", "HAKOVEN", "PUERTO NOCHE"],
+   6 : ["ILIYA", "LEMA", "OLVIA", "PUESTO EPHERIA", "SANTUARIO", "SAUSAN"]
 }
 function nuevoNivel(num)
 {
@@ -23,6 +25,8 @@ function nuevoPunto(nombre)
     li.onclick = function()
     {
         const nodosm_area = document.getElementById("nodosm");
+        if (nodosm_area.value !== "" && !nodosm_area.value.endsWith("\n"))
+            nodosm_area.value += "\n";
         nodosm_area.value += this.innerText + "\n";
     }
     return li;
@@ -50,10 +54,10 @@ function menu_cargar_puntos()
 function mostrarNiveles()
 {    
     menu_puntos.innerHTML = "";
-    menu_puntos.appendChild(nuevoNivel(1));
-    menu_puntos.appendChild(nuevoNivel(2));
-    menu_puntos.appendChild(nuevoNivel(3));
-    menu_puntos.appendChild(nuevoNivel(4));
+    for (const nivel of Object.keys(data_puntos))
+    {
+        menu_puntos.appendChild(nuevoNivel(nivel));
+    }
     if (fload)
     {
         for(d of Object.keys(data_puntos))
