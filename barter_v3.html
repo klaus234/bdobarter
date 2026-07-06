@@ -386,6 +386,7 @@
         // ============================================
         // CONFIGURACIÓN Y ESTADO GLOBAL
         // ============================================
+        let dependenciasEncadenadas = false;
         const nodosDic = {};
         let resultadoViajes = [];
         let ndata;
@@ -552,6 +553,158 @@
             return rutaFinal;
         }
 
+
+        // ============================================
+        // ALGORITMO DP CON DEPENDENCIAS CORREGIDO
+        // ============================================
+        function calcularRutaConCadenasDP(nodosRawStrings, inicial, maxNodosPViaje, nodosDic) {
+            console.log("calculando con cadenas DP")
+            // --- 1. PARSER REFORZADO: Filtrar vacíos y validar existencia ---
+            let nodosReales = [];
+            let rawStringsFiltrados = [];
+
+            for (let i = 0; i < nodosRawStrings.length; i++) {
+                let raw = nodosRawStrings[i].trim();
+                if (raw === "") continue;
+
+                let parts = raw.split('#');
+                let nombre = "";
+                
+                // Encontrar el nombre real limpio
+                for (let p of parts) {
+                    let pLower = p.toLowerCase().trim();
+                    if (!pLower.startsWith('o_') && !pLower.startsWith('d_')) {
+                        nombre = p.trim();
+                        break;
+                    }
+                }
+
+                if (nombre in nodosDic) {
+                    nodosReales.push(nodosDic[nombre]);
+                    rawStringsFiltrados.push(raw);
+                } else {
+                    console.warn(`Nodo ignorado/no encontrado: ${nombre}`);
+                }
+            }
+
+            const N = nodosReales.length;
+            if (N === 0) return [];
+
+            let requerimientos = Array(N + 1).fill(0);
+            let origenes = {};
+
+            // Mapear llaves (orígenes) utilizando el índice real alineado
+            for (let i = 0; i < N; i++) {
+                let parts = rawStringsFiltrados[i].split('#');
+                for (let p of parts) {
+                    let pLower = p.toLowerCase().trim();
+                    if (pLower.startsWith('o_')) {
+                        let id = pLower.split('_')[1];
+                        origenes[id] = (1 << i);
+                    }
+                }
+            }
+
+            // Mapear candados (destinos) utilizando el índice real alineado
+            for (let i = 0; i < N; i++) {
+                let parts = rawStringsFiltrados[i].split('#');
+                for (let p of parts) {
+                    let pLower = p.toLowerCase().trim();
+                    if (pLower.startsWith('d_')) {
+                        let id = pLower.split('_')[1];
+                        if (origenes[id] !== undefined) {
+                            requerimientos[i + 1] |= origenes[id]; 
+                        }
+                    }
+                }
+            }
+
+            // --- 2. MATRIZ DE DISTANCIAS ---
+            const todos = [inicial, ...nodosReales];
+            const dist = Array(N + 1).fill(0).map(() => Array(N + 1).fill(0));
+            for (let i = 0; i <= N; i++) {
+                for (let j = 0; j <= N; j++) {
+                    dist[i][j] = todos[i].distancia(todos[j]);
+                }
+            }
+
+            const memo = new Map();
+
+            // --- 3. MOTOR DP CON ÁRBOL DE DECISIÓN FLEXIBLE ---
+            function resolver(mask, curr, load) {
+                if (mask === (1 << N) - 1) {
+                    return { cost: dist[curr][0], path: [0] };
+                }
+
+                const stateKey = `${mask}-${curr}-${load}`;
+                if (memo.has(stateKey)) return memo.get(stateKey);
+
+                let bestCost = Infinity;
+                let bestPath = [];
+
+                // Opción A: Considerar volver a la base (Permitido siempre que estemos en una isla)
+                if (curr !== 0 && load > 0) {
+                    let res = resolver(mask, 0, 0); 
+                    let cost = dist[curr][0] + res.cost;
+                    if (cost < bestCost) {
+                        bestCost = cost;
+                        bestPath = [0, ...res.path];
+                    }
+                } 
+
+                // Opción B: Considerar visitar una isla nueva (Permitido si el barco tiene espacio)
+                if (load < maxNodosPViaje) {
+                    for (let i = 1; i <= N; i++) {
+                        let bitIsla = 1 << (i - 1);
+                        
+                        if ((mask & bitIsla) === 0) {
+                            let req = requerimientos[i];
+                            
+                            if ((mask & req) === req) { 
+                                let res = resolver(mask | bitIsla, i, load + 1);
+                                let cost = dist[curr][i] + res.cost;
+                                if (cost < bestCost) {
+                                    bestCost = cost;
+                                    bestPath = [i, ...res.path];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                const result = { cost: bestCost, path: bestPath };
+                memo.set(stateKey, result);
+                return result;
+            }
+
+            const finalResult = resolver(0, 0, 0);
+
+            if (finalResult.cost === Infinity) {
+                alert("Ruta imposible: Hay un bucle de correlatividades o restricciones que no se pueden cumplir.");
+                return [];
+            }
+
+            // --- 4. RECONSTRUCCIÓN COMPLETAMENTE LIMPIA PARA LA INTERFAZ ---
+            let rutaFinal = [];
+            let viajeActual = [inicial];
+            
+            for (let i = 0; i < finalResult.path.length; i++) {
+                let idx = finalResult.path[i];
+                
+                if (idx === 0) {
+                    viajeActual.push(inicial);
+                    rutaFinal.push(viajeActual);
+                    if (i !== finalResult.path.length - 1) {
+                        viajeActual = [inicial];
+                    }
+                } else {
+                    // Usamos directamente el nodo real del diccionario para conservar su nombre limpio
+                    viajeActual.push(todos[idx]);
+                }
+            }
+
+            return rutaFinal;
+        }
         // FIN Rutas v2
         // ============================================
         // ALGORITMO DE CÁLCULO DE RUTAS
@@ -693,6 +846,8 @@
         // ============================================
         function calcularNodos() {
             resetearNodosColor();
+            dependenciasEncadenadas = document.getElementById("chkDependencias").checked;
+            
             const nodosInp = document.getElementById("nodosm").value;
             const nodosRecorridos = nodosInp.split("\n");
             const recorrido = [];
@@ -710,7 +865,7 @@
                 }
             }
 
-            if (recorrido.length === 0) {
+            if (recorrido.length === 0 && !dependenciasEncadenadas) {
                 alert("⚠️ Por favor, ingresa al menos un nodo válido.");
                 return;
             }
@@ -751,8 +906,14 @@
             const posibles = permutator(recorrido);
             resultadoViajes = mejorRecorrido(posibles, actual, maxNodosPViaje);
             */
-            if(recorrido.length > 9) {
-                resultadoViajes = calcularRutaPerfectaDP(recorrido, actual, maxNodosPViaje);
+           // recorrido.length > 9
+            if(true) {
+
+                if(dependenciasEncadenadas) {
+                    resultadoViajes = calcularRutaConCadenasDP(nodosRecorridos, actual, maxNodosPViaje, nodosDic);
+                } else {
+                    resultadoViajes = calcularRutaPerfectaDP(recorrido, actual, maxNodosPViaje);
+                }
                 recNodos = resultadoViajes[0];
             }else{
                 const posibles = permutator(recorrido);
@@ -884,7 +1045,7 @@
     </script>
 </head>
 <body>
-    <h2>🗺️ Calcular Ruta Óptima v3.1.5</h2>
+    <h2>🗺️ Calcular Ruta Óptima v4.0.0</h2>
     <div class="layout-container">
         <div class="columnaA">
             <div class="input-group">
@@ -900,6 +1061,11 @@
             <div class="input-group">
                 <label for="viajes">📦 Máx Nodos por Viaje:</label>
                 <input type="number" id="viajes" value="3" min="1" max="6" step="1">
+            </div>
+            
+            <div class="input-group" style="flex-direction: row; align-items: center;">
+                <input type="checkbox" id="chkDependencias">
+                <label for="chkDependencias" style="margin-bottom: 0; cursor: pointer;">🔗 Dependencias Encadenadas</label>
             </div>
             
             <label class="lbl">📋 Ruta Planeada:</label>
