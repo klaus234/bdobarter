@@ -553,6 +553,132 @@
             font-size: 10px;
         }
 
+        #barcoPanel {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            padding: 15px;
+            border: 2px solid var(--border-accent);
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        #barcoPanel h3 {
+            color: var(--accent-gold);
+            margin: 0 0 12px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .barco-campos {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .barco-campo {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .barco-campo input {
+            width: 110px;
+        }
+
+        #barcoPanel .hint {
+            text-align: center;
+        }
+
+        .btn-play {
+            width: auto;
+            min-width: 52px;
+            margin: 0 0 0 auto;
+            padding: 3px 9px;
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            background: rgba(46, 204, 113, 0.12);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+            border-radius: 12px;
+            letter-spacing: 0;
+            flex: 0 0 auto;
+        }
+
+        .btn-play:hover {
+            background: var(--accent-green);
+            color: #fff;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .fila-vuelta span {
+            color: rgba(236, 240, 241, 0.65);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .fila-vuelta span:hover {
+            color: var(--accent-gold);
+        }
+
+        .cboxnodo.enNavegacion {
+            background: rgba(212, 175, 55, 0.08);
+            border-radius: 6px;
+            animation: pulseNav 1.6s ease-in-out infinite;
+        }
+
+        @keyframes pulseNav {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.25); }
+            50% { box-shadow: 0 0 10px 2px rgba(212, 175, 55, 0.4); }
+        }
+
+        #timerViaje {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 1200;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(135deg, var(--secondary-dark), #0a1f33);
+            border: 2px solid var(--accent-gold);
+            border-radius: 10px;
+            padding: 10px 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+        }
+
+        #timerDestino {
+            color: var(--accent-gold);
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        #timerCuenta {
+            color: var(--text-light);
+            font-size: 22px;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #timerCancelar {
+            width: auto;
+            margin: 0;
+            padding: 3px 9px;
+            background: transparent;
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            border-radius: 6px;
+            font-size: 11px;
+        }
+
+        #timerCancelar:hover {
+            background: var(--accent-red);
+            color: #fff;
+            transform: none;
+            box-shadow: none;
+        }
+
         @media (max-width: 1024px) {
             .layout-container {
                 flex-direction: column;
@@ -579,6 +705,15 @@
         let resultadoViajes = [];
         let ndata;
         let ignoreCache = false;
+
+        // Retrasos entre nodos (retrasos.json): distancia extra en unidades de
+        // mapa por giros/maniobras, medida con calculadora_retraso.html.
+        // Clave simétrica "A|B" (orden alfabético). Si no hay dato, retraso 0.
+        const retrasosDic = {};
+        function retrasoEntre(a, b) {
+            const clave = [String(a).toUpperCase(), String(b).toUpperCase()].sort().join("|");
+            return retrasosDic[clave] || 0;
+        }
 
         // ============================================
         // CLASES
@@ -1008,14 +1143,15 @@
                 liGeneral.append(identificador);
 
                 let firstNodoSpan = undefined;
-                for (let rnodo of rgeneral.slice(1, rgeneral.length - 1)) {
+                const paradas = rgeneral.slice(1, rgeneral.length - 1);
+                paradas.forEach((rnodo, j) => {
                     const lit = document.createElement("div");
                     lit.className = "cboxnodo";
-                    
+
                     const cbox = document.createElement("input");
                     cbox.type = "checkbox";
                     cbox.onclick = colorearNodo;
-                    
+
                     const spn = document.createElement("span");
                     spn.innerText = rnodo.titulo;
                     spn.onclick = irNodo;
@@ -1024,10 +1160,60 @@
                         firstNodoSpan = spn;
                     }
 
+                    // ▶ = "zarpé hacia este nodo" (desde la parada anterior)
+                    const origen = rgeneral[j];
+                    const btnPlay = document.createElement("button");
+                    btnPlay.type = "button";
+                    btnPlay.className = "btn-play";
+                    btnPlay.innerText = "▶";
+                    const { vel, acc } = Navegacion.stats();
+                    const retr = retrasoEntre(origen.titulo, rnodo.titulo);
+                    const est = Navegacion.estimarSegundos(
+                        dist2(origen.x, origen.y, rnodo.x, rnodo.y) + retr, vel, acc);
+                    btnPlay.title = `Zarpé de ${origen.titulo} hacia ${rnodo.titulo} · llegada ≈ ${Navegacion.fmt(est)}`
+                        + (retr !== 0 ? ` · retraso ${retr}` : "");
+                    btnPlay.onclick = function () {
+                        Navegacion.zarpar(origen, rnodo, rnodo.titulo, btnPlay, cbox);
+                    };
+
                     lit.append(cbox);
                     lit.append(spn);
+                    lit.append(btnPlay);
                     liGeneral.append(lit);
                     totalNodos++;
+                });
+
+                // Fila extra: regreso al nodo inicial
+                if (paradas.length > 0) {
+                    const filaV = document.createElement("div");
+                    filaV.className = "cboxnodo fila-vuelta";
+                    const origenV = rgeneral[rgeneral.length - 2];
+                    const destinoV = rgeneral[rgeneral.length - 1];
+
+                    const spnV = document.createElement("span");
+                    spnV.innerText = "↩ Vuelta a " + destinoV.titulo;
+                    spnV.onclick = function () {
+                        const n = nodosDic[destinoV.titulo];
+                        if (n) centrarEnNodo(n);
+                    };
+
+                    const btnV = document.createElement("button");
+                    btnV.type = "button";
+                    btnV.className = "btn-play";
+                    btnV.innerText = "▶";
+                    const { vel: velV, acc: accV } = Navegacion.stats();
+                    const retrV = retrasoEntre(origenV.titulo, destinoV.titulo);
+                    const estV = Navegacion.estimarSegundos(
+                        dist2(origenV.x, origenV.y, destinoV.x, destinoV.y) + retrV, velV, accV);
+                    btnV.title = `Zarpé de ${origenV.titulo} de vuelta a ${destinoV.titulo} · llegada ≈ ${Navegacion.fmt(estV)}`
+                        + (retrV !== 0 ? ` · retraso ${retrV}` : "");
+                    btnV.onclick = function () {
+                        Navegacion.zarpar(origenV, destinoV, destinoV.titulo, btnV, null);
+                    };
+
+                    filaV.append(spnV);
+                    filaV.append(btnV);
+                    liGeneral.append(filaV);
                 }
 
                 identificador.firstNodoSpan = firstNodoSpan;
@@ -1383,6 +1569,132 @@
         window.Ruta = Ruta;
 
         // ============================================
+        // MÓDULO NAVEGACIÓN: aviso de llegada del barco
+        //
+        // Calibración: barco con 191% vel / 196% acel recorre 750 unidades
+        // del mapa en 42 s. Modelo físico simple:
+        //   v = V0 · vel/100  (unidades/s, velocidad crucero)
+        //   a = A0 · acel/100 (unidades/s², arranque)
+        //   t = d/v + v/(2a)      → crucero + costo de arranque
+        //   t = sqrt(2d/a)        → tramos cortos donde no llega a crucero
+        // Asumiendo ~3.5 s de arranque en la calibración:
+        //   42 = 750/v + 3.5 → v = 19.48 → V0 = 10.2 ; a = v/7 → A0 = 1.42
+        // ============================================
+        const Navegacion = (function () {
+            const V0 = 10.2;
+            const A0 = 1.42;
+            let intervalo = null;
+            let filaActiva = null;
+            let audioCtx = null;
+            const tituloOriginal = document.title;
+
+            function stats() {
+                const vel = parseFloat(document.getElementById("barcoVel").value) || 100;
+                const acc = parseFloat(document.getElementById("barcoAcc").value) || 100;
+                return { vel, acc };
+            }
+
+            function estimarSegundos(dist, vel, acc) {
+                const v = V0 * vel / 100;
+                const a = A0 * acc / 100;
+                const dArranque = (v * v) / (2 * a);
+                if (dist <= dArranque) return Math.sqrt(2 * dist / a);
+                return dist / v + v / (2 * a);
+            }
+
+            function fmt(seg) {
+                seg = Math.max(0, Math.ceil(seg));
+                return Math.floor(seg / 60) + ":" + String(seg % 60).padStart(2, "0");
+            }
+
+            // Campanita suave sintetizada (C5-E5-G5, volumen bajo), sin archivos.
+            function sonarAlerta() {
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === "suspended") audioCtx.resume();
+                    const notas = [523.25, 659.25, 783.99];
+                    for (let rep = 0; rep < 2; rep++) {
+                        notas.forEach((f, i) => {
+                            const t0 = audioCtx.currentTime + rep * 1.15 + i * 0.28;
+                            const osc = audioCtx.createOscillator();
+                            const gan = audioCtx.createGain();
+                            osc.type = "sine";
+                            osc.frequency.value = f;
+                            gan.gain.setValueAtTime(0.0001, t0);
+                            gan.gain.exponentialRampToValueAtTime(0.09, t0 + 0.03);
+                            gan.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+                            osc.connect(gan).connect(audioCtx.destination);
+                            osc.start(t0);
+                            osc.stop(t0 + 1);
+                        });
+                    }
+                } catch (e) { console.warn("Audio no disponible:", e); }
+            }
+
+            function cancelar() {
+                if (intervalo) { clearInterval(intervalo); intervalo = null; }
+                if (filaActiva) {
+                    filaActiva.btn.innerText = "▶";
+                    const fila = filaActiva.btn.closest(".cboxnodo");
+                    if (fila) fila.classList.remove("enNavegacion");
+                    filaActiva = null;
+                }
+                document.getElementById("timerViaje").style.display = "none";
+                document.title = tituloOriginal;
+            }
+
+            // origen/destino: objetos con x,y (Nodo o plano del cache)
+            function zarpar(origen, destino, destinoNombre, btn, cbox) {
+                cancelar(); // un barco a la vez: reemplaza el aviso anterior
+                const { vel, acc } = stats();
+                const distancia = dist2(origen.x, origen.y, destino.x, destino.y)
+                    + retrasoEntre(origen.titulo, destino.titulo);
+                const llegada = Date.now() + estimarSegundos(distancia, vel, acc) * 1000;
+
+                filaActiva = { btn };
+                const fila = btn.closest(".cboxnodo");
+                if (fila) fila.classList.add("enNavegacion");
+
+                const widget = document.getElementById("timerViaje");
+                const wDest = document.getElementById("timerDestino");
+                const wCuenta = document.getElementById("timerCuenta");
+                widget.style.display = "flex";
+                wDest.innerText = "→ " + destinoNombre;
+
+                function tick() {
+                    const rest = (llegada - Date.now()) / 1000;
+                    if (rest <= 0) {
+                        clearInterval(intervalo);
+                        intervalo = null;
+                        wCuenta.innerText = "0:00";
+                        wDest.innerText = "⚓ " + destinoNombre;
+                        document.title = "⚓ " + destinoNombre + " — " + tituloOriginal;
+                        sonarAlerta();
+                        if (cbox && !cbox.checked) cbox.click(); // marcar visitado en el mapa
+                        btn.innerText = "⚓";
+                        if (fila) fila.classList.remove("enNavegacion");
+                        filaActiva = null;
+                        setTimeout(() => {
+                            if (!intervalo) {
+                                widget.style.display = "none";
+                                document.title = tituloOriginal;
+                            }
+                        }, 8000);
+                        return;
+                    }
+                    wCuenta.innerText = fmt(rest);
+                    btn.innerText = fmt(rest);
+                    document.title = "⏱ " + fmt(rest) + " → " + destinoNombre;
+                }
+                tick();
+                intervalo = setInterval(tick, 250);
+            }
+
+            return { zarpar, cancelar, estimarSegundos, stats, fmt };
+        })();
+        window.Navegacion = Navegacion;
+
+        // ============================================
         // INICIALIZACIÓN
         // ============================================
         window.onload = function () {
@@ -1404,6 +1716,17 @@
                     });
                 });
 
+            // Cargar retrasos medidos entre nodos (si el archivo no existe, sin retrasos)
+            fetch('retrasos.json')
+                .then(response => response.json())
+                .then(lista => {
+                    for (const r of lista) {
+                        const clave = [String(r.nodoA).toUpperCase(), String(r.nodoB).toUpperCase()].sort().join("|");
+                        retrasosDic[clave] = r.retraso;
+                    }
+                })
+                .catch(() => console.warn("retrasos.json no disponible"));
+
             // Lista visual de la ruta (carga lo guardado desde localStorage)
             const nmm = document.getElementById("nodosm");
             Ruta.init();
@@ -1422,7 +1745,29 @@
             document.getElementById("guardar").onclick = function () {
                 Ruta.sincronizar();
                 localStorage.setItem("NodosR", nmm.value);
+                localStorage.setItem("BarcoVel", document.getElementById("barcoVel").value);
+                localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
                 showMessageGuardando();
+            };
+
+            // Datos del barco: restaurar y mostrar estimación de referencia
+            const barcoVel = document.getElementById("barcoVel");
+            const barcoAcc = document.getElementById("barcoAcc");
+            if (localStorage.getItem("BarcoVel")) barcoVel.value = localStorage.getItem("BarcoVel");
+            if (localStorage.getItem("BarcoAcc")) barcoAcc.value = localStorage.getItem("BarcoAcc");
+
+            function actualizarInfoBarco() {
+                const { vel, acc } = Navegacion.stats();
+                const t = Navegacion.estimarSegundos(750, vel, acc);
+                document.getElementById("barcoInfo").innerText =
+                    `Con este barco: 750 unidades de mapa ≈ ${Navegacion.fmt(t)}`;
+            }
+            barcoVel.addEventListener("input", actualizarInfoBarco);
+            barcoAcc.addEventListener("input", actualizarInfoBarco);
+            actualizarInfoBarco();
+
+            document.getElementById("timerCancelar").onclick = function () {
+                Navegacion.cancelar();
             };
 
             // Zoom controls (aplicarZoom ancla el zoom para que no se desplace)
@@ -1492,18 +1837,11 @@
 
             document.addEventListener('mousemove', movGUIFnc);
             document.addEventListener('mouseup', movFncE);
-
-            // Play alarm (hidden button)
-            document.getElementById("btnplay").onclick = function () {
-                setTimeout(function () {
-                    document.getElementById("alarm1").play();
-                }, 4000);
-            };
         };
     </script>
 </head>
 <body>
-    <h2>🗺️ Calcular Ruta Óptima v4.2.0</h2>
+    <h2>🗺️ Calcular Ruta Óptima v4.3.0</h2>
     <div class="layout-container">
         <div class="columnaA">
             <div class="input-group">
@@ -1572,12 +1910,31 @@
                 <span><i style="background:#e74c3c;border-radius:2px;height:4px;margin-top:4px"></i> Viaje activo</span>
             </div>
             <p id="ayudaMapa">💡 Click en un nodo del mapa para agregarlo o quitarlo de la ruta planeada · rueda del mouse para zoom · arrastrar para mover</p>
+
+            <div id="barcoPanel">
+                <h3>🚢 Datos del Barco</h3>
+                <div class="barco-campos">
+                    <div class="barco-campo">
+                        <label for="barcoVel">Velocidad %</label>
+                        <input type="number" id="barcoVel" min="50" max="300" step="1" value="191">
+                    </div>
+                    <div class="barco-campo">
+                        <label for="barcoAcc">Aceleración %</label>
+                        <input type="number" id="barcoAcc" min="50" max="300" step="1" value="196">
+                    </div>
+                </div>
+                <p class="hint" id="barcoInfo"></p>
+                <p class="hint">▶ en la lista de rutas = «zarpé hacia ese nodo»: cuenta regresiva y campanita al llegar. Se guarda con 💾 Guardar Estado.</p>
+            </div>
         </div>
     </div>
     
     <div id="popupguardando">✅ Se han guardado los datos de los nodos.</div>
-    <button id="btnplay" style="display: none;">Play</button>
-    <audio id="alarm1"><source src="alarm_1.ogg" type="audio/ogg"></audio>
+    <div id="timerViaje">
+        <span id="timerDestino">→ NODO</span>
+        <span id="timerCuenta">0:00</span>
+        <button type="button" id="timerCancelar" title="Cancelar aviso">✕</button>
+    </div>
     <script src="puntos_menu.js"></script>
 </body>
 </html>
