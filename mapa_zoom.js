@@ -51,8 +51,9 @@ function nombreDeLinea(linea) {
     return "";
 }
 
-// nodos escritos en la ruta planeada (textarea), para marcarlos en el mapa
+// nodos en la ruta planeada, para marcarlos en el mapa
 function nodosPlaneados() {
+    if (window.Ruta && window.Ruta.planeados) return new Set(window.Ruta.planeados());
     const s = new Set();
     const area = document.getElementById("nodosm");
     if (!area) return s;
@@ -65,6 +66,7 @@ function nodosPlaneados() {
 
 // agrega el nodo a la ruta planeada, o lo quita si ya estaba
 function toggleNodoPlaneado(titulo) {
+    if (window.Ruta && window.Ruta.toggle) { window.Ruta.toggle(titulo); return; }
     const area = document.getElementById("nodosm");
     if (!area) return;
     const lineas = area.value.split("\n").filter(l => l.trim() !== "");

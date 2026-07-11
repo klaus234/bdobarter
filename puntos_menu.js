@@ -24,6 +24,7 @@ function nuevoPunto(nombre)
     li.className = "puntomenu"
     li.onclick = function()
     {
+        if (window.Ruta && window.Ruta.agregar) { window.Ruta.agregar(this.innerText); return; }
         const nodosm_area = document.getElementById("nodosm");
         if (nodosm_area.value !== "" && !nodosm_area.value.endsWith("\n"))
             nodosm_area.value += "\n";
