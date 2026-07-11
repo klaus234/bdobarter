@@ -29,18 +29,6 @@ let recNodos = [];
 const COLOR_NODO = [52, 152, 219];      // azul: nodo comun
 const COLOR_SELECCION = [46, 204, 113]; // verde: marcado en la ruta calculada
 const COLOR_RUTA = [231, 76, 60];       // rojo: linea del viaje activo
-const COLOR_NIVEL = {
-    5: [230, 126, 34],  // naranja: intercambio nivel 5
-    6: [155, 89, 182]   // violeta: intercambio nivel 6
-};
-
-// nivel de intercambio segun el selector (puntos_menu.js)
-function nivelDeNodo(titulo) {
-    if (typeof data_puntos === "undefined") return 0;
-    if ((data_puntos[6] || []).indexOf(titulo) !== -1) return 6;
-    if ((data_puntos[5] || []).indexOf(titulo) !== -1) return 5;
-    return 0;
-}
 
 // nombre limpio de una linea de la ruta planeada (soporta marcadores #o_/#d_)
 function nombreDeLinea(linea) {
@@ -85,7 +73,6 @@ class NodoM {
         this.titulo = "";
         this.terminado = false;
         this.seleccionado = false;
-        this.nivel = 0;
     }
 
     pantallaX() { return (this.x * szFixX + szFixOX) * zoomValue + offsetX; }
@@ -112,20 +99,11 @@ class NodoM {
             ellipse(xd, yd, d + 9, d + 9);
         }
 
-        const base = this.seleccionado ? COLOR_SELECCION : (COLOR_NIVEL[this.nivel] || COLOR_NODO);
+        const base = this.seleccionado ? COLOR_SELECCION : COLOR_NODO;
         if (hover) { stroke(255); strokeWeight(2); }
         else { stroke(10, 20, 40, 160); strokeWeight(1); }
         fill(base[0], base[1], base[2]);
         ellipse(xd, yd, d, d);
-
-        // numero de nivel dentro del circulo
-        if (this.nivel && d >= 13) {
-            noStroke();
-            fill(255);
-            textAlign(CENTER, CENTER);
-            textSize(Math.max(8, d * 0.42));
-            text(this.nivel, xd, yd + 1);
-        }
 
         // etiqueta (se ocultan con el mapa alejado para no superponerse)
         if (hover || this.seleccionado || planeado || zoomValue >= 0.35) {
@@ -242,7 +220,6 @@ function setup() {
         let nnodo = new NodoM(dnodo["x"], dnodo["y"]);
         nnodo.titulo = dnodo["titulo"];
         nnodo.terminado = true;
-        nnodo.nivel = nivelDeNodo(nnodo.titulo);
         nodosM.push(nnodo);
     }
 
@@ -309,12 +286,13 @@ function draw() {
     // 3) Números de orden del viaje activo
     if (recNodos.length > 2) {
         textAlign(CENTER, CENTER);
-        textSize(11);
-        const sep = Math.max(9, 30 * zoomValue) * 0.9 + 4;
+        textStyle(BOLD);
+        textSize(17);
+        const sep = Math.max(9, 30 * zoomValue) * 0.9 + 8;
         for (let j = 1; j < recNodos.length - 1; j++) {
             noStroke();
-            fill(10, 20, 40, 230);
-            ellipse(px(recNodos[j]), py(recNodos[j]) - sep, 18, 18);
+            fill(10, 20, 40, 235);
+            ellipse(px(recNodos[j]), py(recNodos[j]) - sep, 26, 26);
             fill(231, 76, 60);
             text(j, px(recNodos[j]), py(recNodos[j]) - sep + 1);
         }
