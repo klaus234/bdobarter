@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Retraso entre Nodos</title>
+</head>
+<body>
+    <h1>Calculadora de Retraso entre Nodos</h1>
+    <p>
+        Calcula la variable <b>retraso</b> de un tramo: la distancia extra (en unidades del mapa)
+        que el barco recorre de más por giros, maniobras, etc., comparado con la línea recta.<br>
+        Es <b>universal</b>: no depende de la velocidad ni aceleración del barco usado para medirlo.<br>
+        El resultado se agrega a mano en <code>retrasos.json</code>.
+    </p>
+
+    <form id="formRetraso">
+        <label>Velocidad % del barco: <input type="number" id="vel" value="191" min="50" max="300"></label><br><br>
+        <label>Aceleración % del barco: <input type="number" id="acc" value="196" min="50" max="300"></label><br><br>
+        <label>Nodo A (origen): <input type="text" id="nodoA" list="listaNodos" required></label><br><br>
+        <label>Nodo B (destino): <input type="text" id="nodoB" list="listaNodos" required></label><br><br>
+        <label>Tiempo real que tardó (segundos, o m:ss): <input type="text" id="tiempo" placeholder="42  ó  1:23" required></label><br><br>
+        <button type="submit">Calcular retraso</button>
+    </form>
+    <datalist id="listaNodos"></datalist>
+
+    <pre id="salida"></pre>
+
+    <script>
+        // Mismo modelo físico que barter_v3.html (calibrado: 191%/196% -> 750 unidades en 42 s):
+        //   v = V0·vel/100 (unid/s crucero), a = A0·acc/100 (unid/s² arranque)
+        //   t = d/v + v/(2a)   |   t = sqrt(2d/a) en tramos cortos
+        // Inversión (de tiempo real a distancia efectiva recorrida):
+        //   si t <= v/a  -> d_eff = a·t²/2      (nunca llegó a crucero)
+        //   si t >  v/a  -> d_eff = (t - v/(2a))·v
+        // retraso = d_eff - distancia_recta  (unidades de mapa, universal)
+        const V0 = 10.2;
+        const A0 = 1.42;
+
+        let nodos = {};
+        let retrasos = [];
+
+        fetch('datos.json')
+            .then(r => r.json())
+            .then(d => {
+                const dl = document.getElementById('listaNodos');
+                for (const n of d) {
+                    nodos[n.titulo] = n;
+                    const op = document.createElement('option');
+                    op.value = n.titulo;
+                    dl.appendChild(op);
+                }
+            })
+            .catch(() => { document.getElementById('salida').textContent = 'Error: no se pudo cargar datos.json (abrir desde un servidor local).'; });
+
+        fetch('retrasos.json')
+            .then(r => r.json())
+            .then(d => { retrasos = d; })
+            .catch(() => {});
+
+        function parseTiempo(s) {
+            s = s.trim();
+            if (s.includes(':')) {
+                const partes = s.split(':');
+                return parseInt(partes[0], 10) * 60 + parseFloat(partes[1]);
+            }
+            return parseFloat(s);
+        }
+
+        document.getElementById('formRetraso').onsubmit = function (e) {
+            e.preventDefault();
+            const salida = document.getElementById('salida');
+            const vel = parseFloat(document.getElementById('vel').value) || 100;
+            const acc = parseFloat(document.getElementById('acc').value) || 100;
+            const nA = document.getElementById('nodoA').value.trim().toUpperCase();
+            const nB = document.getElementById('nodoB').value.trim().toUpperCase();
+            const t = parseTiempo(document.getElementById('tiempo').value);
+
+            if (!(nA in nodos)) { salida.textContent = 'Nodo A no encontrado: ' + nA; return; }
+            if (!(nB in nodos)) { salida.textContent = 'Nodo B no encontrado: ' + nB; return; }
+            if (!(t > 0)) { salida.textContent = 'Tiempo inválido.'; return; }
+
+            const v = V0 * vel / 100;
+            const a = A0 * acc / 100;
+            const dEff = (t <= v / a) ? (a * t * t / 2) : ((t - v / (2 * a)) * v);
+            const A = nodos[nA], B = nodos[nB];
+            const dRecta = Math.sqrt((A.x - B.x) ** 2 + (A.y - B.y) ** 2);
+            const retraso = Math.round(dEff - dRecta);
+
+            const previo = retrasos.find(r =>
+                (r.nodoA === nA && r.nodoB === nB) || (r.nodoA === nB && r.nodoB === nA));
+
+            salida.textContent =
+                'Distancia en línea recta:    ' + Math.round(dRecta) + ' unidades\n' +
+                'Distancia efectiva estimada: ' + Math.round(dEff) + ' unidades (según tu tiempo de ' + t + ' s)\n' +
+                '\n' +
+                'RETRASO = ' + retraso + '\n' +
+                '\n' +
+                (previo
+                    ? 'Ojo: ya hay un retraso registrado para este par en retrasos.json: ' + previo.retraso + '\n\n'
+                    : 'Sin retraso registrado aún para este par.\n\n') +
+                'Línea para agregar a retrasos.json:\n' +
+                '  {"nodoA": "' + nA + '", "nodoB": "' + nB + '", "retraso": ' + retraso + '}';
+        };
+    </script>
+</body>
+</html>
