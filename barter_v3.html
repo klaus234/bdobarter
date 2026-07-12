@@ -685,6 +685,47 @@
             box-shadow: none;
         }
 
+        #savestates {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .savestate {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .savestate input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 7px 10px;
+            font-size: 12px;
+        }
+
+        .btn-ss {
+            width: auto;
+            margin: 0;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 6px;
+            letter-spacing: 0;
+            flex: 0 0 auto;
+        }
+
+        .btn-ss:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+
+        .btn-ss:disabled:hover {
+            background: linear-gradient(135deg, var(--border-accent) 0%, #0a1f33 100%);
+            color: var(--accent-gold);
+            transform: none;
+            box-shadow: none;
+        }
+
         @media (max-width: 1024px) {
             .layout-container {
                 flex-direction: column;
@@ -1235,22 +1276,26 @@
         // ============================================
         function calcularNodos() {
             resetearNodosColor();
-            dependenciasEncadenadas = document.getElementById("chkDependencias").checked
-                || document.getElementById("nodosm").value.includes("#d_");
-            
+            const modoManual = document.getElementById("chkManual").checked;
+            dependenciasEncadenadas = !modoManual && (
+                document.getElementById("chkDependencias").checked
+                || document.getElementById("nodosm").value.includes("#d_"));
+
             const nodosInp = document.getElementById("nodosm").value;
             const nodosRecorridos = nodosInp.split("\n");
             const recorrido = [];
             const recorrido_titulo = [];
-            
+
             let inicial = document.getElementById("inicial").value.toUpperCase();
-            
-            for (let nodo of nodosRecorridos) {
-                nodo = nodo.toUpperCase();
+
+            for (let linea of nodosRecorridos) {
+                // nombreDeLinea (mapa_zoom.js) ignora los marcadores #o_/#d_
+                const nodo = nombreDeLinea(linea);
+                if (nodo === "") continue;
                 if (nodo in nodosDic) {
                     recorrido.push(nodosDic[nodo]);
                     recorrido_titulo.push(nodo);
-                } else if (nodo.trim() !== "") {
+                } else {
                     console.warn(`Nodo no encontrado: ${nodo}`);
                 }
             }
@@ -1265,8 +1310,8 @@
             const dom1 = document.getElementById("outputnodos");
             const maxNodosPViaje = parseInt(document.getElementById("viajes").value);
 
-            // Intentar cargar del cache
-            if (recorrido_titulo.length > 9 && !ignoreCache) {
+            // Intentar cargar del cache (solo rutas optimizadas sin dependencias)
+            if (recorrido_titulo.length > 9 && !ignoreCache && !modoManual && !dependenciasEncadenadas) {
                 fetch('cache_nodes_v1.json')
                     .then(response => response.json())
                     .then(data => {
@@ -1292,22 +1337,25 @@
             dom1.innerHTML = "<em style='color: var(--accent-blue);'>Calculando rutas...</em>";
 
             let actual = nodosDic[inicial];
-            /* V1 viejo
-            const posibles = permutator(recorrido);
-            resultadoViajes = mejorRecorrido(posibles, actual, maxNodosPViaje);
-            */
-           // recorrido.length > 9
-            if(true) {
+            if (!actual) {
+                alert("⚠️ Nodo inicial no encontrado: " + inicial);
+                return;
+            }
 
-                if(dependenciasEncadenadas) {
-                    resultadoViajes = calcularRutaConCadenasDP(nodosRecorridos, actual, maxNodosPViaje, nodosDic);
-                } else {
-                    resultadoViajes = calcularRutaPerfectaDP(recorrido, actual, maxNodosPViaje);
+            if (modoManual) {
+                // Modo manual: sin optimización, en el orden ingresado,
+                // partiendo en viajes según el máximo de nodos por viaje.
+                resultadoViajes = [];
+                for (let i = 0; i < recorrido.length; i += maxNodosPViaje) {
+                    resultadoViajes.push([actual, ...recorrido.slice(i, i + maxNodosPViaje), actual]);
                 }
                 recNodos = resultadoViajes[0];
-            }else{
-                const posibles = permutator(recorrido);
-                resultadoViajes = mejorRecorrido(posibles, actual, maxNodosPViaje);
+            } else if (dependenciasEncadenadas) {
+                resultadoViajes = calcularRutaConCadenasDP(nodosRecorridos, actual, maxNodosPViaje, nodosDic);
+                recNodos = resultadoViajes[0];
+            } else {
+                resultadoViajes = calcularRutaPerfectaDP(recorrido, actual, maxNodosPViaje);
+                recNodos = resultadoViajes[0];
             }
             
             const res = renderizarViajes(resultadoViajes, dom1);
@@ -1494,6 +1542,7 @@
 
             function limpiar() { modelo = []; actualizar(); }
             function planeados() { return modelo.map(n => n.name); }
+            function cargarTexto(texto) { modelo = parsear(texto || ""); actualizar(); }
 
             function init() {
                 lista = document.getElementById("rutaLista");
@@ -1570,9 +1619,103 @@
                 });
             }
 
-            return { init, agregar, quitar, toggle, limpiar, planeados, sincronizar };
+            return { init, agregar, quitar, toggle, limpiar, planeados, sincronizar, cargarTexto };
         })();
         window.Ruta = Ruta;
+
+        // ============================================
+        // MÓDULO SAVESTATES: hasta 5 rutas guardadas con nombre
+        // Cada slot guarda: nombre, ruta (texto con #o_/#d_), nodo inicial,
+        // máx nodos por viaje y el flag de modo manual.
+        // ============================================
+        const SaveStates = (function () {
+            const MAX = 5;
+
+            function leer() {
+                try {
+                    const v = JSON.parse(localStorage.getItem("SaveStates")) || [];
+                    return Array.from({ length: MAX }, (_, i) => v[i] || null);
+                } catch (e) {
+                    return Array(MAX).fill(null);
+                }
+            }
+
+            function escribir(slots) {
+                localStorage.setItem("SaveStates", JSON.stringify(slots));
+            }
+
+            function boton(txt, title) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "btn-ss";
+                b.innerText = txt;
+                b.title = title;
+                return b;
+            }
+
+            function guardar(i, nombre) {
+                Ruta.sincronizar();
+                const slots = leer();
+                slots[i] = {
+                    nombre: (nombre || "").trim() || ("Slot " + (i + 1)),
+                    ruta: document.getElementById("nodosm").value,
+                    inicial: document.getElementById("inicial").value,
+                    viajes: document.getElementById("viajes").value,
+                    manual: document.getElementById("chkManual").checked
+                };
+                escribir(slots);
+                render();
+                showMessageGuardando();
+            }
+
+            function cargar(i) {
+                const slot = leer()[i];
+                if (!slot) return;
+                document.getElementById("inicial").value = slot.inicial || "ILIYA";
+                document.getElementById("viajes").value = slot.viajes || 3;
+                document.getElementById("chkManual").checked = !!slot.manual;
+                Ruta.cargarTexto(slot.ruta);
+            }
+
+            function render() {
+                const ul = document.getElementById("savestates");
+                if (!ul) return;
+                const slots = leer();
+                ul.innerHTML = "";
+                slots.forEach((slot, i) => {
+                    const li = document.createElement("li");
+                    li.className = "savestate";
+
+                    const inp = document.createElement("input");
+                    inp.type = "text";
+                    inp.maxLength = 24;
+                    inp.placeholder = "Slot " + (i + 1) + " (vacío)";
+                    inp.value = slot ? slot.nombre : "";
+
+                    const bG = boton("💾", "Guardar acá la ruta actual");
+                    bG.onclick = function () { guardar(i, inp.value); };
+
+                    const bC = boton("📂", slot ? "Cargar: " + slot.nombre : "Slot vacío");
+                    bC.onclick = function () { cargar(i); };
+                    bC.disabled = !slot;
+
+                    const bX = boton("✕", "Borrar este savestate");
+                    bX.onclick = function () {
+                        const s = leer();
+                        s[i] = null;
+                        escribir(s);
+                        render();
+                    };
+                    bX.disabled = !slot;
+
+                    li.append(inp, bG, bC, bX);
+                    ul.append(li);
+                });
+            }
+
+            return { render };
+        })();
+        window.SaveStates = SaveStates;
 
         // ============================================
         // MÓDULO NAVEGACIÓN: aviso de llegada del barco
@@ -1754,8 +1897,13 @@
                 localStorage.setItem("NodosR", nmm.value);
                 localStorage.setItem("BarcoVel", document.getElementById("barcoVel").value);
                 localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
+                localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
                 showMessageGuardando();
             };
+
+            // Modo manual: restaurar y renderizar savestates
+            document.getElementById("chkManual").checked = localStorage.getItem("ModoManual") === "1";
+            SaveStates.render();
 
             // Datos del barco: restaurar y mostrar estimación de referencia
             const barcoVel = document.getElementById("barcoVel");
@@ -1848,7 +1996,7 @@
     </script>
 </head>
 <body>
-    <h2>🗺️ Calcular Ruta Óptima v4.3.0</h2>
+    <h2>🗺️ Calcular Ruta Óptima v4.4.0</h2>
     <div class="layout-container">
         <div class="columnaA">
             <div class="input-group">
@@ -1865,7 +2013,12 @@
                 <label for="viajes">📦 Máx Nodos por Viaje:</label>
                 <input type="number" id="viajes" value="3" min="1" max="6" step="1">
             </div>
-            
+
+            <div class="input-group" style="flex-direction: row; align-items: center;">
+                <input type="checkbox" id="chkManual">
+                <label for="chkManual" style="margin-bottom: 0; cursor: pointer;" title="Sin optimizar: los viajes se arman en el orden en que ingresaste los nodos">✍️ Modo Manual (respetar orden ingresado)</label>
+            </div>
+
             <input type="checkbox" id="chkDependencias" style="display: none;">
 
             <label class="lbl">📋 Ruta Planeada:</label>
@@ -1895,6 +2048,11 @@
             <ul id="outputnodos" class="uml1"></ul>
             
             <button id="guardar">💾 Guardar Estado</button>
+
+            <div class="contenedor-puntos-principal">
+                <h3>💼 Savestates de Rutas</h3>
+                <ul id="savestates"></ul>
+            </div>
         </div>
         
         <div class="columnaB">
