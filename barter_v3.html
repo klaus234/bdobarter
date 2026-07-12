@@ -1601,11 +1601,12 @@
             }
 
             function estimarSegundos(dist, vel, acc) {
+                const correccionReal = 1.0; // Ajuste fino si se desea
                 const v = V0 * vel / 100;
                 const a = A0 * acc / 100;
                 const dArranque = (v * v) / (2 * a);
                 if (dist <= dArranque) return Math.sqrt(2 * dist / a);
-                return dist / v + v / (2 * a);
+                return (dist / v + v / (2 * a)) * correccionReal;
             }
 
             function fmt(seg) {
@@ -1931,6 +1932,7 @@
                 </div>
                 <p class="hint" id="barcoInfo"></p>
                 <p class="hint">▶ en la lista de rutas = «zarpé hacia ese nodo»: cuenta regresiva y campanita al llegar. Se guarda con 💾 Guardar Estado.</p>
+                <p><a href="calculadora_retraso.html" target="_blank">📊 Calculadora de Retraso</a></p>
             </div>
         </div>
     </div>
