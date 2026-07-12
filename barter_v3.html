@@ -627,6 +627,11 @@
             color: var(--accent-gold);
         }
 
+        .fila-vuelta .btn-play {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            background: rgba(52, 152, 219, 0.12);
+        }
         .cboxnodo.enNavegacion {
             background: rgba(212, 175, 55, 0.08);
             border-radius: 6px;
@@ -796,6 +801,20 @@
             let total = 0;
             for (let i = 0; i < viaje.length - 1; i++) {
                 total += dist2(viaje[i].x, viaje[i].y, viaje[i + 1].x, viaje[i + 1].y);
+            }
+            return total;
+        }
+
+        // Tiempo total estimado de un viaje (incluye la vuelta al inicial, ya que
+        // el viaje termina en el nodo inicial). Suma el ETA de cada tramo con su
+        // retraso, usando la velocidad/aceleración actuales del barco.
+        function tiempoViajeXY(viaje) {
+            const { vel, acc } = Navegacion.stats();
+            let total = 0;
+            for (let i = 0; i < viaje.length - 1; i++) {
+                const retr = retrasoEntre(viaje[i].titulo, viaje[i + 1].titulo);
+                total += Navegacion.estimarSegundos(
+                    dist2(viaje[i].x, viaje[i].y, viaje[i + 1].x, viaje[i + 1].y), vel, acc, retr);
             }
             return total;
         }
@@ -1167,7 +1186,7 @@
                 distTotal += distViaje;
                 const liGeneral = document.createElement("li");
                 const identificador = document.createElement("div");
-                identificador.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)}`;
+                identificador.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)} · ⏱ ${Navegacion.fmt(tiempoViajeXY(rgeneral))}`;
                 identificador.className = "identificadorViaje";
                 
                 if (indiceViaje === 0) {
