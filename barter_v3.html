@@ -1216,7 +1216,7 @@
                     const { vel, acc } = Navegacion.stats();
                     const retr = retrasoEntre(origen.titulo, rnodo.titulo);
                     const est = Navegacion.estimarSegundos(
-                        dist2(origen.x, origen.y, rnodo.x, rnodo.y) + retr, vel, acc);
+                        dist2(origen.x, origen.y, rnodo.x, rnodo.y), vel, acc, retr);
                     btnPlay.title = `Zarpé de ${origen.titulo} hacia ${rnodo.titulo} · llegada ≈ ${Navegacion.fmt(est)}`
                         + (retr !== 0 ? ` · retraso ${retr}` : "");
                     btnPlay.onclick = function () {
@@ -1251,7 +1251,7 @@
                     const { vel: velV, acc: accV } = Navegacion.stats();
                     const retrV = retrasoEntre(origenV.titulo, destinoV.titulo);
                     const estV = Navegacion.estimarSegundos(
-                        dist2(origenV.x, origenV.y, destinoV.x, destinoV.y) + retrV, velV, accV);
+                        dist2(origenV.x, origenV.y, destinoV.x, destinoV.y), velV, accV, retrV);
                     btnV.title = `Zarpé de ${origenV.titulo} de vuelta a ${destinoV.titulo} · llegada ≈ ${Navegacion.fmt(estV)}`
                         + (retrV !== 0 ? ` · retraso ${retrV}` : "");
                     btnV.onclick = function () {
@@ -1720,18 +1720,22 @@
         // ============================================
         // MÓDULO NAVEGACIÓN: aviso de llegada del barco
         //
-        // Calibración: barco con 191% vel / 196% acel recorre 750 unidades
-        // del mapa en 42 s. Modelo físico simple:
-        //   v = V0 · vel/100  (unidades/s, velocidad crucero)
-        //   a = A0 · acel/100 (unidades/s², arranque)
-        //   t = d/v + v/(2a)      → crucero + costo de arranque
-        //   t = sqrt(2d/a)        → tramos cortos donde no llega a crucero
-        // Asumiendo ~3.5 s de arranque en la calibración:
-        //   42 = 750/v + 3.5 → v = 19.48 → V0 = 10.2 ; a = v/7 → A0 = 1.42
+        // Modelo recalibrado (jul-2026) con 36 tramos medidos en el juego:
+        //   d_eff = K_RUTA·d_recta + D_FIJA + retraso_residual
+        //   v = V0·vel/100 (unid/s) ; a = A0·acc/100 (unid/s²)
+        //   t = d_eff/v + v/(2a)    | t = sqrt(2·d_eff/a) en tramos cortos
+        // K_RUTA=3.511 (el camino real ≈ 3.5× la línea recta del mapa) y
+        // D_FIJA=307 unid (~19 s: atraque + arranque + boost promediado)
+        // salen de un ajuste por mínimos cuadrados sobre los 16 tramos de
+        // mar abierto (R²=0.94, error mediano ~15 s).
+        // El retraso de retrasos.json es el RESIDUO geográfico del tramo
+        // (rodear continentes) respecto de este modelo; sin dato, 0.
         // ============================================
         const Navegacion = (function () {
             const V0 = 10.2;
             const A0 = 1.42;
+            const K_RUTA = 3.511;
+            const D_FIJA = 307;
             let intervalo = null;
             let filaActiva = null;
             let audioCtx = null;
@@ -1743,13 +1747,14 @@
                 return { vel, acc };
             }
 
-            function estimarSegundos(dist, vel, acc) {
-                const correccionReal = 1.0; // Ajuste fino si se desea
+            // distRecta: línea recta del mapa; retraso: residuo geográfico (retrasos.json)
+            function estimarSegundos(distRecta, vel, acc, retraso) {
                 const v = V0 * vel / 100;
                 const a = A0 * acc / 100;
+                const dEff = Math.max(0, K_RUTA * distRecta + D_FIJA + (retraso || 0));
                 const dArranque = (v * v) / (2 * a);
-                if (dist <= dArranque) return Math.sqrt(2 * dist / a);
-                return (dist / v + v / (2 * a)) * correccionReal;
+                if (dEff <= dArranque) return Math.sqrt(2 * dEff / a);
+                return dEff / v + v / (2 * a);
             }
 
             function fmt(seg) {
@@ -1797,9 +1802,9 @@
             function zarpar(origen, destino, destinoNombre, btn, cbox) {
                 cancelar(); // un barco a la vez: reemplaza el aviso anterior
                 const { vel, acc } = stats();
-                const distancia = dist2(origen.x, origen.y, destino.x, destino.y)
-                    + retrasoEntre(origen.titulo, destino.titulo);
-                const llegada = Date.now() + estimarSegundos(distancia, vel, acc) * 1000;
+                const distancia = dist2(origen.x, origen.y, destino.x, destino.y);
+                const retraso = retrasoEntre(origen.titulo, destino.titulo);
+                const llegada = Date.now() + estimarSegundos(distancia, vel, acc, retraso) * 1000;
 
                 filaActiva = { btn };
                 const fila = btn.closest(".cboxnodo");
@@ -1915,7 +1920,7 @@
                 const { vel, acc } = Navegacion.stats();
                 const t = Navegacion.estimarSegundos(750, vel, acc);
                 document.getElementById("barcoInfo").innerText =
-                    `Con este barco: 750 unidades de mapa ≈ ${Navegacion.fmt(t)}`;
+                    `Con este barco: 750 unidades en línea recta ≈ ${Navegacion.fmt(t)}`;
             }
             barcoVel.addEventListener("input", actualizarInfoBarco);
             barcoAcc.addEventListener("input", actualizarInfoBarco);

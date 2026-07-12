@@ -26,15 +26,21 @@
     <pre id="salida"></pre>
 
     <script>
-        // Mismo modelo físico que barter_v3.html (calibrado: 191%/196% -> 750 unidades en 42 s):
+        // Mismo modelo que barter_v3.html, recalibrado (jul-2026) con 36 tramos reales:
+        //   d_eff = K_RUTA·d_recta + D_FIJA + retraso   (K_RUTA=3.511, D_FIJA=307; R²=0.94)
         //   v = V0·vel/100 (unid/s crucero), a = A0·acc/100 (unid/s² arranque)
-        //   t = d/v + v/(2a)   |   t = sqrt(2d/a) en tramos cortos
+        //   t = d_eff/v + v/(2a)   |   t = sqrt(2·d_eff/a) en tramos cortos
         // Inversión (de tiempo real a distancia efectiva recorrida):
-        //   si t <= v/a  -> d_eff = a·t²/2      (nunca llegó a crucero)
-        //   si t >  v/a  -> d_eff = (t - v/(2a))·v
-        // retraso = d_eff - distancia_recta  (unidades de mapa, universal)
+        //   si t <= v/a  -> d_medida = a·t²/2      (nunca llegó a crucero)
+        //   si t >  v/a  -> d_medida = (t - v/(2a))·v
+        // retraso = d_medida - (K_RUTA·d_recta + D_FIJA)
+        // Es el RESIDUO geográfico del tramo (rodear continentes, estrechos);
+        // en mar abierto suele quedar cerca de 0 y no hace falta registrarlo.
+        // Sigue siendo universal: no depende del barco usado para medir.
         const V0 = 10.2;
         const A0 = 1.42;
+        const K_RUTA = 3.511;
+        const D_FIJA = 307;
 
         let nodos = {};
         let retrasos = [];
@@ -81,20 +87,26 @@
 
             const v = V0 * vel / 100;
             const a = A0 * acc / 100;
-            const dEff = (t <= v / a) ? (a * t * t / 2) : ((t - v / (2 * a)) * v);
+            const dMedida = (t <= v / a) ? (a * t * t / 2) : ((t - v / (2 * a)) * v);
             const A = nodos[nA], B = nodos[nB];
             const dRecta = Math.sqrt((A.x - B.x) ** 2 + (A.y - B.y) ** 2);
-            const retraso = Math.round(dEff - dRecta);
+            const dModelo = K_RUTA * dRecta + D_FIJA;
+            const retraso = Math.round(dMedida - dModelo);
+            const segResiduo = Math.round(retraso / v);
 
             const previo = retrasos.find(r =>
                 (r.nodoA === nA && r.nodoB === nB) || (r.nodoA === nB && r.nodoB === nA));
 
             salida.textContent =
-                'Distancia en línea recta:    ' + Math.round(dRecta) + ' unidades\n' +
-                'Distancia efectiva estimada: ' + Math.round(dEff) + ' unidades (según tu tiempo de ' + t + ' s)\n' +
+                'Distancia en línea recta:      ' + Math.round(dRecta) + ' unidades\n' +
+                'Distancia esperada por modelo: ' + Math.round(dModelo) + ' unidades\n' +
+                'Distancia medida (tu tiempo):  ' + Math.round(dMedida) + ' unidades (' + t + ' s)\n' +
                 '\n' +
-                'RETRASO = ' + retraso + '\n' +
+                'RETRASO (residuo) = ' + retraso + '   (~' + segResiduo + ' s con este barco)\n' +
                 '\n' +
+                (Math.abs(segResiduo) < 30
+                    ? 'El modelo ya estima bien este tramo (residuo < 30 s): no hace falta registrarlo.\n\n'
+                    : '') +
                 (previo
                     ? 'Ojo: ya hay un retraso registrado para este par en retrasos.json: ' + previo.retraso + '\n\n'
                     : 'Sin retraso registrado aún para este par.\n\n') +
