@@ -39,6 +39,12 @@ function nombreDeLinea(linea) {
     return "";
 }
 
+// nombre del nodo inicial (campo "Nodo Inicial"), para marcarlo en el mapa
+function nodoInicialTitulo() {
+    const inp = document.getElementById("inicial");
+    return inp ? inp.value.trim().toUpperCase() : "";
+}
+
 // nodos en la ruta planeada, para marcarlos en el mapa
 function nodosPlaneados() {
     if (window.Ruta && window.Ruta.planeados) return new Set(window.Ruta.planeados());
@@ -86,10 +92,18 @@ class NodoM {
         return dx * dx + dy * dy <= r * r;
     }
 
-    dibujar(hover, planeado) {
+    dibujar(hover, planeado, esInicial) {
         const xd = this.pantallaX();
         const yd = this.pantallaY();
         const d = this.diametro() * (hover ? 1.25 : 1);
+
+        // anillo verde si es el nodo inicial (por fuera del halo dorado)
+        if (esInicial) {
+            noFill();
+            stroke(46, 204, 113, 235);
+            strokeWeight(Math.max(2.5, d * 0.14));
+            ellipse(xd, yd, d + 17, d + 17);
+        }
 
         // halo dorado si esta en la ruta planeada
         if (planeado) {
@@ -278,10 +292,11 @@ function draw() {
         }
     }
     const planeados = nodosPlaneados();
+    const inicial = nodoInicialTitulo();
     for (let nodo of nodosM) {
-        if (nodo !== hoverNodo) nodo.dibujar(false, planeados.has(nodo.titulo));
+        if (nodo !== hoverNodo) nodo.dibujar(false, planeados.has(nodo.titulo), nodo.titulo === inicial);
     }
-    if (hoverNodo) hoverNodo.dibujar(true, planeados.has(hoverNodo.titulo));
+    if (hoverNodo) hoverNodo.dibujar(true, planeados.has(hoverNodo.titulo), hoverNodo.titulo === inicial);
 
     // 3) Números de orden del viaje activo
     if (recNodos.length > 2) {

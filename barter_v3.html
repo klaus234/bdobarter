@@ -95,6 +95,13 @@
             height: 7px;
         }
 
+        #leyenda i.anillo-verde {
+            background: transparent;
+            border: 2px solid var(--accent-green);
+            width: 7px;
+            height: 7px;
+        }
+
         #ayudaMapa {
             font-size: 11px;
             color: rgba(236, 240, 241, 0.55);
@@ -631,6 +638,7 @@
             color: var(--accent-blue);
             border-color: var(--accent-blue);
             background: rgba(52, 152, 219, 0.12);
+
         }
         .cboxnodo.enNavegacion {
             background: rgba(212, 175, 55, 0.08);
@@ -1266,7 +1274,7 @@
                     const btnV = document.createElement("button");
                     btnV.type = "button";
                     btnV.className = "btn-play";
-                    btnV.innerText = "▶";
+                    btnV.innerText = "◀";
                     const { vel: velV, acc: accV } = Navegacion.stats();
                     const retrV = retrasoEntre(origenV.titulo, destinoV.titulo);
                     const estV = Navegacion.estimarSegundos(
@@ -2094,6 +2102,7 @@
                 <span><i style="background:#3498db"></i> Nodo</span>
                 <span><i style="background:#e67e22"></i> Nivel 5</span>
                 <span><i style="background:#9b59b6"></i> Nivel 6</span>
+                <span><i class="anillo-verde"></i> Nodo inicial</span>
                 <span><i class="anillo"></i> Ruta planeada</span>
                 <span><i style="background:#2ecc71"></i> Marcado</span>
                 <span><i style="background:#e74c3c;border-radius:2px;height:4px;margin-top:4px"></i> Viaje activo</span>
