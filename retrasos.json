@@ -34,5 +34,6 @@
     {"nodoA": "ILIYA", "nodoB": "THEONIL", "retraso": 214},
     {"nodoA": "PUERTO NOCHE", "nodoB": "SAUSAN", "retraso": 8142},
     {"nodoA": "SANTUARIO", "nodoB": "ILIYA", "retraso": 192},
-    {"nodoA": "HAKOVEN", "nodoB": "ILIYA", "retraso": 5032}
+    {"nodoA": "HAKOVEN", "nodoB": "ILIYA", "retraso": 5032},
+    {"nodoA": "GRANDIHA", "nodoB": "PUESTO EPHERIA", "retraso": 1897}
 ]
