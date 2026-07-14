@@ -25,6 +25,10 @@ let szFixOY = -80;
 let zoomValue = 1;
 let recNodos = [];
 
+// Animación del barco (barco.png) durante un tramo con aviso activo
+let imgBarco = null;
+let barcoAnim = null; // {x1,y1,x2,y2,inicio,fin} en coords de datos.json
+
 // Colores
 const COLOR_NODO = [52, 152, 219];      // azul: nodo comun
 const COLOR_SELECCION = [46, 204, 113]; // verde: marcado en la ruta calculada
@@ -216,6 +220,30 @@ function mouseDragged() {
 // ============================================
 function preload() {
     data = loadJSON("datos.json");
+    imgBarco = loadImage("barco.png", undefined, () => { imgBarco = null; });
+}
+
+// ¿Hay que dibujar el barco? (checkbox activo + imagen cargada + viaje iniciado)
+function animBarcoActiva() {
+    const chk = document.getElementById("chkAnimBarco");
+    return !!(chk && chk.checked && barcoAnim && imgBarco && imgBarco.width > 0);
+}
+
+// Llamado desde Navegacion.zarpar (barter_v3.html): inicia el viaje del barco.
+// origen/destino: objetos con x,y en coords de datos.json.
+function iniciarBarco(origen, destino, duracionSeg) {
+    const ahora = Date.now();
+    barcoAnim = {
+        x1: origen.x, y1: origen.y,
+        x2: destino.x, y2: destino.y,
+        inicio: ahora,
+        fin: ahora + Math.max(1, duracionSeg) * 1000
+    };
+}
+
+// Llamado desde Navegacion.cancelar: saca el barco del mapa.
+function cancelarBarco() {
+    barcoAnim = null;
 }
 
 // ============================================
@@ -246,8 +274,9 @@ function setup() {
 // DIBUJO - LOOP PRINCIPAL
 // ============================================
 function draw() {
-    // framerate adaptativo: fluido al interactuar, liviano en reposo
-    if (mouseMove || millis() - ultimoMovimiento < 1800) frameRate(30);
+    // framerate adaptativo: fluido al interactuar o con el barco navegando
+    const barcoNavegando = animBarcoActiva() && Date.now() < barcoAnim.fin;
+    if (mouseMove || millis() - ultimoMovimiento < 1800 || barcoNavegando) frameRate(30);
     else frameRate(8);
 
     // Fondo de océano estilizado
@@ -311,6 +340,23 @@ function draw() {
             fill(231, 76, 60);
             text(j, px(recNodos[j]), py(recNodos[j]) - sep + 1);
         }
+    }
+
+    // 4) Barco navegando o estacionado en el destino
+    if (animBarcoActiva()) {
+        const dur = Math.max(1, barcoAnim.fin - barcoAnim.inicio);
+        const prog = Math.min(1, (Date.now() - barcoAnim.inicio) / dur);
+        const bx = barcoAnim.x1 + (barcoAnim.x2 - barcoAnim.x1) * prog;
+        const by = barcoAnim.y1 + (barcoAnim.y2 - barcoAnim.y1) * prog;
+        const sx = (bx * szFixX + szFixOX) * zoomValue + offsetX;
+        const sy = (by * szFixY + szFixOY) * zoomValue + offsetY;
+        const tam = Math.max(20, 48 * zoomValue);
+        push();
+        imageMode(CENTER);
+        translate(sx, sy - tam * 0.25); // apenas por encima del nodo
+        if (barcoAnim.x2 < barcoAnim.x1) scale(-1, 1); // la imagen mira a la derecha
+        image(imgBarco, 0, 0, tam, tam);
+        pop();
     }
 
     cursor(hoverNodo ? HAND : (mouseMove ? "grabbing" : ARROW));

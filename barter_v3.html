@@ -1814,6 +1814,7 @@
             }
 
             function cancelar() {
+                if (typeof cancelarBarco === "function") cancelarBarco();
                 if (intervalo) { clearInterval(intervalo); intervalo = null; }
                 if (filaActiva) {
                     filaActiva.btn.innerText = "▶";
@@ -1831,7 +1832,11 @@
                 const { vel, acc } = stats();
                 const distancia = dist2(origen.x, origen.y, destino.x, destino.y);
                 const retraso = retrasoEntre(origen.titulo, destino.titulo);
-                const llegada = Date.now() + estimarSegundos(distancia, vel, acc, retraso) * 1000;
+                const totalSeg = estimarSegundos(distancia, vel, acc, retraso);
+                const llegada = Date.now() + totalSeg * 1000;
+
+                // animación del barco en el mapa (se dibuja solo si el checkbox está activo)
+                if (typeof iniciarBarco === "function") iniciarBarco(origen, destino, totalSeg);
 
                 filaActiva = { btn };
                 const fila = btn.closest(".cboxnodo");
@@ -1930,11 +1935,14 @@
                 localStorage.setItem("BarcoVel", document.getElementById("barcoVel").value);
                 localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
                 localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
+                localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
                 showMessageGuardando();
             };
 
-            // Modo manual: restaurar y renderizar savestates
+            // Modo manual y animación: restaurar; renderizar savestates
             document.getElementById("chkManual").checked = localStorage.getItem("ModoManual") === "1";
+            if (localStorage.getItem("AnimBarco") !== null)
+                document.getElementById("chkAnimBarco").checked = localStorage.getItem("AnimBarco") === "1";
             SaveStates.render();
 
             // Datos del barco: restaurar y mostrar estimación de referencia
@@ -2028,7 +2036,7 @@
     </script>
 </head>
 <body>
-    <h2>🗺️ Calcular Ruta Óptima v4.4.0</h2>
+    <h2>🗺️ Calcular Ruta Óptima v4.5.0</h2>
     <div class="layout-container">
         <div class="columnaA">
             <div class="input-group">
@@ -2106,6 +2114,10 @@
                 <span><i class="anillo"></i> Ruta planeada</span>
                 <span><i style="background:#2ecc71"></i> Marcado</span>
                 <span><i style="background:#e74c3c;border-radius:2px;height:4px;margin-top:4px"></i> Viaje activo</span>
+            </div>
+            <div class="input-group" style="flex-direction: row; align-items: center; justify-content: center; margin: 10px 0 0;">
+                <input type="checkbox" id="chkAnimBarco" checked>
+                <label for="chkAnimBarco" style="margin-bottom: 0; cursor: pointer;" title="Al apretar ▶, el barco navega en el mapa del nodo origen al destino">🚢 Mostrar animación del barco</label>
             </div>
             <p id="ayudaMapa">💡 Click en un nodo del mapa para agregarlo o quitarlo de la ruta planeada · rueda del mouse para zoom · arrastrar para mover</p>
 
