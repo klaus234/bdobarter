@@ -16,7 +16,7 @@
     {"nodoA": "ILIYA", "nodoB": "HAEMO", "retraso": -800},
     {"nodoA": "HAEMO", "nodoB": "DALLAE", "retraso": 524},
     {"nodoA": "DALLAE", "nodoB": "SANTUARIO", "retraso": -1224},
-    {"nodoA": "SANTUARIO", "nodoB": "SAUSAN", "retraso": -38},
+    {"nodoA": "SANTUARIO", "nodoB": "SAUSAN", "retraso": -238},
     {"nodoA": "SAUSAN", "nodoB": "ILIYA", "retraso": -91},
     {"nodoA": "ILIYA", "nodoB": "PUJARA", "retraso": 56},
     {"nodoA": "PUJARA", "nodoB": "PILAVA", "retraso": -361},
@@ -35,5 +35,8 @@
     {"nodoA": "PUERTO NOCHE", "nodoB": "SAUSAN", "retraso": 8142},
     {"nodoA": "SANTUARIO", "nodoB": "ILIYA", "retraso": 192},
     {"nodoA": "HAKOVEN", "nodoB": "ILIYA", "retraso": 5032},
-    {"nodoA": "GRANDIHA", "nodoB": "PUESTO EPHERIA", "retraso": 1897}
+    {"nodoA": "GRANDIHA", "nodoB": "PUESTO EPHERIA", "retraso": 1897},
+    {"nodoA": "HAKOVEN", "nodoB": "LEMA", "retraso": 4353},
+    {"nodoA": "HAEMO", "nodoB": "SANTUARIO", "retraso": -3084},
+    {"nodoA": "GRANDIHA", "nodoB": "SANTUARIO", "retraso": 2591}
 ]
