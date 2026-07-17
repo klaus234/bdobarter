@@ -624,13 +624,33 @@
             box-shadow: none;
         }
 
-        .fila-vuelta span {
+        .tiempoTramo {
+            color: rgba(236, 240, 241, 0.55);
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+            white-space: nowrap;
+            cursor: default;
+        }
+
+        #resumenTiempoTotal {
+            border-left: 3px solid var(--accent-green);
+            background: rgba(46, 204, 113, 0.08);
+            color: var(--accent-green);
+            font-weight: bold;
+            font-size: 13px;
+            padding: 10px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .fila-vuelta span:first-child {
             color: rgba(236, 240, 241, 0.65);
             font-weight: 600;
             cursor: pointer;
         }
 
-        .fila-vuelta span:hover {
+        .fila-vuelta span:first-child:hover {
             color: var(--accent-gold);
         }
 
@@ -1188,13 +1208,16 @@
             let indiceViaje = 0;
             let totalNodos = 0;
             let distTotal = 0;
+            let tiempoTotal = 0;
 
             for (let rgeneral of viajes) {
                 const distViaje = distanciaViajeXY(rgeneral);
                 distTotal += distViaje;
+                const tViaje = tiempoViajeXY(rgeneral);
+                tiempoTotal += tViaje;
                 const liGeneral = document.createElement("li");
                 const identificador = document.createElement("div");
-                identificador.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)} · ⏱ ${Navegacion.fmt(tiempoViajeXY(rgeneral))}`;
+                identificador.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)} · ⏱ ${Navegacion.fmt(tViaje)}`;
                 identificador.className = "identificadorViaje";
                 
                 if (indiceViaje === 0) {
@@ -1240,6 +1263,7 @@
                     btnPlay.type = "button";
                     btnPlay.className = "btn-play";
                     btnPlay.innerText = "▶";
+                    btnPlay.dataset.simbolo = "▶";
                     const { vel, acc } = Navegacion.stats();
                     const retr = retrasoEntre(origen.titulo, rnodo.titulo);
                     const est = Navegacion.estimarSegundos(
@@ -1250,8 +1274,14 @@
                         Navegacion.zarpar(origen, rnodo, rnodo.titulo, btnPlay, cbox);
                     };
 
+                    // tiempo estimado del tramo, visible al lado del nombre
+                    const spnT = document.createElement("span");
+                    spnT.className = "tiempoTramo";
+                    spnT.innerText = "≈ " + Navegacion.fmt(est);
+
                     lit.append(cbox);
                     lit.append(spn);
+                    lit.append(spnT);
                     lit.append(btnPlay);
                     liGeneral.append(lit);
                     totalNodos++;
@@ -1275,6 +1305,7 @@
                     btnV.type = "button";
                     btnV.className = "btn-play";
                     btnV.innerText = "◀";
+                    btnV.dataset.simbolo = "◀";
                     const { vel: velV, acc: accV } = Navegacion.stats();
                     const retrV = retrasoEntre(origenV.titulo, destinoV.titulo);
                     const estV = Navegacion.estimarSegundos(
@@ -1285,7 +1316,12 @@
                         Navegacion.zarpar(origenV, destinoV, destinoV.titulo, btnV, null);
                     };
 
+                    const spnTV = document.createElement("span");
+                    spnTV.className = "tiempoTramo";
+                    spnTV.innerText = "≈ " + Navegacion.fmt(estV);
+
                     filaV.append(spnV);
+                    filaV.append(spnTV);
                     filaV.append(btnV);
                     liGeneral.append(filaV);
                 }
@@ -1293,6 +1329,14 @@
                 identificador.firstNodoSpan = firstNodoSpan;
                 indiceViaje++;
                 contenedor.append(liGeneral);
+            }
+
+            // Resumen final: tiempo total de todos los viajes (con vueltas)
+            if (viajes.length > 0) {
+                const resumen = document.createElement("li");
+                resumen.id = "resumenTiempoTotal";
+                resumen.innerText = `⏱ Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${Navegacion.fmt(tiempoTotal)}`;
+                contenedor.append(resumen);
             }
 
             return { nodos: totalNodos, dist: distTotal };
@@ -1817,7 +1861,7 @@
                 if (typeof cancelarBarco === "function") cancelarBarco();
                 if (intervalo) { clearInterval(intervalo); intervalo = null; }
                 if (filaActiva) {
-                    filaActiva.btn.innerText = "▶";
+                    filaActiva.btn.innerText = filaActiva.btn.dataset.simbolo || "▶";
                     const fila = filaActiva.btn.closest(".cboxnodo");
                     if (fila) fila.classList.remove("enNavegacion");
                     filaActiva = null;
@@ -2108,8 +2152,6 @@
             </div>
             <div id="leyenda">
                 <span><i style="background:#3498db"></i> Nodo</span>
-                <span><i style="background:#e67e22"></i> Nivel 5</span>
-                <span><i style="background:#9b59b6"></i> Nivel 6</span>
                 <span><i class="anillo-verde"></i> Nodo inicial</span>
                 <span><i class="anillo"></i> Ruta planeada</span>
                 <span><i style="background:#2ecc71"></i> Marcado</span>
