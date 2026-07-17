@@ -13,6 +13,15 @@
         El resultado se agrega a mano en <code>retrasos.json</code>.
     </p>
 
+    <h2>Cronómetro</h2>
+    <p id="cronoDisplay" style="font-size: 2em; font-family: monospace;">00:00</p>
+    <button type="button" id="btnCronoStart">Iniciar</button>
+    <button type="button" id="btnCronoStop">Detener</button>
+    <button type="button" id="btnCronoReset">Reiniciar</button>
+    <button type="button" id="btnCronoUsar">Usar este tiempo ↓</button>
+
+    <hr>
+
     <form id="formRetraso">
         <label>Velocidad % del barco: <input type="number" id="vel" value="157" min="50" max="300"></label><br><br>
         <label>Aceleración % del barco: <input type="number" id="acc" value="127" min="50" max="300"></label><br><br>
@@ -41,6 +50,52 @@
         const A0 = 1.42;
         const K_RUTA = 3.511;
         const D_FIJA = 307;
+
+        // --- Cronómetro (minutos:segundos.décimas) ---
+        let cronoInicio = null;
+        let cronoAcumulado = 0; // ms acumulados en pausas previas
+        let cronoIntervalo = null;
+
+        function cronoFmt(ms) {
+            const totalSeg = Math.floor(ms / 1000);
+            const min = Math.floor(totalSeg / 60);
+            const seg = totalSeg % 60;
+            return String(min).padStart(2, '0') + ':' + String(seg).padStart(2, '0');
+        }
+
+        function cronoMsActual() {
+            return cronoAcumulado + (cronoInicio ? (Date.now() - cronoInicio) : 0);
+        }
+
+        function cronoRender() {
+            document.getElementById('cronoDisplay').textContent = cronoFmt(cronoMsActual());
+        }
+
+        document.getElementById('btnCronoStart').onclick = function () {
+            if (cronoInicio) return; // ya corriendo
+            cronoInicio = Date.now();
+            cronoIntervalo = setInterval(cronoRender, 100);
+        };
+
+        document.getElementById('btnCronoStop').onclick = function () {
+            if (!cronoInicio) return;
+            cronoAcumulado += Date.now() - cronoInicio;
+            cronoInicio = null;
+            clearInterval(cronoIntervalo);
+            cronoRender();
+        };
+
+        document.getElementById('btnCronoReset').onclick = function () {
+            cronoInicio = null;
+            cronoAcumulado = 0;
+            clearInterval(cronoIntervalo);
+            cronoRender();
+        };
+
+        document.getElementById('btnCronoUsar').onclick = function () {
+            const segs = cronoMsActual() / 1000;
+            document.getElementById('tiempo').value = segs.toFixed(1);
+        };
 
         let nodos = {};
         let retrasos = [];
