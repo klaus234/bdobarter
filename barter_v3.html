@@ -722,6 +722,9 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            max-height: 260px;
+            overflow-y: auto;
+            padding-right: 6px;
         }
 
         .savestate {
@@ -1700,7 +1703,7 @@
         // máx nodos por viaje y el flag de modo manual.
         // ============================================
         const SaveStates = (function () {
-            const MAX = 5;
+            const MAX = 10;
 
             function leer() {
                 try {
