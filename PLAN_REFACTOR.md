@@ -1,8 +1,9 @@
 # Plan de refactorización y organización — BDO Barter
 
-> Estado: **propuesta para evaluar**. Nada de esto está aplicado.
-> Cada fase deja el sitio 100% funcional y se commitea por separado,
-> así se puede frenar (o revertir) en cualquier punto.
+> Estado: **EJECUTADO** (jul-2026). Fases F0–F4 aplicadas, un commit por fase.
+> Decisiones tomadas: legacy borrado (no `legacy/`), **F5 descartada**
+> (jQuery se queda, decisión del usuario), JSONs movidos a `data/`.
+> F6 aplicada parcialmente (README actualizado).
 
 ## 1. Diagnóstico del estado actual
 
