@@ -624,13 +624,20 @@
             box-shadow: none;
         }
 
+        .uml1 span.tiempoTramo,
         .tiempoTramo {
-            color: rgba(236, 240, 241, 0.55);
+            color: var(--accent-gold);
             font-size: 11px;
             font-weight: 600;
             margin-left: 8px;
             white-space: nowrap;
             cursor: default;
+        }
+
+        .cboxnodo.atajoSel {
+            outline: 1px dashed var(--accent-gold);
+            outline-offset: 2px;
+            border-radius: 6px;
         }
 
         #resumenTiempoTotal {
@@ -848,6 +855,15 @@
                     dist2(viaje[i].x, viaje[i].y, viaje[i + 1].x, viaje[i + 1].y), vel, acc, retr);
             }
             return total;
+        }
+
+        // Formato hh:mm:ss (solo para el tiempo total de todos los viajes)
+        function fmtHMS(seg) {
+            seg = Math.max(0, Math.ceil(seg));
+            const h = Math.floor(seg / 3600);
+            const m = Math.floor((seg % 3600) / 60);
+            const s = seg % 60;
+            return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
         }
 
         function showMessageGuardando() {
@@ -1338,9 +1354,12 @@
             if (viajes.length > 0) {
                 const resumen = document.createElement("li");
                 resumen.id = "resumenTiempoTotal";
-                resumen.innerText = `⏱ Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${Navegacion.fmt(tiempoTotal)}`;
+                resumen.innerText = `⏱ Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${fmtHMS(tiempoTotal)}`;
                 contenedor.append(resumen);
             }
+
+            // reposicionar el puntero de atajos de teclado ("." y ",")
+            if (typeof Atajos !== "undefined") Atajos.reset();
 
             return { nodos: totalNodos, dist: distTotal };
         }
@@ -1730,6 +1749,9 @@
             function guardar(i, nombre) {
                 Ruta.sincronizar();
                 const slots = leer();
+                if (slots[i] && !confirm(`¿Sobreescribir el savestate "${slots[i].nombre}" con la ruta actual?`)) {
+                    return;
+                }
                 slots[i] = {
                     nombre: (nombre || "").trim() || ("Slot " + (i + 1)),
                     ruta: document.getElementById("nodosm").value,
@@ -1776,6 +1798,7 @@
                     const bX = boton("✕", "Borrar este savestate");
                     bX.onclick = function () {
                         const s = leer();
+                        if (s[i] && !confirm(`¿Borrar el savestate "${s[i].nombre}"?`)) return;
                         s[i] = null;
                         escribir(s);
                         render();
@@ -1813,6 +1836,8 @@
             let intervalo = null;
             let filaActiva = null;
             let audioCtx = null;
+            let pausado = false;
+            let destinoActual = "";
             const tituloOriginal = document.title;
 
             function stats() {
@@ -1860,7 +1885,29 @@
                 } catch (e) { console.warn("Audio no disponible:", e); }
             }
 
+            // ESC: primer toque detiene el reloj; el segundo cancela el viaje
+            // como si nunca se hubiese apretado play. La pausa no se reanuda.
+            function pausar() {
+                if (!intervalo || pausado) return;
+                clearInterval(intervalo);
+                intervalo = null;
+                pausado = true;
+                document.getElementById("timerDestino").innerText = "⏸ " + destinoActual;
+                document.title = "⏸ " + destinoActual + " — " + tituloOriginal;
+                if (typeof pausarBarco === "function") pausarBarco();
+            }
+
+            function escTimer() {
+                if (intervalo && !pausado) { pausar(); return; }
+                if (pausado) cancelar();
+            }
+
+            function enViaje() {
+                return intervalo !== null || pausado;
+            }
+
             function cancelar() {
+                pausado = false;
                 if (typeof cancelarBarco === "function") cancelarBarco();
                 if (intervalo) { clearInterval(intervalo); intervalo = null; }
                 if (filaActiva) {
@@ -1876,6 +1923,7 @@
             // origen/destino: objetos con x,y (Nodo o plano del cache)
             function zarpar(origen, destino, destinoNombre, btn, cbox) {
                 cancelar(); // un barco a la vez: reemplaza el aviso anterior
+                destinoActual = destinoNombre;
                 const { vel, acc } = stats();
                 const distancia = dist2(origen.x, origen.y, destino.x, destino.y);
                 const retraso = retrasoEntre(origen.titulo, destino.titulo);
@@ -1924,9 +1972,72 @@
                 intervalo = setInterval(tick, 250);
             }
 
-            return { zarpar, cancelar, estimarSegundos, stats, fmt };
+            return { zarpar, cancelar, pausar, escTimer, enViaje, estimarSegundos, stats, fmt };
         })();
         window.Navegacion = Navegacion;
+
+        // ============================================
+        // MÓDULO ATAJOS DE TECLADO
+        //  "."   → zarpar en el primer tramo disponible desde el puntero
+        //  ","   → mover el puntero al siguiente tramo (cicla entre viajes)
+        //  "ESC" → pausar el reloj / cancelar el viaje (segundo toque)
+        // El puntero se marca con un borde dorado punteado en la lista.
+        // ============================================
+        const Atajos = (function () {
+            let idx = 0;
+
+            function botones() {
+                return Array.from(document.querySelectorAll("#outputnodos .btn-play"));
+            }
+
+            function marcar() {
+                document.querySelectorAll("#outputnodos .cboxnodo.atajoSel")
+                    .forEach(f => f.classList.remove("atajoSel"));
+                const btns = botones();
+                if (btns.length === 0) return;
+                if (idx >= btns.length) idx = 0;
+                const fila = btns[idx].closest(".cboxnodo");
+                if (fila) {
+                    fila.classList.add("atajoSel");
+                    fila.scrollIntoView({ block: "nearest" });
+                }
+            }
+
+            function reset() {
+                idx = 0;
+                marcar();
+            }
+
+            // tecla ",": pasar al siguiente tramo (tras la vuelta, sigue el próximo viaje)
+            function siguiente() {
+                const btns = botones();
+                if (btns.length === 0) return;
+                idx = (idx + 1) % btns.length;
+                marcar();
+            }
+
+            // tecla ".": click en play del primer tramo disponible desde el puntero.
+            // Los tramos ya viajados (⚓) o en curso se saltean; si hay un viaje
+            // activo o pausado, no hace nada (para no cancelarlo por accidente).
+            function zarparActual() {
+                if (Navegacion.enViaje()) return;
+                const btns = botones();
+                if (btns.length === 0) return;
+                for (let k = 0; k < btns.length; k++) {
+                    const i = (idx + k) % btns.length;
+                    const b = btns[i];
+                    if (b.innerText === (b.dataset.simbolo || "▶")) {
+                        idx = i;
+                        marcar();
+                        b.click();
+                        return;
+                    }
+                }
+            }
+
+            return { reset, siguiente, zarparActual };
+        })();
+        window.Atajos = Atajos;
 
         // ============================================
         // INICIALIZACIÓN
@@ -2012,6 +2123,20 @@
                 Navegacion.cancelar();
             };
 
+            // Atajos de teclado (se ignoran al escribir en inputs/textarea)
+            document.addEventListener("keydown", function (e) {
+                if (e.target && e.target.matches && e.target.matches("input, textarea, select")) return;
+                if (e.key === ".") {
+                    e.preventDefault();
+                    Atajos.zarparActual();
+                } else if (e.key === ",") {
+                    e.preventDefault();
+                    Atajos.siguiente();
+                } else if (e.key === "Escape") {
+                    Navegacion.escTimer();
+                }
+            });
+
             // Zoom controls (aplicarZoom ancla el zoom para que no se desplace)
             document.getElementById("btnZoomIn").onclick = function (e) {
                 e.preventDefault();
@@ -2083,7 +2208,7 @@
     </script>
 </head>
 <body>
-    <h2>🗺️ Calcular Ruta Óptima v4.5.0</h2>
+    <h2>🗺️ Calcular Ruta Óptima v4.6.0</h2>
     <div class="layout-container">
         <div class="columnaA">
             <div class="input-group">
@@ -2133,6 +2258,7 @@
             
             <label class="lbl">📊 Rutas Calculadas (Total: <span id="totales">0</span>):</label>
             <ul id="outputnodos" class="uml1"></ul>
+            <p class="hint">⌨ Atajos: <b>.</b> zarpar al tramo marcado · <b>,</b> mover la marca al siguiente tramo · <b>ESC</b> pausa el reloj (2° ESC cancela el viaje)</p>
             
             <button id="guardar">💾 Guardar Estado</button>
 

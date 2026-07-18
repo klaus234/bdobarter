@@ -246,6 +246,13 @@ function cancelarBarco() {
     barcoAnim = null;
 }
 
+// Llamado desde Navegacion.pausar (ESC): congela el barco donde está.
+function pausarBarco() {
+    if (!barcoAnim) return;
+    const dur = Math.max(1, barcoAnim.fin - barcoAnim.inicio);
+    barcoAnim.congelado = Math.min(1, (Date.now() - barcoAnim.inicio) / dur);
+}
+
 // ============================================
 // INICIALIZACIÓN
 // ============================================
@@ -275,7 +282,7 @@ function setup() {
 // ============================================
 function draw() {
     // framerate adaptativo: fluido al interactuar o con el barco navegando
-    const barcoNavegando = animBarcoActiva() && Date.now() < barcoAnim.fin;
+    const barcoNavegando = animBarcoActiva() && barcoAnim.congelado === undefined && Date.now() < barcoAnim.fin;
     if (mouseMove || millis() - ultimoMovimiento < 1800 || barcoNavegando) frameRate(30);
     else frameRate(8);
 
@@ -345,7 +352,9 @@ function draw() {
     // 4) Barco navegando o estacionado en el destino
     if (animBarcoActiva()) {
         const dur = Math.max(1, barcoAnim.fin - barcoAnim.inicio);
-        const prog = Math.min(1, (Date.now() - barcoAnim.inicio) / dur);
+        const prog = (barcoAnim.congelado !== undefined)
+            ? barcoAnim.congelado
+            : Math.min(1, (Date.now() - barcoAnim.inicio) / dur);
         const bx = barcoAnim.x1 + (barcoAnim.x2 - barcoAnim.x1) * prog;
         const by = barcoAnim.y1 + (barcoAnim.y2 - barcoAnim.y1) * prog;
         const sx = (bx * szFixX + szFixOX) * zoomValue + offsetX;
