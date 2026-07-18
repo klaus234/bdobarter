@@ -10,6 +10,7 @@
     <script src="p5.min.js"></script>
     <script src="jquery-1.9.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="js/modelo.js"></script>
     <script src="mapa_zoom.js"></script>
     <script>
         // ============================================
@@ -50,10 +51,6 @@
         // ============================================
         // FUNCIONES UTILITARIAS
         // ============================================
-        function dist2(x1, y1, x2, y2) {
-            return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
-        }
-
         function distNodos(n1, n2) {
             return n1.distancia(n2);
         }
@@ -80,15 +77,6 @@
                     dist2(viaje[i].x, viaje[i].y, viaje[i + 1].x, viaje[i + 1].y), vel, acc, retr);
             }
             return total;
-        }
-
-        // Formato hh:mm:ss (solo para el tiempo total de todos los viajes)
-        function fmtHMS(seg) {
-            seg = Math.max(0, Math.ceil(seg));
-            const h = Math.floor(seg / 3600);
-            const m = Math.floor((seg % 3600) / 60);
-            const s = seg % 60;
-            return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
         }
 
         function showMessageGuardando() {
@@ -579,7 +567,7 @@
             if (viajes.length > 0) {
                 const resumen = document.createElement("li");
                 resumen.id = "resumenTiempoTotal";
-                resumen.innerText = `⏱ Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${fmtHMS(tiempoTotal)}`;
+                resumen.innerText = `⏱ Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${Modelo.fmtHMS(tiempoTotal)}`;
                 contenedor.append(resumen);
             }
 
@@ -1041,23 +1029,11 @@
 
         // ============================================
         // MÓDULO NAVEGACIÓN: aviso de llegada del barco
-        //
-        // Modelo recalibrado (jul-2026) con 36 tramos medidos en el juego:
-        //   d_eff = K_RUTA·d_recta + D_FIJA + retraso_residual
-        //   v = V0·vel/100 (unid/s) ; a = A0·acc/100 (unid/s²)
-        //   t = d_eff/v + v/(2a)    | t = sqrt(2·d_eff/a) en tramos cortos
-        // K_RUTA=3.511 (el camino real ≈ 3.5× la línea recta del mapa) y
-        // D_FIJA=307 unid (~19 s: atraque + arranque + boost promediado)
-        // salen de un ajuste por mínimos cuadrados sobre los 16 tramos de
-        // mar abierto (R²=0.94, error mediano ~15 s).
-        // El retraso de retrasos.json es el RESIDUO geográfico del tramo
-        // (rodear continentes) respecto de este modelo; sin dato, 0.
+        // El modelo físico (constantes, ETA, formato) vive en js/modelo.js.
         // ============================================
         const Navegacion = (function () {
-            const V0 = 10.2;
-            const A0 = 1.42;
-            const K_RUTA = 3.511;
-            const D_FIJA = 307;
+            const estimarSegundos = Modelo.estimarSegundos;
+            const fmt = Modelo.fmt;
             let intervalo = null;
             let filaActiva = null;
             let audioCtx = null;
@@ -1069,21 +1045,6 @@
                 const vel = parseFloat(document.getElementById("barcoVel").value) || 100;
                 const acc = parseFloat(document.getElementById("barcoAcc").value) || 100;
                 return { vel, acc };
-            }
-
-            // distRecta: línea recta del mapa; retraso: residuo geográfico (retrasos.json)
-            function estimarSegundos(distRecta, vel, acc, retraso) {
-                const v = V0 * vel / 100;
-                const a = A0 * acc / 100;
-                const dEff = Math.max(0, K_RUTA * distRecta + D_FIJA + (retraso || 0));
-                const dArranque = (v * v) / (2 * a);
-                if (dEff <= dArranque) return Math.sqrt(2 * dEff / a);
-                return dEff / v + v / (2 * a);
-            }
-
-            function fmt(seg) {
-                seg = Math.max(0, Math.ceil(seg));
-                return Math.floor(seg / 60) + ":" + String(seg % 60).padStart(2, "0");
             }
 
             // Campanita suave sintetizada (C5-E5-G5, volumen bajo), sin archivos.

@@ -36,22 +36,14 @@
 
     <pre id="salida"></pre>
 
+    <script src="js/modelo.js"></script>
     <script>
-        // Mismo modelo que index.html, recalibrado (jul-2026) con 36 tramos reales:
-        //   d_eff = K_RUTA·d_recta + D_FIJA + retraso   (K_RUTA=3.511, D_FIJA=307; R²=0.94)
-        //   v = V0·vel/100 (unid/s crucero), a = A0·acc/100 (unid/s² arranque)
-        //   t = d_eff/v + v/(2a)   |   t = sqrt(2·d_eff/a) en tramos cortos
-        // Inversión (de tiempo real a distancia efectiva recorrida):
-        //   si t <= v/a  -> d_medida = a·t²/2      (nunca llegó a crucero)
-        //   si t >  v/a  -> d_medida = (t - v/(2a))·v
-        // retraso = d_medida - (K_RUTA·d_recta + D_FIJA)
-        // Es el RESIDUO geográfico del tramo (rodear continentes, estrechos);
-        // en mar abierto suele quedar cerca de 0 y no hace falta registrarlo.
-        // Sigue siendo universal: no depende del barco usado para medir.
-        const V0 = 10.2;
-        const A0 = 1.42;
-        const K_RUTA = 3.511;
-        const D_FIJA = 307;
+        // El modelo físico (constantes, estimación e inversión) vive en
+        // js/modelo.js, compartido con index.html.
+        // retraso = d_medida - (K_RUTA·d_recta + D_FIJA): RESIDUO geográfico
+        // del tramo (rodear continentes, estrechos); en mar abierto queda
+        // cerca de 0 y no hace falta registrarlo. Es universal: no depende
+        // del barco usado para medir.
 
         // --- Cronómetro (minutos:segundos.décimas) ---
         let cronoInicio = null;
@@ -150,12 +142,11 @@
             if (!(nB in nodos)) { salida.textContent = 'Nodo B no encontrado: ' + nB; return; }
             if (!(t > 0)) { salida.textContent = 'Tiempo inválido.'; return; }
 
-            const v = V0 * vel / 100;
-            const a = A0 * acc / 100;
-            const dMedida = (t <= v / a) ? (a * t * t / 2) : ((t - v / (2 * a)) * v);
+            const v = Modelo.velocidad(vel);
+            const dMedida = Modelo.distanciaMedida(t, vel, acc);
             const A = nodos[nA], B = nodos[nB];
             const dRecta = Math.sqrt((A.x - B.x) ** 2 + (A.y - B.y) ** 2);
-            const dModelo = K_RUTA * dRecta + D_FIJA;
+            const dModelo = Modelo.distanciaModelo(dRecta);
             const retraso = Math.round(dMedida - dModelo);
             const segResiduo = Math.round(retraso / v);
 
