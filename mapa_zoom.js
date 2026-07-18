@@ -229,7 +229,7 @@ function animBarcoActiva() {
     return !!(chk && chk.checked && barcoAnim && imgBarco && imgBarco.width > 0);
 }
 
-// Llamado desde Navegacion.zarpar (barter_v3.html): inicia el viaje del barco.
+// Llamado desde Navegacion.zarpar (index.html): inicia el viaje del barco.
 // origen/destino: objetos con x,y en coords de datos.json.
 function iniciarBarco(origen, destino, duracionSeg) {
     const ahora = Date.now();

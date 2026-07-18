@@ -4,24 +4,2319 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDO BARTER</title>
+    <title>Barter Simple V3 - Viajes </title>
+    <link rel="stylesheet" href="jquery-ui.min.css">
+    <link rel="stylesheet" href="estilo.css">
+    <script src="p5.min.js"></script>
     <style>
-        body{
-            background-color: black;
+        :root {
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent-gold: #d4af37;
+            --accent-red: #e74c3c;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --text-light: #ecf0f1;
+            --border-accent: #0f3460;
+            --shadow: 0 8px 32px 0 rgba(212, 175, 55, 0.1);
         }
-        a{
-            display: block;
-            margin: 20px;
-            font-size: 2em;
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-size: 14px;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 15px;
+            min-height: 100vh;
+        }
+
+        h2 {
+            color: var(--accent-gold);
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .layout-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .columnaA, .columnaB {
+            flex: 1;
+            min-width: 350px;
+        }
+
+        .columnaB {
+            text-align: center;
+            position: sticky;
+            top: 12px;
+            align-self: flex-start;
+        }
+
+        #leyenda {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            justify-content: center;
+            margin-top: 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #leyenda span {
+            display: flex;
+            align-items: center;
+        }
+
+        #leyenda i {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        #leyenda i.anillo {
+            background: transparent;
+            border: 2px solid var(--accent-gold);
+            width: 7px;
+            height: 7px;
+        }
+
+        #leyenda i.anillo-verde {
+            background: transparent;
+            border: 2px solid var(--accent-green);
+            width: 7px;
+            height: 7px;
+        }
+
+        #ayudaMapa {
+            font-size: 11px;
+            color: rgba(236, 240, 241, 0.55);
+            margin-top: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            color: var(--accent-gold);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"] {
+            background-color: rgba(15, 52, 96, 0.6);
+            color: var(--accent-blue);
+            border: 2px solid var(--border-accent);
+            padding: 10px 12px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            background-color: rgba(15, 52, 96, 0.8);
+        }
+
+        textarea {
+            background-color: rgba(15, 52, 96, 0.6);
+            color: var(--text-light);
+            border: 2px solid var(--border-accent);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            resize: vertical;
+            transition: all 0.3s ease;
+            min-height: 150px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+            background-color: rgba(15, 52, 96, 0.8);
+        }
+
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--border-accent) 0%, #0a1f33 100%);
+            color: var(--accent-gold);
+            border: 2px solid var(--accent-gold);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 10px 0;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #c09d2a 100%);
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        a {
+            color: var(--accent-blue);
             text-decoration: none;
+            transition: all 0.3s ease;
         }
-        a:hover{
-            text-shadow: 4px 4px 4px blue;
+
+        a:hover {
+            color: var(--accent-gold);
+            text-decoration: underline;
+        }
+
+        #defaultCanvas0 {
+            border: 3px solid var(--accent-gold);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .uml1 {
+            margin-top: 15px;
+        }
+
+        .uml1 li {
+            padding-block: 8px;
+            border-left: 3px solid var(--accent-gold);
+            padding-left: 10px;
+            margin-bottom: 8px;
+            background: rgba(212, 175, 55, 0.05);
+            padding: 10px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .uml1 li:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-left-color: var(--accent-blue);
+        }
+
+        .uml1 span {
+            cursor: pointer;
+            color: var(--accent-blue);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .uml1 span:hover {
+            color: var(--accent-gold);
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        }
+
+        .identificadorViaje {
+            font-weight: bold;
+            color: var(--text-light);
+            background-color: rgba(52, 152, 219, 0.2);
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--accent-blue);
+            width: 100%;
+            cursor: pointer;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .identificadorViaje:hover {
+            background-color: rgba(52, 152, 219, 0.4);
+            border-color: var(--accent-gold);
+        }
+
+        .viajeActivo {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.5) 0%, rgba(46, 204, 113, 0.3) 100%);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        #popupguardando {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #229954 100%);
+            border-radius: 8px;
+            padding: 20px;
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(39, 174, 96, 0.3);
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        input[type="checkbox"] {
+            cursor: pointer;
+            height: 18px;
+            width: 18px;
+            margin-right: 8px;
+            accent-color: var(--accent-gold);
+        }
+
+        .cboxnodo {
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .cboxnodo:hover {
+            transform: translateX(3px);
+        }
+
+        .btn_slide_container {
+            position: relative;
+            border-radius: 2rem;
+            border: 3px solid var(--accent-red);
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+            width: 100%;
+            padding: 0.4rem;
+            padding-block: 0.7rem;
+            margin-block: 0.6rem;
+            text-align: center;
+            height: 2.5rem;
+            cursor: grab;
+        }
+
+        .btn_slide_container:active {
+            cursor: grabbing;
+        }
+
+        #slider_erase {
+            position: absolute;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            --size_box: 2.5rem;
+            background: linear-gradient(135deg, var(--accent-red), #c0392b);
+            width: var(--size_box);
+            height: var(--size_box);
+            border-radius: 2rem;
+            cursor: grab;
+            -webkit-user-drag: element;
+            -moz-user-drag: element;
+            transition: left 0.3s ease;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        #slider_erase:active {
+            cursor: grabbing;
+        }
+
+        #zoomer {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(15, 52, 96, 0.6);
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--border-accent);
+        }
+
+        #zoomer span {
+            color: var(--accent-gold);
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .zoomBTN {
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: var(--border-accent);
+            border: 2px solid var(--accent-gold);
+            margin: 0 4px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .zoomBTN:hover {
+            background-color: var(--accent-gold);
+            color: var(--primary-dark);
+        }
+
+        .lbl {
+            color: var(--accent-gold);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .ruta-lista {
+            list-style: none;
+            margin: 0 0 8px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ruta-vacia {
+            color: rgba(236, 240, 241, 0.5);
+            font-size: 12px;
+            font-style: italic;
+            margin: 0 0 10px;
+            line-height: 1.5;
+        }
+
+        .ruta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(52, 152, 219, 0.12);
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            padding: 8px 10px;
+            transition: background 0.2s ease;
+        }
+
+        .ruta-item:hover { background: rgba(52, 152, 219, 0.2); }
+        .ruta-item.dragging { opacity: 0.4; }
+
+        .ruta-grip {
+            color: var(--accent-gold);
+            cursor: grab;
+            font-size: 15px;
+            line-height: 1;
+            letter-spacing: -3px;
+            padding-right: 3px;
+        }
+        .ruta-item:active .ruta-grip { cursor: grabbing; }
+
+        .ruta-nombre {
+            min-width: 96px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+
+        .ruta-deps {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .dep-label {
+            color: rgba(236, 240, 241, 0.5);
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .dep-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(46, 204, 113, 0.18);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .dep-x { cursor: pointer; opacity: 0.75; }
+        .dep-x:hover { opacity: 1; color: var(--accent-red); }
+
+        .dep-add {
+            background: #0f3460;
+            color: var(--text-light);
+            border: 1px dashed var(--accent-blue);
+            border-radius: 12px;
+            padding: 3px 7px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .dep-add option {
+            background: #16213e;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .ruta-del {
+            background: transparent;
+            border: none;
+            color: var(--accent-red);
+            cursor: pointer;
+            font-size: 14px;
+            width: auto;
+            margin: 0;
+            padding: 2px 4px;
+            flex: 0 0 auto;
+        }
+        .ruta-del:hover {
+            transform: scale(1.2);
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .ruta-acciones { margin: 2px 0 8px; }
+
+        .btn-mini {
+            width: auto;
+            margin: 0;
+            padding: 6px 12px;
+            font-size: 11px;
+            background: transparent;
+            color: var(--accent-blue);
+            border: 1px solid var(--border-accent);
+            letter-spacing: 0.5px;
+        }
+        .btn-mini:hover {
+            background: var(--border-accent);
+            color: var(--accent-gold);
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-mini.activo {
+            color: var(--accent-gold);
+            border-color: var(--accent-gold);
+        }
+
+        .hint {
+            font-size: 11px;
+            color: rgba(236, 240, 241, 0.5);
+            margin: 6px 0 0;
+            line-height: 1.5;
+        }
+        .hint code {
+            background: rgba(15, 52, 96, 0.6);
+            padding: 1px 5px;
+            border-radius: 4px;
+            color: var(--accent-blue);
+            font-size: 10px;
+        }
+
+        #barcoPanel {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            padding: 15px;
+            border: 2px solid var(--border-accent);
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        #barcoPanel h3 {
+            color: var(--accent-gold);
+            margin: 0 0 12px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .barco-campos {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .barco-campo {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .barco-campo input {
+            width: 110px;
+        }
+
+        #barcoPanel .hint {
+            text-align: center;
+        }
+
+        .btn-play {
+            width: auto;
+            min-width: 52px;
+            margin: 0 0 0 auto;
+            padding: 3px 9px;
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            background: rgba(46, 204, 113, 0.12);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+            border-radius: 12px;
+            letter-spacing: 0;
+            flex: 0 0 auto;
+        }
+
+        .btn-play:hover {
+            background: var(--accent-green);
+            color: #fff;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .uml1 span.tiempoTramo,
+        .tiempoTramo {
+            color: var(--accent-gold);
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+            white-space: nowrap;
+            cursor: default;
+        }
+
+        .cboxnodo.atajoSel {
+            outline: 1px dashed var(--accent-gold);
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+
+        #resumenTiempoTotal {
+            border-left: 3px solid var(--accent-green);
+            background: rgba(46, 204, 113, 0.08);
+            color: var(--accent-green);
+            font-weight: bold;
+            font-size: 13px;
+            padding: 10px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .fila-vuelta span:first-child {
+            color: rgba(236, 240, 241, 0.65);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .fila-vuelta span:first-child:hover {
+            color: var(--accent-gold);
+        }
+
+        .fila-vuelta .btn-play {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            background: rgba(52, 152, 219, 0.12);
+
+        }
+        .cboxnodo.enNavegacion {
+            background: rgba(212, 175, 55, 0.08);
+            border-radius: 6px;
+            animation: pulseNav 1.6s ease-in-out infinite;
+        }
+
+        @keyframes pulseNav {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.25); }
+            50% { box-shadow: 0 0 10px 2px rgba(212, 175, 55, 0.4); }
+        }
+
+        #timerViaje {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 1200;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(135deg, var(--secondary-dark), #0a1f33);
+            border: 2px solid var(--accent-gold);
+            border-radius: 10px;
+            padding: 10px 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+        }
+
+        #timerDestino {
+            color: var(--accent-gold);
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        #timerCuenta {
+            color: var(--text-light);
+            font-size: 22px;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #timerCancelar {
+            width: auto;
+            margin: 0;
+            padding: 3px 9px;
+            background: transparent;
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            border-radius: 6px;
+            font-size: 11px;
+        }
+
+        #timerCancelar:hover {
+            background: var(--accent-red);
+            color: #fff;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #savestates {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 260px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .savestate {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .savestate input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 7px 10px;
+            font-size: 12px;
+        }
+
+        .btn-ss {
+            width: auto;
+            margin: 0;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 6px;
+            letter-spacing: 0;
+            flex: 0 0 auto;
+        }
+
+        .btn-ss:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+
+        .btn-ss:disabled:hover {
+            background: linear-gradient(135deg, var(--border-accent) 0%, #0a1f33 100%);
+            color: var(--accent-gold);
+            transform: none;
+            box-shadow: none;
+        }
+
+        @media (max-width: 1024px) {
+            .layout-container {
+                flex-direction: column;
+            }
+
+            .columnaA, .columnaB {
+                width: 100%;
+            }
+
+            .columnaB {
+                position: static;
+            }
         }
     </style>
+    <script src="jquery-1.9.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="mapa_zoom.js"></script>
+    <script>
+        // ============================================
+        // CONFIGURACIÓN Y ESTADO GLOBAL
+        // ============================================
+        let dependenciasEncadenadas = false;
+        const nodosDic = {};
+        let resultadoViajes = [];
+        let ndata;
+        let ignoreCache = false;
+
+        // Retrasos entre nodos (retrasos.json): distancia extra en unidades de
+        // mapa por giros/maniobras, medida con calculadora_retraso.html.
+        // Clave simétrica "A|B" (orden alfabético). Si no hay dato, retraso 0.
+        const retrasosDic = {};
+        function retrasoEntre(a, b) {
+            const clave = [String(a).toUpperCase(), String(b).toUpperCase()].sort().join("|");
+            return retrasosDic[clave] || 0;
+        }
+
+        // ============================================
+        // CLASES
+        // ============================================
+        class Nodo {
+            constructor(x, y, titulo) {
+                this.x = x;
+                this.y = y;
+                this.titulo = titulo;
+            }
+
+            distancia(otro) {
+                return Math.sqrt(
+                    Math.pow(this.x - otro.x, 2) + Math.pow(this.y - otro.y, 2)
+                );
+            }
+        }
+
+        // ============================================
+        // FUNCIONES UTILITARIAS
+        // ============================================
+        function dist2(x1, y1, x2, y2) {
+            return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+        }
+
+        function distNodos(n1, n2) {
+            return n1.distancia(n2);
+        }
+
+        // Distancia total de un viaje. Usa dist2 sobre x/y para que también
+        // funcione con los viajes del cache (objetos planos sin métodos).
+        function distanciaViajeXY(viaje) {
+            let total = 0;
+            for (let i = 0; i < viaje.length - 1; i++) {
+                total += dist2(viaje[i].x, viaje[i].y, viaje[i + 1].x, viaje[i + 1].y);
+            }
+            return total;
+        }
+
+        // Tiempo total estimado de un viaje (incluye la vuelta al inicial, ya que
+        // el viaje termina en el nodo inicial). Suma el ETA de cada tramo con su
+        // retraso, usando la velocidad/aceleración actuales del barco.
+        function tiempoViajeXY(viaje) {
+            const { vel, acc } = Navegacion.stats();
+            let total = 0;
+            for (let i = 0; i < viaje.length - 1; i++) {
+                const retr = retrasoEntre(viaje[i].titulo, viaje[i + 1].titulo);
+                total += Navegacion.estimarSegundos(
+                    dist2(viaje[i].x, viaje[i].y, viaje[i + 1].x, viaje[i + 1].y), vel, acc, retr);
+            }
+            return total;
+        }
+
+        // Formato hh:mm:ss (solo para el tiempo total de todos los viajes)
+        function fmtHMS(seg) {
+            seg = Math.max(0, Math.ceil(seg));
+            const h = Math.floor(seg / 3600);
+            const m = Math.floor((seg % 3600) / 60);
+            const s = seg % 60;
+            return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+        }
+
+        function showMessageGuardando() {
+            setTimeout(function () {
+                $("#popupguardando").fadeIn(1000);
+                setTimeout(function () {
+                    $("#popupguardando").fadeOut(1000);
+                }, 3000);
+            }, 100);
+        }
+
+        function resetearNodosColor() {
+            for (let ndo of nodosM) {
+                ndo.seleccionado = false;
+            }
+        }
+
+        function irNodo() {
+            const inodo = nodosDic[this.innerText];
+            if (!inodo) return;
+            centrarEnNodo(inodo); // definido en mapa_zoom.js: deja el nodo en el centro del canvas
+        }
+
+        function colorearNodo() {
+            const nombreNodo = this.parentNode.children[1].innerText;
+            for (let ndo of nodosM) {
+                if (ndo.titulo === nombreNodo) {
+                    ndo.seleccionado = !ndo.seleccionado;
+                    return 0;
+                }
+            }
+            return 1;
+        }
+
+
+        // Rutas V2.
+        // ============================================
+// ALGORITMO 100% PERFECTO (Programación Dinámica / Held-Karp Modificado)
+// ============================================
+        function calcularRutaPerfectaDP(nodosPendientes, inicial, maxNodosPViaje) {
+            const N = nodosPendientes.length;
+            if (N === 0) return [];
+
+            // Precalcular matriz de distancias para máxima velocidad
+            // Índice 0 es la base (inicial), Índices 1 a N son las islas pendientes
+            const todos = [inicial, ...nodosPendientes];
+            const dist = Array(N + 1).fill(0).map(() => Array(N + 1).fill(0));
+            for (let i = 0; i <= N; i++) {
+                for (let j = 0; j <= N; j++) {
+                    dist[i][j] = todos[i].distancia(todos[j]);
+                }
+            }
+
+            // Mapa para memorizar estados y evitar recalcular (Aquí está la magia contra el O(N!))
+            const memo = new Map();
+
+            // Función recursiva con Memoización
+            // mask: Islas ya visitadas (en bits)
+            // curr: Dónde está el barco ahora mismo (índice)
+            // load: Cuántos intercambios lleva en el viaje actual
+            function resolver(mask, curr, load) {
+                // Caso base: Si ya visitamos todos los nodos, hay que volver a la base
+                if (mask === (1 << N) - 1) {
+                    return { cost: dist[curr][0], path: [0] };
+                }
+
+                // Crear una clave única para este estado
+                const stateKey = `${mask}-${curr}-${load}`;
+                if (memo.has(stateKey)) return memo.get(stateKey);
+
+                let bestCost = Infinity;
+                let bestPath = [];
+
+                // Opción 1: El barco se llenó. OBLIGATORIO volver a la base y empezar un viaje nuevo.
+                if (load === maxNodosPViaje) {
+                    let res = resolver(mask, 0, 0); 
+                    let cost = dist[curr][0] + res.cost;
+                    if (cost < bestCost) {
+                        bestCost = cost;
+                        bestPath = [0, ...res.path];
+                    }
+                } 
+                // Opción 2: El barco tiene espacio. Revisamos todas las islas no visitadas.
+                else {
+                    for (let i = 1; i <= N; i++) {
+                        // Comprobamos bit a bit si la isla 'i' NO ha sido visitada
+                        if ((mask & (1 << (i - 1))) === 0) {
+                            // Marcamos la isla como visitada añadiéndola a la máscara de bits
+                            let nextMask = mask | (1 << (i - 1));
+                            let res = resolver(nextMask, i, load + 1);
+                            
+                            let cost = dist[curr][i] + res.cost;
+                            if (cost < bestCost) {
+                                bestCost = cost;
+                                bestPath = [i, ...res.path];
+                            }
+                        }
+                    }
+                }
+
+                const result = { cost: bestCost, path: bestPath };
+                memo.set(stateKey, result);
+                return result;
+            }
+
+            // Ejecutamos el algoritmo saliendo desde la Base (0), con 0 islas visitadas y carga 0
+            const finalResult = resolver(0, 0, 0);
+
+            // --- Reconstrucción de los Viajes para el Renderizador ---
+            let rutaFinal = [];
+            let viajeActual = [inicial];
+            
+            for (let i = 0; i < finalResult.path.length; i++) {
+                let idx = finalResult.path[i];
+                let nodo = todos[idx];
+                
+                if (idx === 0) { // Si el paso es volver a la base
+                    viajeActual.push(inicial);
+                    rutaFinal.push(viajeActual);
+                    // Si no es el último viaje, preparamos el siguiente barco
+                    if (i !== finalResult.path.length - 1) {
+                        viajeActual = [inicial];
+                    }
+                } else {
+                    viajeActual.push(nodo); // Si es una isla, la agregamos al viaje
+                }
+            }
+
+            return rutaFinal;
+        }
+
+
+        // ============================================
+        // ALGORITMO DP CON DEPENDENCIAS CORREGIDO
+        // ============================================
+        function calcularRutaConCadenasDP(nodosRawStrings, inicial, maxNodosPViaje, nodosDic) {
+            console.log("calculando con cadenas DP")
+            // --- 1. PARSER REFORZADO: Filtrar vacíos y validar existencia ---
+            let nodosReales = [];
+            let rawStringsFiltrados = [];
+
+            for (let i = 0; i < nodosRawStrings.length; i++) {
+                let raw = nodosRawStrings[i].trim();
+                if (raw === "") continue;
+
+                let parts = raw.split('#');
+                let nombre = "";
+                
+                // Encontrar el nombre real limpio
+                for (let p of parts) {
+                    let pLower = p.toLowerCase().trim();
+                    if (!pLower.startsWith('o_') && !pLower.startsWith('d_')) {
+                        nombre = p.trim();
+                        break;
+                    }
+                }
+
+                if (nombre in nodosDic) {
+                    nodosReales.push(nodosDic[nombre]);
+                    rawStringsFiltrados.push(raw);
+                } else {
+                    console.warn(`Nodo ignorado/no encontrado: ${nombre}`);
+                }
+            }
+
+            const N = nodosReales.length;
+            if (N === 0) return [];
+
+            let requerimientos = Array(N + 1).fill(0);
+            let origenes = {};
+
+            // Mapear llaves (orígenes) utilizando el índice real alineado
+            for (let i = 0; i < N; i++) {
+                let parts = rawStringsFiltrados[i].split('#');
+                for (let p of parts) {
+                    let pLower = p.toLowerCase().trim();
+                    if (pLower.startsWith('o_')) {
+                        let id = pLower.split('_')[1];
+                        origenes[id] = (1 << i);
+                    }
+                }
+            }
+
+            // Mapear candados (destinos) utilizando el índice real alineado
+            for (let i = 0; i < N; i++) {
+                let parts = rawStringsFiltrados[i].split('#');
+                for (let p of parts) {
+                    let pLower = p.toLowerCase().trim();
+                    if (pLower.startsWith('d_')) {
+                        let id = pLower.split('_')[1];
+                        if (origenes[id] !== undefined) {
+                            requerimientos[i + 1] |= origenes[id]; 
+                        }
+                    }
+                }
+            }
+
+            // --- 2. MATRIZ DE DISTANCIAS ---
+            const todos = [inicial, ...nodosReales];
+            const dist = Array(N + 1).fill(0).map(() => Array(N + 1).fill(0));
+            for (let i = 0; i <= N; i++) {
+                for (let j = 0; j <= N; j++) {
+                    dist[i][j] = todos[i].distancia(todos[j]);
+                }
+            }
+
+            const memo = new Map();
+
+            // --- 3. MOTOR DP CON ÁRBOL DE DECISIÓN FLEXIBLE ---
+            function resolver(mask, curr, load) {
+                if (mask === (1 << N) - 1) {
+                    return { cost: dist[curr][0], path: [0] };
+                }
+
+                const stateKey = `${mask}-${curr}-${load}`;
+                if (memo.has(stateKey)) return memo.get(stateKey);
+
+                let bestCost = Infinity;
+                let bestPath = [];
+
+                // Opción A: Considerar volver a la base (Permitido siempre que estemos en una isla)
+                if (curr !== 0 && load > 0) {
+                    let res = resolver(mask, 0, 0); 
+                    let cost = dist[curr][0] + res.cost;
+                    if (cost < bestCost) {
+                        bestCost = cost;
+                        bestPath = [0, ...res.path];
+                    }
+                } 
+
+                // Opción B: Considerar visitar una isla nueva (Permitido si el barco tiene espacio)
+                if (load < maxNodosPViaje) {
+                    for (let i = 1; i <= N; i++) {
+                        let bitIsla = 1 << (i - 1);
+                        
+                        if ((mask & bitIsla) === 0) {
+                            let req = requerimientos[i];
+                            
+                            if ((mask & req) === req) { 
+                                let res = resolver(mask | bitIsla, i, load + 1);
+                                let cost = dist[curr][i] + res.cost;
+                                if (cost < bestCost) {
+                                    bestCost = cost;
+                                    bestPath = [i, ...res.path];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                const result = { cost: bestCost, path: bestPath };
+                memo.set(stateKey, result);
+                return result;
+            }
+
+            const finalResult = resolver(0, 0, 0);
+
+            if (finalResult.cost === Infinity) {
+                alert("Ruta imposible: Hay un bucle de correlatividades o restricciones que no se pueden cumplir.");
+                return [];
+            }
+
+            // --- 4. RECONSTRUCCIÓN COMPLETAMENTE LIMPIA PARA LA INTERFAZ ---
+            let rutaFinal = [];
+            let viajeActual = [inicial];
+            
+            for (let i = 0; i < finalResult.path.length; i++) {
+                let idx = finalResult.path[i];
+                
+                if (idx === 0) {
+                    viajeActual.push(inicial);
+                    rutaFinal.push(viajeActual);
+                    if (i !== finalResult.path.length - 1) {
+                        viajeActual = [inicial];
+                    }
+                } else {
+                    // Usamos directamente el nodo real del diccionario para conservar su nombre limpio
+                    viajeActual.push(todos[idx]);
+                }
+            }
+
+            return rutaFinal;
+        }
+        // FIN Rutas v2
+        // ============================================
+        // ALGORITMO DE CÁLCULO DE RUTAS
+        // ============================================
+        function permutator(inputArr) {
+            const results = [];
+
+            function permute(arr, memo = []) {
+                for (let i = 0; i < arr.length; i++) {
+                    const cur = arr.splice(i, 1);
+                    if (arr.length === 0) {
+                        results.push(memo.concat(cur));
+                    }
+                    permute(arr.slice(), memo.concat(cur));
+                    arr.splice(i, 0, cur[0]);
+                }
+                return results;
+            }
+
+            return permute(inputArr);
+        }
+
+        function distanciaTotal(ruta) {
+            let distx = 0;
+            for (let i = 0; i < ruta.length - 2; i++) {
+                distx += ruta[i].distancia(ruta[i + 1]);
+            }
+            return distx;
+        }
+
+        function llenarCombinacion(posible, maxNodosPViaje, inicial) {
+            const combinacion = [];
+            const auxPosible = [].concat(posible);
+            const tamDX = posible.length;
+            const viajesTotales = Math.ceil(tamDX / maxNodosPViaje);
+
+            for (let i = 0; i < viajesTotales; i++) {
+                const nuevo = [inicial];
+                for (let j = 0; j < maxNodosPViaje && auxPosible.length > 0; j++) {
+                    nuevo.push(auxPosible.pop());
+                }
+                nuevo.push(inicial);
+                combinacion.push(nuevo);
+            }
+            return combinacion;
+        }
+
+        function distanciaRecorridaTotalViajes(combinacionViajes) {
+            let totalD = 0;
+            for (let i = 0; i < combinacionViajes.length; i++) {
+                const viaje = combinacionViajes[i];
+                for (let j = 0; j < viaje.length - 1; j++) {
+                    totalD += viaje[j].distancia(viaje[j + 1]);
+                }
+            }
+            return totalD;
+        }
+
+        function mejorRecorrido(posibles, inicial, maxNodosPViaje) {
+            let bdist = Infinity;
+            let mejorRuta = [1, 2];
+            for (let p of posibles) {
+                const ruta = llenarCombinacion(p, maxNodosPViaje, inicial);
+                const rdist = distanciaRecorridaTotalViajes(ruta);
+                if (rdist < bdist) {
+                    bdist = rdist;
+                    mejorRuta = ruta;
+                }
+            }
+            return mejorRuta;
+        }
+
+        // ============================================
+        // RENDERIZADOR DE VIAJES
+        // ============================================
+        function renderizarViajes(viajes, contenedor) {
+            contenedor.innerHTML = "";
+            let indiceViaje = 0;
+            let totalNodos = 0;
+            let distTotal = 0;
+            let tiempoTotal = 0;
+
+            for (let rgeneral of viajes) {
+                const distViaje = distanciaViajeXY(rgeneral);
+                distTotal += distViaje;
+                const tViaje = tiempoViajeXY(rgeneral);
+                tiempoTotal += tViaje;
+                const liGeneral = document.createElement("li");
+                const identificador = document.createElement("div");
+                identificador.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)} · ⏱ ${Navegacion.fmt(tViaje)}`;
+                identificador.className = "identificadorViaje";
+                
+                if (indiceViaje === 0) {
+                    identificador.classList.add("viajeActivo");
+                }
+
+                identificador.id = `viaje${indiceViaje}`;
+                identificador.validx = indiceViaje;
+
+                identificador.onclick = function () {
+                    recNodos = viajes[this.validx];
+                    const allIds = document.querySelectorAll(".identificadorViaje");
+                    allIds.forEach(k => k.classList.remove("viajeActivo"));
+                    this.classList.add("viajeActivo");
+                    if (identificador.firstNodoSpan) {
+                        identificador.firstNodoSpan.click();
+                    }
+                };
+
+                liGeneral.append(identificador);
+
+                let firstNodoSpan = undefined;
+                const paradas = rgeneral.slice(1, rgeneral.length - 1);
+                paradas.forEach((rnodo, j) => {
+                    const lit = document.createElement("div");
+                    lit.className = "cboxnodo";
+
+                    const cbox = document.createElement("input");
+                    cbox.type = "checkbox";
+                    cbox.onclick = colorearNodo;
+
+                    const spn = document.createElement("span");
+                    spn.innerText = rnodo.titulo;
+                    spn.onclick = irNodo;
+
+                    if (firstNodoSpan === undefined) {
+                        firstNodoSpan = spn;
+                    }
+
+                    // ▶ = "zarpé hacia este nodo" (desde la parada anterior)
+                    const origen = rgeneral[j];
+                    const btnPlay = document.createElement("button");
+                    btnPlay.type = "button";
+                    btnPlay.className = "btn-play";
+                    btnPlay.innerText = "▶";
+                    btnPlay.dataset.simbolo = "▶";
+                    const { vel, acc } = Navegacion.stats();
+                    const retr = retrasoEntre(origen.titulo, rnodo.titulo);
+                    const est = Navegacion.estimarSegundos(
+                        dist2(origen.x, origen.y, rnodo.x, rnodo.y), vel, acc, retr);
+                    btnPlay.title = `Zarpé de ${origen.titulo} hacia ${rnodo.titulo} · llegada ≈ ${Navegacion.fmt(est)}`
+                        + (retr !== 0 ? ` · retraso ${retr}` : "");
+                    btnPlay.onclick = function () {
+                        Navegacion.zarpar(origen, rnodo, rnodo.titulo, btnPlay, cbox);
+                    };
+
+                    // tiempo estimado del tramo, visible al lado del nombre
+                    const spnT = document.createElement("span");
+                    spnT.className = "tiempoTramo";
+                    spnT.innerText = "≈ " + Navegacion.fmt(est);
+
+                    lit.append(cbox);
+                    lit.append(spn);
+                    lit.append(spnT);
+                    lit.append(btnPlay);
+                    liGeneral.append(lit);
+                    totalNodos++;
+                });
+
+                // Fila extra: regreso al nodo inicial
+                if (paradas.length > 0) {
+                    const filaV = document.createElement("div");
+                    filaV.className = "cboxnodo fila-vuelta";
+                    const origenV = rgeneral[rgeneral.length - 2];
+                    const destinoV = rgeneral[rgeneral.length - 1];
+
+                    const spnV = document.createElement("span");
+                    spnV.innerText = "↩ Vuelta a " + destinoV.titulo;
+                    spnV.onclick = function () {
+                        const n = nodosDic[destinoV.titulo];
+                        if (n) centrarEnNodo(n);
+                    };
+
+                    const btnV = document.createElement("button");
+                    btnV.type = "button";
+                    btnV.className = "btn-play";
+                    btnV.innerText = "◀";
+                    btnV.dataset.simbolo = "◀";
+                    const { vel: velV, acc: accV } = Navegacion.stats();
+                    const retrV = retrasoEntre(origenV.titulo, destinoV.titulo);
+                    const estV = Navegacion.estimarSegundos(
+                        dist2(origenV.x, origenV.y, destinoV.x, destinoV.y), velV, accV, retrV);
+                    btnV.title = `Zarpé de ${origenV.titulo} de vuelta a ${destinoV.titulo} · llegada ≈ ${Navegacion.fmt(estV)}`
+                        + (retrV !== 0 ? ` · retraso ${retrV}` : "");
+                    btnV.onclick = function () {
+                        Navegacion.zarpar(origenV, destinoV, destinoV.titulo, btnV, null);
+                    };
+
+                    const spnTV = document.createElement("span");
+                    spnTV.className = "tiempoTramo";
+                    spnTV.innerText = "≈ " + Navegacion.fmt(estV);
+
+                    filaV.append(spnV);
+                    filaV.append(spnTV);
+                    filaV.append(btnV);
+                    liGeneral.append(filaV);
+                }
+
+                identificador.firstNodoSpan = firstNodoSpan;
+                indiceViaje++;
+                contenedor.append(liGeneral);
+            }
+
+            // Resumen final: tiempo total de todos los viajes (con vueltas)
+            if (viajes.length > 0) {
+                const resumen = document.createElement("li");
+                resumen.id = "resumenTiempoTotal";
+                resumen.innerText = `⏱ Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${fmtHMS(tiempoTotal)}`;
+                contenedor.append(resumen);
+            }
+
+            // reposicionar el puntero de atajos de teclado ("." y ",")
+            if (typeof Atajos !== "undefined") Atajos.reset();
+
+            return { nodos: totalNodos, dist: distTotal };
+        }
+
+        // ============================================
+        // MANEJADOR PRINCIPAL DE CÁLCULO
+        // ============================================
+        function calcularNodos() {
+            resetearNodosColor();
+            const modoManual = document.getElementById("chkManual").checked;
+            dependenciasEncadenadas = !modoManual && (
+                document.getElementById("chkDependencias").checked
+                || document.getElementById("nodosm").value.includes("#d_"));
+
+            const nodosInp = document.getElementById("nodosm").value;
+            const nodosRecorridos = nodosInp.split("\n");
+            const recorrido = [];
+            const recorrido_titulo = [];
+
+            let inicial = document.getElementById("inicial").value.toUpperCase();
+
+            for (let linea of nodosRecorridos) {
+                // nombreDeLinea (mapa_zoom.js) ignora los marcadores #o_/#d_
+                const nodo = nombreDeLinea(linea);
+                if (nodo === "") continue;
+                if (nodo in nodosDic) {
+                    recorrido.push(nodosDic[nodo]);
+                    recorrido_titulo.push(nodo);
+                } else {
+                    console.warn(`Nodo no encontrado: ${nodo}`);
+                }
+            }
+
+            if (recorrido.length === 0 && !dependenciasEncadenadas) {
+                alert("⚠️ Por favor, ingresa al menos un nodo válido.");
+                return;
+            }
+
+            recorrido_titulo.sort();
+            const clavetitulo = recorrido_titulo.join(", ");
+            const dom1 = document.getElementById("outputnodos");
+            const maxNodosPViaje = parseInt(document.getElementById("viajes").value);
+
+            // Intentar cargar del cache (solo rutas optimizadas sin dependencias)
+            if (recorrido_titulo.length > 9 && !ignoreCache && !modoManual && !dependenciasEncadenadas) {
+                fetch('cache_nodes_v1.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (clavetitulo in data[recorrido_titulo.length]) {
+                            const resultadoViajes = data[recorrido_titulo.length][clavetitulo];
+                            recNodos = resultadoViajes[0];
+                            dom1.innerHTML = "";
+                            const res = renderizarViajes(resultadoViajes, dom1);
+                            document.getElementById("totales").innerText = `${res.nodos} nodos · dist ${Math.round(res.dist)} [cache]`;
+                        } else {
+                            ignoreCache = true;
+                            calcularNodos();
+                        }
+                    })
+                    .catch(() => {
+                        ignoreCache = true;
+                        calcularNodos();
+                    });
+                return;
+            }
+
+            ignoreCache = false;
+            dom1.innerHTML = "<em style='color: var(--accent-blue);'>Calculando rutas...</em>";
+
+            let actual = nodosDic[inicial];
+            if (!actual) {
+                alert("⚠️ Nodo inicial no encontrado: " + inicial);
+                return;
+            }
+
+            if (modoManual) {
+                // Modo manual: sin optimización, en el orden ingresado,
+                // partiendo en viajes según el máximo de nodos por viaje.
+                resultadoViajes = [];
+                for (let i = 0; i < recorrido.length; i += maxNodosPViaje) {
+                    resultadoViajes.push([actual, ...recorrido.slice(i, i + maxNodosPViaje), actual]);
+                }
+                recNodos = resultadoViajes[0];
+            } else if (dependenciasEncadenadas) {
+                resultadoViajes = calcularRutaConCadenasDP(nodosRecorridos, actual, maxNodosPViaje, nodosDic);
+                recNodos = resultadoViajes[0];
+            } else {
+                resultadoViajes = calcularRutaPerfectaDP(recorrido, actual, maxNodosPViaje);
+                recNodos = resultadoViajes[0];
+            }
+            
+            const res = renderizarViajes(resultadoViajes, dom1);
+            document.getElementById("totales").innerText = `${res.nodos} nodos · dist ${Math.round(res.dist)}`;
+        }
+
+        // ============================================
+        // MÓDULO RUTA: lista visual de nodos + dependencias
+        // El modelo estructurado [{name, deps:[]}] es la fuente de verdad;
+        // el textarea #nodosm se mantiene sincronizado con los marcadores
+        // #o_/#d_ para que el motor DP, el mapa y localStorage sigan igual.
+        // ============================================
+        const Ruta = (function () {
+            let modelo = [];
+            let lista, vacia, area, wrap, chk;
+
+            function existeEnDic(nombre) {
+                return typeof nodosDic === "undefined"
+                    || Object.keys(nodosDic).length === 0
+                    || (nombre in nodosDic);
+            }
+
+            function idx(nombre) { return modelo.findIndex(n => n.name === nombre); }
+
+            // ¿'a' depende (directa o transitivamente) de 'b'? Sirve para no crear ciclos.
+            function dependeTransitivo(a, b) {
+                const visto = {};
+                const pila = [a];
+                while (pila.length) {
+                    const nd = modelo[idx(pila.pop())];
+                    if (!nd) continue;
+                    for (const d of nd.deps) {
+                        if (d === b) return true;
+                        if (!visto[d]) { visto[d] = 1; pila.push(d); }
+                    }
+                }
+                return false;
+            }
+
+            // Nodos que se pueden ofrecer como "después de" para el nodo i sin generar ciclos.
+            function candidatos(i) {
+                const self = modelo[i];
+                return modelo
+                    .filter((n, j) => j !== i
+                        && self.deps.indexOf(n.name) === -1
+                        && !dependeTransitivo(n.name, self.name))
+                    .map(n => n.name);
+            }
+
+            // modelo -> texto con marcadores #o_/#d_
+            function serializar() {
+                const ids = {}; let next = 1;
+                modelo.forEach(n => n.deps.forEach(dep => {
+                    if (idx(dep) !== -1 && !ids[dep]) ids[dep] = next++;
+                }));
+                return modelo.map(n => {
+                    let s = n.name;
+                    if (ids[n.name]) s += "#o_" + ids[n.name];
+                    n.deps.forEach(dep => { if (ids[dep]) s += "#d_" + ids[dep]; });
+                    return s;
+                }).join("\n");
+            }
+
+            // texto con marcadores #o_/#d_ -> modelo
+            function parsear(texto) {
+                const crudo = (texto || "").split("\n").map(l => l.trim()).filter(l => l !== "")
+                    .map(raw => {
+                        const parts = raw.split("#");
+                        let name = "", oid = [], did = [];
+                        for (const p of parts) {
+                            const pl = p.trim().toLowerCase();
+                            if (pl.startsWith("o_")) oid.push(pl.split("_")[1]);
+                            else if (pl.startsWith("d_")) did.push(pl.split("_")[1]);
+                            else if (p.trim() !== "" && name === "") name = p.trim().toUpperCase();
+                        }
+                        return { name, oid, did };
+                    }).filter(x => x.name !== "");
+
+                const id2name = {};
+                crudo.forEach(x => x.oid.forEach(id => { id2name[id] = x.name; }));
+
+                const vistos = {}, res = [];
+                crudo.forEach(x => {
+                    if (vistos[x.name]) return; // sin duplicados
+                    vistos[x.name] = 1;
+                    let deps = x.did.map(id => id2name[id]).filter(n => n && n !== x.name);
+                    deps = deps.filter((n, i) => deps.indexOf(n) === i);
+                    res.push({ name: x.name, deps });
+                });
+                return res;
+            }
+
+            function sincronizar() {
+                // No pisar el textarea si el usuario lo está editando (modo avanzado).
+                if (area && document.activeElement !== area) area.value = serializar();
+                if (chk) chk.checked = modelo.some(n => n.deps.length > 0);
+            }
+
+            function render() {
+                if (!lista) return;
+                lista.innerHTML = "";
+                if (vacia) vacia.style.display = modelo.length ? "none" : "block";
+
+                modelo.forEach((nd, i) => {
+                    const li = document.createElement("li");
+                    li.className = "ruta-item";
+                    li.draggable = true;
+                    li.dataset.i = i;
+
+                    const grip = document.createElement("span");
+                    grip.className = "ruta-grip";
+                    grip.textContent = "⠿";
+                    grip.setAttribute("aria-hidden", "true");
+
+                    const nombre = document.createElement("span");
+                    nombre.className = "ruta-nombre";
+                    nombre.textContent = nd.name;
+
+                    const deps = document.createElement("div");
+                    deps.className = "ruta-deps";
+                    const cand = candidatos(i);
+                    if (nd.deps.length || cand.length) {
+                        const et = document.createElement("span");
+                        et.className = "dep-label";
+                        et.textContent = "después de";
+                        deps.appendChild(et);
+
+                        nd.deps.forEach(dep => {
+                            const chip = document.createElement("span");
+                            chip.className = "dep-chip";
+                            const txt = document.createTextNode(dep + " ");
+                            const x = document.createElement("span");
+                            x.className = "dep-x";
+                            x.dataset.quita = dep;
+                            x.setAttribute("aria-label", "Quitar dependencia de " + dep);
+                            x.textContent = "✕";
+                            chip.append(txt, x);
+                            deps.appendChild(chip);
+                        });
+
+                        if (cand.length) {
+                            const sel = document.createElement("select");
+                            sel.className = "dep-add";
+                            sel.innerHTML = '<option value="">＋ …</option>'
+                                + cand.map(c => '<option value="' + c + '">' + c + '</option>').join("");
+                            deps.appendChild(sel);
+                        }
+                    }
+
+                    const del = document.createElement("button");
+                    del.className = "ruta-del";
+                    del.type = "button";
+                    del.dataset.del = nd.name;
+                    del.setAttribute("aria-label", "Quitar " + nd.name);
+                    del.textContent = "✕";
+
+                    li.append(grip, nombre, deps, del);
+                    lista.appendChild(li);
+                });
+            }
+
+            function actualizar() { render(); sincronizar(); }
+
+            function agregar(nombre) {
+                nombre = (nombre || "").trim().toUpperCase();
+                if (!nombre) return;
+                if (!existeEnDic(nombre)) { console.warn("Nodo desconocido:", nombre); return; }
+                if (idx(nombre) === -1) modelo.push({ name: nombre, deps: [] });
+                actualizar();
+            }
+
+            function quitar(nombre) {
+                const i = idx(nombre);
+                if (i === -1) return;
+                modelo.splice(i, 1);
+                modelo.forEach(n => { n.deps = n.deps.filter(d => d !== nombre); });
+                actualizar();
+            }
+
+            function toggle(nombre) {
+                nombre = (nombre || "").trim().toUpperCase();
+                if (idx(nombre) === -1) agregar(nombre); else quitar(nombre);
+            }
+
+            function limpiar() { modelo = []; actualizar(); }
+            function planeados() { return modelo.map(n => n.name); }
+            function cargarTexto(texto) { modelo = parsear(texto || ""); actualizar(); }
+
+            function init() {
+                lista = document.getElementById("rutaLista");
+                vacia = document.getElementById("rutaVacia");
+                area = document.getElementById("nodosm");
+                wrap = document.getElementById("textoAvanzadoWrap");
+                chk = document.getElementById("chkDependencias");
+
+                modelo = parsear(localStorage.getItem("NodosR") || "");
+                actualizar();
+
+                lista.addEventListener("change", e => {
+                    const sel = e.target.closest(".dep-add");
+                    if (!sel) return;
+                    const i = +sel.closest(".ruta-item").dataset.i;
+                    if (sel.value && modelo[i].deps.indexOf(sel.value) === -1) modelo[i].deps.push(sel.value);
+                    actualizar();
+                });
+
+                lista.addEventListener("click", e => {
+                    const x = e.target.closest(".dep-x");
+                    if (x) {
+                        const i = +x.closest(".ruta-item").dataset.i;
+                        modelo[i].deps = modelo[i].deps.filter(d => d !== x.dataset.quita);
+                        actualizar();
+                        return;
+                    }
+                    const del = e.target.closest(".ruta-del");
+                    if (del) quitar(del.dataset.del);
+                });
+
+                // Reordenar arrastrando
+                let dragI = null;
+                lista.addEventListener("dragstart", e => {
+                    const li = e.target.closest(".ruta-item");
+                    if (!li) return;
+                    dragI = +li.dataset.i;
+                    li.classList.add("dragging");
+                });
+                lista.addEventListener("dragend", e => {
+                    const li = e.target.closest(".ruta-item");
+                    if (li) li.classList.remove("dragging");
+                    dragI = null;
+                });
+                lista.addEventListener("dragover", e => e.preventDefault());
+                lista.addEventListener("drop", e => {
+                    e.preventDefault();
+                    const li = e.target.closest(".ruta-item");
+                    if (!li || dragI === null) return;
+                    const to = +li.dataset.i;
+                    if (to === dragI) return;
+                    const m = modelo.splice(dragI, 1)[0];
+                    modelo.splice(to, 0, m);
+                    actualizar();
+                });
+
+                // Alternar el textarea de texto avanzado
+                const btn = document.getElementById("btnTextoAvanzado");
+                btn.addEventListener("click", () => {
+                    const abierto = wrap.style.display !== "none";
+                    if (abierto) {
+                        modelo = parsear(area.value);
+                        actualizar();
+                        wrap.style.display = "none";
+                        btn.classList.remove("activo");
+                    } else {
+                        sincronizar();
+                        wrap.style.display = "block";
+                        btn.classList.add("activo");
+                    }
+                });
+                area.addEventListener("blur", () => {
+                    if (wrap.style.display !== "none") { modelo = parsear(area.value); actualizar(); }
+                });
+            }
+
+            return { init, agregar, quitar, toggle, limpiar, planeados, sincronizar, cargarTexto };
+        })();
+        window.Ruta = Ruta;
+
+        // ============================================
+        // MÓDULO SAVESTATES: hasta 5 rutas guardadas con nombre
+        // Cada slot guarda: nombre, ruta (texto con #o_/#d_), nodo inicial,
+        // máx nodos por viaje y el flag de modo manual.
+        // ============================================
+        const SaveStates = (function () {
+            const MAX = 10;
+
+            function leer() {
+                try {
+                    const v = JSON.parse(localStorage.getItem("SaveStates")) || [];
+                    return Array.from({ length: MAX }, (_, i) => v[i] || null);
+                } catch (e) {
+                    return Array(MAX).fill(null);
+                }
+            }
+
+            function escribir(slots) {
+                localStorage.setItem("SaveStates", JSON.stringify(slots));
+            }
+
+            function boton(txt, title) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "btn-ss";
+                b.innerText = txt;
+                b.title = title;
+                return b;
+            }
+
+            function guardar(i, nombre) {
+                Ruta.sincronizar();
+                const slots = leer();
+                if (slots[i] && !confirm(`¿Sobreescribir el savestate "${slots[i].nombre}" con la ruta actual?`)) {
+                    return;
+                }
+                slots[i] = {
+                    nombre: (nombre || "").trim() || ("Slot " + (i + 1)),
+                    ruta: document.getElementById("nodosm").value,
+                    inicial: document.getElementById("inicial").value,
+                    viajes: document.getElementById("viajes").value,
+                    manual: document.getElementById("chkManual").checked
+                };
+                escribir(slots);
+                render();
+                showMessageGuardando();
+            }
+
+            function cargar(i) {
+                const slot = leer()[i];
+                if (!slot) return;
+                document.getElementById("inicial").value = slot.inicial || "ILIYA";
+                document.getElementById("viajes").value = slot.viajes || 3;
+                document.getElementById("chkManual").checked = !!slot.manual;
+                Ruta.cargarTexto(slot.ruta);
+            }
+
+            function render() {
+                const ul = document.getElementById("savestates");
+                if (!ul) return;
+                const slots = leer();
+                ul.innerHTML = "";
+                slots.forEach((slot, i) => {
+                    const li = document.createElement("li");
+                    li.className = "savestate";
+
+                    const inp = document.createElement("input");
+                    inp.type = "text";
+                    inp.maxLength = 24;
+                    inp.placeholder = "Slot " + (i + 1) + " (vacío)";
+                    inp.value = slot ? slot.nombre : "";
+
+                    const bG = boton("💾", "Guardar acá la ruta actual");
+                    bG.onclick = function () { guardar(i, inp.value); };
+
+                    const bC = boton("📂", slot ? "Cargar: " + slot.nombre : "Slot vacío");
+                    bC.onclick = function () { cargar(i); };
+                    bC.disabled = !slot;
+
+                    const bX = boton("✕", "Borrar este savestate");
+                    bX.onclick = function () {
+                        const s = leer();
+                        if (s[i] && !confirm(`¿Borrar el savestate "${s[i].nombre}"?`)) return;
+                        s[i] = null;
+                        escribir(s);
+                        render();
+                    };
+                    bX.disabled = !slot;
+
+                    li.append(inp, bG, bC, bX);
+                    ul.append(li);
+                });
+            }
+
+            return { render };
+        })();
+        window.SaveStates = SaveStates;
+
+        // ============================================
+        // MÓDULO NAVEGACIÓN: aviso de llegada del barco
+        //
+        // Modelo recalibrado (jul-2026) con 36 tramos medidos en el juego:
+        //   d_eff = K_RUTA·d_recta + D_FIJA + retraso_residual
+        //   v = V0·vel/100 (unid/s) ; a = A0·acc/100 (unid/s²)
+        //   t = d_eff/v + v/(2a)    | t = sqrt(2·d_eff/a) en tramos cortos
+        // K_RUTA=3.511 (el camino real ≈ 3.5× la línea recta del mapa) y
+        // D_FIJA=307 unid (~19 s: atraque + arranque + boost promediado)
+        // salen de un ajuste por mínimos cuadrados sobre los 16 tramos de
+        // mar abierto (R²=0.94, error mediano ~15 s).
+        // El retraso de retrasos.json es el RESIDUO geográfico del tramo
+        // (rodear continentes) respecto de este modelo; sin dato, 0.
+        // ============================================
+        const Navegacion = (function () {
+            const V0 = 10.2;
+            const A0 = 1.42;
+            const K_RUTA = 3.511;
+            const D_FIJA = 307;
+            let intervalo = null;
+            let filaActiva = null;
+            let audioCtx = null;
+            let pausado = false;
+            let destinoActual = "";
+            const tituloOriginal = document.title;
+
+            function stats() {
+                const vel = parseFloat(document.getElementById("barcoVel").value) || 100;
+                const acc = parseFloat(document.getElementById("barcoAcc").value) || 100;
+                return { vel, acc };
+            }
+
+            // distRecta: línea recta del mapa; retraso: residuo geográfico (retrasos.json)
+            function estimarSegundos(distRecta, vel, acc, retraso) {
+                const v = V0 * vel / 100;
+                const a = A0 * acc / 100;
+                const dEff = Math.max(0, K_RUTA * distRecta + D_FIJA + (retraso || 0));
+                const dArranque = (v * v) / (2 * a);
+                if (dEff <= dArranque) return Math.sqrt(2 * dEff / a);
+                return dEff / v + v / (2 * a);
+            }
+
+            function fmt(seg) {
+                seg = Math.max(0, Math.ceil(seg));
+                return Math.floor(seg / 60) + ":" + String(seg % 60).padStart(2, "0");
+            }
+
+            // Campanita suave sintetizada (C5-E5-G5, volumen bajo), sin archivos.
+            function sonarAlerta() {
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === "suspended") audioCtx.resume();
+                    const notas = [523.25, 659.25, 783.99];
+                    for (let rep = 0; rep < 2; rep++) {
+                        notas.forEach((f, i) => {
+                            const t0 = audioCtx.currentTime + rep * 1.15 + i * 0.28;
+                            const osc = audioCtx.createOscillator();
+                            const gan = audioCtx.createGain();
+                            osc.type = "sine";
+                            osc.frequency.value = f;
+                            gan.gain.setValueAtTime(0.0001, t0);
+                            gan.gain.exponentialRampToValueAtTime(0.09, t0 + 0.03);
+                            gan.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+                            osc.connect(gan).connect(audioCtx.destination);
+                            osc.start(t0);
+                            osc.stop(t0 + 1);
+                        });
+                    }
+                } catch (e) { console.warn("Audio no disponible:", e); }
+            }
+
+            // ESC: primer toque detiene el reloj; el segundo cancela el viaje
+            // como si nunca se hubiese apretado play. La pausa no se reanuda.
+            function pausar() {
+                if (!intervalo || pausado) return;
+                clearInterval(intervalo);
+                intervalo = null;
+                pausado = true;
+                document.getElementById("timerDestino").innerText = "⏸ " + destinoActual;
+                document.title = "⏸ " + destinoActual + " — " + tituloOriginal;
+                if (typeof pausarBarco === "function") pausarBarco();
+            }
+
+            function escTimer() {
+                if (intervalo && !pausado) { pausar(); return; }
+                if (pausado) cancelar();
+            }
+
+            function enViaje() {
+                return intervalo !== null || pausado;
+            }
+
+            function cancelar() {
+                pausado = false;
+                if (typeof cancelarBarco === "function") cancelarBarco();
+                if (intervalo) { clearInterval(intervalo); intervalo = null; }
+                if (filaActiva) {
+                    filaActiva.btn.innerText = filaActiva.btn.dataset.simbolo || "▶";
+                    const fila = filaActiva.btn.closest(".cboxnodo");
+                    if (fila) fila.classList.remove("enNavegacion");
+                    filaActiva = null;
+                }
+                document.getElementById("timerViaje").style.display = "none";
+                document.title = tituloOriginal;
+            }
+
+            // origen/destino: objetos con x,y (Nodo o plano del cache)
+            function zarpar(origen, destino, destinoNombre, btn, cbox) {
+                cancelar(); // un barco a la vez: reemplaza el aviso anterior
+                destinoActual = destinoNombre;
+                const { vel, acc } = stats();
+                const distancia = dist2(origen.x, origen.y, destino.x, destino.y);
+                const retraso = retrasoEntre(origen.titulo, destino.titulo);
+                const totalSeg = estimarSegundos(distancia, vel, acc, retraso);
+                const llegada = Date.now() + totalSeg * 1000;
+
+                // animación del barco en el mapa (se dibuja solo si el checkbox está activo)
+                if (typeof iniciarBarco === "function") iniciarBarco(origen, destino, totalSeg);
+
+                filaActiva = { btn };
+                const fila = btn.closest(".cboxnodo");
+                if (fila) fila.classList.add("enNavegacion");
+
+                const widget = document.getElementById("timerViaje");
+                const wDest = document.getElementById("timerDestino");
+                const wCuenta = document.getElementById("timerCuenta");
+                widget.style.display = "flex";
+                wDest.innerText = "→ " + destinoNombre;
+
+                function tick() {
+                    const rest = (llegada - Date.now()) / 1000;
+                    if (rest <= 0) {
+                        clearInterval(intervalo);
+                        intervalo = null;
+                        wCuenta.innerText = "0:00";
+                        wDest.innerText = "⚓ " + destinoNombre;
+                        document.title = "⚓ " + destinoNombre + " — " + tituloOriginal;
+                        sonarAlerta();
+                        if (cbox && !cbox.checked) cbox.click(); // marcar visitado en el mapa
+                        btn.innerText = "⚓";
+                        if (fila) fila.classList.remove("enNavegacion");
+                        filaActiva = null;
+                        setTimeout(() => {
+                            if (!intervalo) {
+                                widget.style.display = "none";
+                                document.title = tituloOriginal;
+                            }
+                        }, 8000);
+                        return;
+                    }
+                    wCuenta.innerText = fmt(rest);
+                    btn.innerText = fmt(rest);
+                    document.title = "⏱ " + fmt(rest) + " → " + destinoNombre;
+                }
+                tick();
+                intervalo = setInterval(tick, 250);
+            }
+
+            return { zarpar, cancelar, pausar, escTimer, enViaje, estimarSegundos, stats, fmt };
+        })();
+        window.Navegacion = Navegacion;
+
+        // ============================================
+        // MÓDULO ATAJOS DE TECLADO
+        //  "."   → zarpar en el primer tramo disponible desde el puntero
+        //  ","   → mover el puntero al siguiente tramo (cicla entre viajes)
+        //  "ESC" → pausar el reloj / cancelar el viaje (segundo toque)
+        // El puntero se marca con un borde dorado punteado en la lista.
+        // ============================================
+        const Atajos = (function () {
+            let idx = 0;
+
+            function botones() {
+                return Array.from(document.querySelectorAll("#outputnodos .btn-play"));
+            }
+
+            function marcar() {
+                document.querySelectorAll("#outputnodos .cboxnodo.atajoSel")
+                    .forEach(f => f.classList.remove("atajoSel"));
+                const btns = botones();
+                if (btns.length === 0) return;
+                if (idx >= btns.length) idx = 0;
+                const fila = btns[idx].closest(".cboxnodo");
+                if (fila) {
+                    fila.classList.add("atajoSel");
+                    fila.scrollIntoView({ block: "nearest" });
+                }
+            }
+
+            function reset() {
+                idx = 0;
+                marcar();
+            }
+
+            // tecla ",": pasar al siguiente tramo (tras la vuelta, sigue el próximo viaje)
+            function siguiente() {
+                const btns = botones();
+                if (btns.length === 0) return;
+                idx = (idx + 1) % btns.length;
+                marcar();
+            }
+
+            // tecla ".": click en play del primer tramo disponible desde el puntero.
+            // Los tramos ya viajados (⚓) o en curso se saltean; si hay un viaje
+            // activo o pausado, no hace nada (para no cancelarlo por accidente).
+            function zarparActual() {
+                if (Navegacion.enViaje()) return;
+                const btns = botones();
+                if (btns.length === 0) return;
+                for (let k = 0; k < btns.length; k++) {
+                    const i = (idx + k) % btns.length;
+                    const b = btns[i];
+                    if (b.innerText === (b.dataset.simbolo || "▶")) {
+                        idx = i;
+                        marcar();
+                        b.click();
+                        return;
+                    }
+                }
+            }
+
+            return { reset, siguiente, zarparActual };
+        })();
+        window.Atajos = Atajos;
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        window.onload = function () {
+            // Cargar datos de nodos
+            fetch('datos.json')
+                .then(response => response.json())
+                .then(data => {
+                    ndata = data;
+                    for (let nodo of ndata) {
+                        nodosDic[nodo.titulo] = new Nodo(nodo.x, nodo.y, nodo.titulo);
+                    }
+                    
+                    $("#inicial").autocomplete({
+                        source: Object.keys(nodosDic)
+                    });
+                    
+                    $("#agregar").autocomplete({
+                        source: Object.keys(nodosDic)
+                    });
+                });
+
+            // Cargar retrasos medidos entre nodos (si el archivo no existe, sin retrasos)
+            fetch('retrasos.json')
+                .then(response => response.json())
+                .then(lista => {
+                    for (const r of lista) {
+                        const clave = [String(r.nodoA).toUpperCase(), String(r.nodoB).toUpperCase()].sort().join("|");
+                        retrasosDic[clave] = r.retraso;
+                    }
+                })
+                .catch(() => console.warn("retrasos.json no disponible"));
+
+            // Lista visual de la ruta (carga lo guardado desde localStorage)
+            const nmm = document.getElementById("nodosm");
+            Ruta.init();
+
+            // Agregar nodo desde el buscador
+            document.getElementById("agregar").addEventListener("keyup", function (event) {
+                if (event.key === "Enter") {
+                    Ruta.agregar(this.value);
+                    this.value = "";
+                }
+            });
+
+            // Botones principales
+            document.getElementById("btnmateriales").onclick = calcularNodos;
+
+            document.getElementById("guardar").onclick = function () {
+                Ruta.sincronizar();
+                localStorage.setItem("NodosR", nmm.value);
+                localStorage.setItem("BarcoVel", document.getElementById("barcoVel").value);
+                localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
+                localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
+                localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
+                showMessageGuardando();
+            };
+
+            // Modo manual y animación: restaurar; renderizar savestates
+            document.getElementById("chkManual").checked = localStorage.getItem("ModoManual") === "1";
+            if (localStorage.getItem("AnimBarco") !== null)
+                document.getElementById("chkAnimBarco").checked = localStorage.getItem("AnimBarco") === "1";
+            SaveStates.render();
+
+            // Datos del barco: restaurar y mostrar estimación de referencia
+            const barcoVel = document.getElementById("barcoVel");
+            const barcoAcc = document.getElementById("barcoAcc");
+            if (localStorage.getItem("BarcoVel")) barcoVel.value = localStorage.getItem("BarcoVel");
+            if (localStorage.getItem("BarcoAcc")) barcoAcc.value = localStorage.getItem("BarcoAcc");
+
+            function actualizarInfoBarco() {
+                const { vel, acc } = Navegacion.stats();
+                const t = Navegacion.estimarSegundos(750, vel, acc);
+                document.getElementById("barcoInfo").innerText =
+                    `Con este barco: 750 unidades en línea recta ≈ ${Navegacion.fmt(t)}`;
+            }
+            barcoVel.addEventListener("input", actualizarInfoBarco);
+            barcoAcc.addEventListener("input", actualizarInfoBarco);
+            actualizarInfoBarco();
+
+            document.getElementById("timerCancelar").onclick = function () {
+                Navegacion.cancelar();
+            };
+
+            // Atajos de teclado (se ignoran al escribir en inputs/textarea)
+            document.addEventListener("keydown", function (e) {
+                if (e.target && e.target.matches && e.target.matches("input, textarea, select")) return;
+                if (e.key === ".") {
+                    e.preventDefault();
+                    Atajos.zarparActual();
+                } else if (e.key === ",") {
+                    e.preventDefault();
+                    Atajos.siguiente();
+                } else if (e.key === "Escape") {
+                    Navegacion.escTimer();
+                }
+            });
+
+            // Zoom controls (aplicarZoom ancla el zoom para que no se desplace)
+            document.getElementById("btnZoomIn").onclick = function (e) {
+                e.preventDefault();
+                aplicarZoom(zoomValue * 1.2); // ancla: centro del canvas
+            };
+            document.getElementById("btnZoomOut").onclick = function (e) {
+                e.preventDefault();
+                aplicarZoom(zoomValue / 1.2);
+            };
+            document.getElementById("btnCentrar").onclick = function (e) {
+                e.preventDefault();
+                const nodo = nodosDic[document.getElementById("inicial").value.toUpperCase().trim()];
+                if (nodo) centrarEnNodo(nodo);
+            };
+            document.getElementById("btnVerTodo").onclick = function (e) {
+                e.preventDefault();
+                ajustarVista();
+            };
+
+            // Mouse wheel zoom, anclado a la posición del puntero
+            document.getElementById("mapa").addEventListener("wheel", function (e) {
+                e.preventDefault();
+                let ax, ay;
+                const canvas = document.getElementById("defaultCanvas0");
+                if (canvas) {
+                    const rect = canvas.getBoundingClientRect();
+                    ax = (e.clientX - rect.left) * (width / rect.width);
+                    ay = (e.clientY - rect.top) * (height / rect.height);
+                }
+                const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+                aplicarZoom(zoomValue * factor, ax, ay);
+            });
+
+            // Slider erase button
+            const slideErase = document.getElementById("slider_erase");
+            const slideContainer = slideErase.parentElement;
+            let currentXErase = 0;
+            let isDragging = false;
+
+            slideErase.onmousedown = function (e) {
+                isDragging = true;
+                currentXErase = e.clientX - slideErase.offsetLeft;
+                slideErase.style.transition = "none";
+            };
+
+            const movGUIFnc = function (e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                const maxX = slideContainer.offsetWidth - slideErase.offsetWidth - 8;
+                let posx = e.clientX - currentXErase;
+
+                if (posx < 4) posx = 4;
+                if (posx >= maxX) {
+                    Ruta.limpiar();
+                }
+                slideErase.style.left = posx + "px";
+            };
+
+            const movFncE = function (e) {
+                if (!isDragging) return;
+                isDragging = false;
+                slideErase.style.transition = "left 0.3s ease";
+                slideErase.style.left = "4px";
+            };
+
+            document.addEventListener('mousemove', movGUIFnc);
+            document.addEventListener('mouseup', movFncE);
+        };
+    </script>
 </head>
 <body>
-    <a href="barter_bestrecorrido.html"> Calcular rutas </a>
-    <a href="barter_bestnodo.html"> Calcular nodos más cercanos </a>
+    <h2>🗺️ Calcular Ruta Óptima v4.6.0</h2>
+    <div class="layout-container">
+        <div class="columnaA">
+            <div class="input-group">
+                <label for="inicial">🎯 Nodo Inicial:</label>
+                <input type="text" id="inicial" placeholder="Ej: ILIYA" value="ILIYA">
+            </div>
+            
+            <div class="input-group">
+                <label for="agregar">➕ Agregar Nodo:</label>
+                <input type="text" id="agregar" placeholder="Escribe nombre del nodo...">
+            </div>
+            
+            <div class="input-group">
+                <label for="viajes">📦 Máx Nodos por Viaje:</label>
+                <input type="number" id="viajes" value="3" min="1" max="6" step="1">
+            </div>
+
+            <div class="input-group" style="flex-direction: row; align-items: center;">
+                <input type="checkbox" id="chkManual">
+                <label for="chkManual" style="margin-bottom: 0; cursor: pointer;" title="Sin optimizar: los viajes se arman en el orden en que ingresaste los nodos">✍️ Modo Manual (respetar orden ingresado)</label>
+            </div>
+
+            <input type="checkbox" id="chkDependencias" style="display: none;">
+
+            <label class="lbl">📋 Ruta Planeada:</label>
+            <ul id="rutaLista" class="ruta-lista"></ul>
+            <p id="rutaVacia" class="ruta-vacia">Agregá nodos desde el buscador, el mapa o el selector de niveles. Con «después de» encadenás el orden (ej: OLVIA antes que AREHAZA).</p>
+
+            <div class="ruta-acciones">
+                <button type="button" id="btnTextoAvanzado" class="btn-mini" title="Editar los marcadores #o_/#d_ a mano">📝 Texto avanzado</button>
+            </div>
+            <div id="textoAvanzadoWrap" style="display: none;">
+                <textarea name="nodosm" id="nodosm" placeholder="NODO#o_1   (origen)&#10;OTRO#d_1   (va después)" cols="30" rows="10"></textarea>
+                <p class="hint">Formato: <code>NOMBRE#o_1</code> marca un origen y <code>OTRO#d_1</code> lo hace ir después. Al cerrar, la lista se re-sincroniza.</p>
+            </div>
+
+            <div class="btn_slide_container" title="Desliza hacia la derecha para limpiar toda la ruta">
+                <div class="slider" id="slider_erase"></div>
+            </div>
+            
+            <div class="contenedor-puntos-principal">
+                <h3>🎲 Selector de Nodos por Nivel</h3>
+                <ul id="contenedor-puntos"></ul>
+            </div>
+            
+            <button id="btnmateriales">⚡ Calcular Ruta Óptima</button>
+            
+            <label class="lbl">📊 Rutas Calculadas (Total: <span id="totales">0</span>):</label>
+            <ul id="outputnodos" class="uml1"></ul>
+            <p class="hint">⌨ Atajos: <b>.</b> zarpar al tramo marcado · <b>,</b> mover la marca al siguiente tramo · <b>ESC</b> pausa el reloj (2° ESC cancela el viaje)</p>
+            
+            <button id="guardar">💾 Guardar Estado</button>
+
+            <div class="contenedor-puntos-principal">
+                <h3>💼 Savestates de Rutas</h3>
+                <ul id="savestates"></ul>
+            </div>
+        </div>
+        
+        <div class="columnaB">
+            <label class="lbl">🌊 Mapa del Océano:</label>
+            <div id="mapa"></div>
+            <div id="zoomer">
+                <span>ZOOM:</span>
+                <span id="zoomPER">100%</span>
+                <a class="zoomBTN" id="btnZoomIn" href="#" title="Acercar">+</a>
+                <a class="zoomBTN" id="btnZoomOut" href="#" title="Alejar">−</a>
+                <a class="zoomBTN" id="btnCentrar" href="#" title="Centrar en el nodo inicial">⌖</a>
+                <a class="zoomBTN" id="btnVerTodo" href="#" title="Ver todo el mapa">🗺️</a>
+            </div>
+            <div id="leyenda">
+                <span><i style="background:#3498db"></i> Nodo</span>
+                <span><i class="anillo-verde"></i> Nodo inicial</span>
+                <span><i class="anillo"></i> Ruta planeada</span>
+                <span><i style="background:#2ecc71"></i> Marcado</span>
+                <span><i style="background:#e74c3c;border-radius:2px;height:4px;margin-top:4px"></i> Viaje activo</span>
+            </div>
+            <div class="input-group" style="flex-direction: row; align-items: center; justify-content: center; margin: 10px 0 0;">
+                <input type="checkbox" id="chkAnimBarco" checked>
+                <label for="chkAnimBarco" style="margin-bottom: 0; cursor: pointer;" title="Al apretar ▶, el barco navega en el mapa del nodo origen al destino">🚢 Mostrar animación del barco</label>
+            </div>
+            <p id="ayudaMapa">💡 Click en un nodo del mapa para agregarlo o quitarlo de la ruta planeada · rueda del mouse para zoom · arrastrar para mover</p>
+
+            <div id="barcoPanel">
+                <h3>🚢 Datos del Barco</h3>
+                <div class="barco-campos">
+                    <div class="barco-campo">
+                        <label for="barcoVel">Velocidad %</label>
+                        <input type="number" id="barcoVel" min="50" max="300" step="1" value="191">
+                    </div>
+                    <div class="barco-campo">
+                        <label for="barcoAcc">Aceleración %</label>
+                        <input type="number" id="barcoAcc" min="50" max="300" step="1" value="196">
+                    </div>
+                </div>
+                <p class="hint" id="barcoInfo"></p>
+                <p class="hint">▶ en la lista de rutas = «zarpé hacia ese nodo»: cuenta regresiva y campanita al llegar. Se guarda con 💾 Guardar Estado.</p>
+                <p><a href="calculadora_retraso.html" target="_blank">📊 Calculadora de Retraso</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="popupguardando">✅ Se han guardado los datos de los nodos.</div>
+    <div id="timerViaje">
+        <span id="timerDestino">→ NODO</span>
+        <span id="timerCuenta">0:00</span>
+        <button type="button" id="timerCancelar" title="Cancelar aviso">✕</button>
+    </div>
+    <script src="puntos_menu.js"></script>
 </body>
 </html>
