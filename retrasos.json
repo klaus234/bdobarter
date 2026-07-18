@@ -40,5 +40,6 @@
     {"nodoA": "HAEMO", "nodoB": "SANTUARIO", "retraso": -3084},
     {"nodoA": "GRANDIHA", "nodoB": "SANTUARIO", "retraso": 2891},
     {"nodoA": "NARVO", "nodoB": "ILIYA", "retraso": -482},
-    {"nodoA": "ILIYA", "nodoB": "BALVEGE", "retraso": -263}
+    {"nodoA": "ILIYA", "nodoB": "BALVEGE", "retraso": -263},
+    {"nodoA": "OLVIA", "nodoB": "GRANDIHA", "retraso": 2200}
 ]
