@@ -14,7 +14,9 @@
     </p>
 
     <h2>Cronómetro</h2>
-    <p id="cronoDisplay" style="font-size: 2em; font-family: monospace;">00:00</p>
+    <p style="font-size: 2em; font-family: monospace;">
+        <span id="cronoEstado" style="display: inline-block; width: 12px; height: 30px; background: red; vertical-align: middle; margin-right: 12px; border-radius: 2px;" title="Rojo: detenido · Verde: corriendo"></span><span id="cronoDisplay">00:00</span>
+    </p>
     <button type="button" id="btnCronoStart">Iniciar</button>
     <button type="button" id="btnCronoStop">Detener</button>
     <button type="button" id="btnCronoReset">Reiniciar</button>
@@ -35,7 +37,7 @@
     <pre id="salida"></pre>
 
     <script>
-        // Mismo modelo que barter_v3.html, recalibrado (jul-2026) con 36 tramos reales:
+        // Mismo modelo que index.html, recalibrado (jul-2026) con 36 tramos reales:
         //   d_eff = K_RUTA·d_recta + D_FIJA + retraso   (K_RUTA=3.511, D_FIJA=307; R²=0.94)
         //   v = V0·vel/100 (unid/s crucero), a = A0·acc/100 (unid/s² arranque)
         //   t = d_eff/v + v/(2a)   |   t = sqrt(2·d_eff/a) en tramos cortos
@@ -71,10 +73,16 @@
             document.getElementById('cronoDisplay').textContent = cronoFmt(cronoMsActual());
         }
 
+        // indicador: verde corriendo, rojo detenido
+        function cronoEstado(corriendo) {
+            document.getElementById('cronoEstado').style.background = corriendo ? 'limegreen' : 'red';
+        }
+
         document.getElementById('btnCronoStart').onclick = function () {
             if (cronoInicio) return; // ya corriendo
             cronoInicio = Date.now();
             cronoIntervalo = setInterval(cronoRender, 100);
+            cronoEstado(true);
         };
 
         document.getElementById('btnCronoStop').onclick = function () {
@@ -83,6 +91,7 @@
             cronoInicio = null;
             clearInterval(cronoIntervalo);
             cronoRender();
+            cronoEstado(false);
         };
 
         document.getElementById('btnCronoReset').onclick = function () {
@@ -90,6 +99,7 @@
             cronoAcumulado = 0;
             clearInterval(cronoIntervalo);
             cronoRender();
+            cronoEstado(false);
         };
 
         document.getElementById('btnCronoUsar').onclick = function () {
