@@ -42,7 +42,7 @@ function calcularNodos() {
 
     // Intentar cargar del cache (solo rutas optimizadas sin dependencias)
     if (recorrido_titulo.length > 9 && !ignoreCache && !modoManual && !dependenciasEncadenadas) {
-        fetch('cache_nodes_v1.json')
+        fetch('data/cache_nodes_v1.json')
             .then(response => response.json())
             .then(data => {
                 if (clavetitulo in data[recorrido_titulo.length]) {
@@ -97,7 +97,7 @@ function calcularNodos() {
 // ============================================
 window.onload = function () {
     // Cargar datos de nodos
-    fetch('datos.json')
+    fetch('data/datos.json')
         .then(response => response.json())
         .then(data => {
             ndata = data;
@@ -115,7 +115,7 @@ window.onload = function () {
         });
 
     // Cargar retrasos medidos entre nodos (si el archivo no existe, sin retrasos)
-    fetch('retrasos.json')
+    fetch('data/retrasos.json')
         .then(response => response.json())
         .then(lista => {
             for (const r of lista) {

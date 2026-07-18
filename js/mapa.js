@@ -219,8 +219,8 @@ function mouseDragged() {
 // CARGA DE DATOS
 // ============================================
 function preload() {
-    data = loadJSON("datos.json");
-    imgBarco = loadImage("barco.png", undefined, () => { imgBarco = null; });
+    data = loadJSON("data/datos.json");
+    imgBarco = loadImage("assets/barco.png", undefined, () => { imgBarco = null; });
 }
 
 // ¿Hay que dibujar el barco? (checkbox activo + imagen cargada + viaje iniciado)

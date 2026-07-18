@@ -10,7 +10,7 @@
         Calcula la variable <b>retraso</b> de un tramo: la distancia extra (en unidades del mapa)
         que el barco recorre de más por giros, maniobras, etc., comparado con la línea recta.<br>
         Es <b>universal</b>: no depende de la velocidad ni aceleración del barco usado para medirlo.<br>
-        El resultado se agrega a mano en <code>retrasos.json</code>.
+        El resultado se agrega a mano en <code>data/retrasos.json</code>.
     </p>
 
     <h2>Cronómetro</h2>
@@ -102,7 +102,7 @@
         let nodos = {};
         let retrasos = [];
 
-        fetch('datos.json')
+        fetch('data/datos.json')
             .then(r => r.json())
             .then(d => {
                 const dl = document.getElementById('listaNodos');
@@ -115,7 +115,7 @@
             })
             .catch(() => { document.getElementById('salida').textContent = 'Error: no se pudo cargar datos.json (abrir desde un servidor local).'; });
 
-        fetch('retrasos.json')
+        fetch('data/retrasos.json')
             .then(r => r.json())
             .then(d => { retrasos = d; })
             .catch(() => {});
@@ -166,7 +166,7 @@
                 (previo
                     ? 'Ojo: ya hay un retraso registrado para este par en retrasos.json: ' + previo.retraso + '\n\n'
                     : 'Sin retraso registrado aún para este par.\n\n') +
-                'Línea para agregar a retrasos.json:\n' +
+                'Línea para agregar a data/retrasos.json:\n' +
                 '  {"nodoA": "' + nA + '", "nodoB": "' + nB + '", "retraso": ' + retraso + '}';
         };
     </script>
