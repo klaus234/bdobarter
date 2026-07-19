@@ -626,6 +626,26 @@ input[type="checkbox"] {
     box-shadow: none;
 }
 
+/* tramo con retraso MEDIDO en data/retrasos.json: fuente más oscura.
+   Los claros no tienen medición y su estimado puede ser impreciso. */
+.btn-play.conRetraso {
+    color: #17954f;
+    border-color: #17954f;
+}
+
+/* botón principal invertido (fondo dorado, texto azul) para
+   distinguirlo al toque de "Guardar Estado" */
+#btnmateriales {
+    background: linear-gradient(135deg, var(--accent-gold) 0%, #c09d2a 100%);
+    color: var(--border-accent);
+    border: 2px solid var(--accent-gold);
+}
+
+#btnmateriales:hover {
+    background: linear-gradient(135deg, var(--border-accent) 0%, #0a1f33 100%);
+    color: var(--accent-gold);
+}
+
 .uml1 span.tiempoTramo,
 .tiempoTramo {
     color: var(--accent-gold);
@@ -668,6 +688,12 @@ input[type="checkbox"] {
     border-color: var(--accent-blue);
     background: rgba(52, 152, 219, 0.12);
 
+}
+
+/* vuelta con retraso medido: azul más oscuro (mismo criterio que el verde) */
+.fila-vuelta .btn-play.conRetraso {
+    color: #2471a3;
+    border-color: #2471a3;
 }
 .cboxnodo.enNavegacion {
     background: rgba(212, 175, 55, 0.08);

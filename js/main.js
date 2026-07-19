@@ -187,7 +187,8 @@ window.onload = function () {
             Atajos.zarparActual();
         } else if (k === "," || k === "q") {
             e.preventDefault();
-            Atajos.siguiente();
+            if (e.shiftKey) Atajos.anterior();
+            else Atajos.siguiente();
         } else if (k === "escape" || k === "r") {
             if (k === "r") e.preventDefault();
             Navegacion.escTimer();

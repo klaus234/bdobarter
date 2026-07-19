@@ -19,6 +19,13 @@ function retrasoEntre(a, b) {
     return retrasosDic[clave] || 0;
 }
 
+// ¿El par tiene retraso MEDIDO en retrasos.json? (distinto de "retraso 0":
+// sirve para marcar visualmente los tramos cuyo estimado está corregido)
+function tieneRetrasoMedido(a, b) {
+    const clave = [String(a).toUpperCase(), String(b).toUpperCase()].sort().join("|");
+    return clave in retrasosDic;
+}
+
 // ============================================
 // CLASES
 // ============================================

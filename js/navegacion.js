@@ -81,6 +81,12 @@ const Navegacion = (function () {
         return pausado;
     }
 
+    // botón ▶ del viaje activo (o null): lo usa el click derecho para saber
+    // si tiene que cancelar el aviso antes de marcar el tramo como terminado
+    function botonActivo() {
+        return filaActiva ? filaActiva.btn : null;
+    }
+
     function cancelar() {
         pausado = false;
         if (typeof cancelarBarco === "function") cancelarBarco();
@@ -158,6 +164,6 @@ const Navegacion = (function () {
         intervalo = setInterval(tick, 250);
     }
 
-    return { zarpar, cancelar, pausar, reanudar, escTimer, enViaje, estaPausado, estimarSegundos, stats, fmt };
+    return { zarpar, cancelar, pausar, reanudar, escTimer, enViaje, estaPausado, botonActivo, estimarSegundos, stats, fmt };
 })();
 window.Navegacion = Navegacion;

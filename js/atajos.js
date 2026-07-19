@@ -41,6 +41,14 @@ const Atajos = (function () {
         marcar();
     }
 
+    // Shift+Q: mover la marca hacia arriba (cicla al final si está en el primero)
+    function anterior() {
+        const btns = botones();
+        if (btns.length === 0) return;
+        idx = (idx - 1 + btns.length) % btns.length;
+        marcar();
+    }
+
     // tecla ".": si el viaje está pausado (ESC), lo reanuda; si hay un viaje
     // en curso no hace nada (para no cancelarlo por accidente); si no,
     // click en play del primer tramo disponible desde el puntero
@@ -62,6 +70,6 @@ const Atajos = (function () {
         }
     }
 
-    return { reset, siguiente, zarparActual };
+    return { reset, siguiente, anterior, zarparActual };
 })();
 window.Atajos = Atajos;

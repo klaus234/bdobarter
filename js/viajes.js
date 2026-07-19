@@ -133,8 +133,16 @@ function renderizarViajes(viajes, contenedor) {
                 dist2(origen.x, origen.y, rnodo.x, rnodo.y), vel, acc, retr);
             btnPlay.title = `Zarpé de ${origen.titulo} hacia ${rnodo.titulo} · llegada ≈ ${Navegacion.fmt(est)}`
                 + (retr !== 0 ? ` · retraso ${retr}` : "");
+            if (tieneRetrasoMedido(origen.titulo, rnodo.titulo)) btnPlay.classList.add("conRetraso");
             btnPlay.onclick = function () {
                 Navegacion.zarpar(origen, rnodo, rnodo.titulo, btnPlay, cbox);
+            };
+            // click derecho: marcar el tramo como terminado (⚓) sin esperar
+            btnPlay.oncontextmenu = function (ev) {
+                ev.preventDefault();
+                if (Navegacion.botonActivo() === btnPlay) Navegacion.cancelar();
+                btnPlay.innerText = "⚓";
+                if (cbox && !cbox.checked) cbox.click();
             };
 
             // tiempo estimado del tramo, visible al lado del nombre
@@ -177,8 +185,14 @@ function renderizarViajes(viajes, contenedor) {
                 dist2(origenV.x, origenV.y, destinoV.x, destinoV.y), velV, accV, retrV);
             btnV.title = `Zarpé de ${origenV.titulo} de vuelta a ${destinoV.titulo} · llegada ≈ ${Navegacion.fmt(estV)}`
                 + (retrV !== 0 ? ` · retraso ${retrV}` : "");
+            if (tieneRetrasoMedido(origenV.titulo, destinoV.titulo)) btnV.classList.add("conRetraso");
             btnV.onclick = function () {
                 Navegacion.zarpar(origenV, destinoV, destinoV.titulo, btnV, null);
+            };
+            btnV.oncontextmenu = function (ev) {
+                ev.preventDefault();
+                if (Navegacion.botonActivo() === btnV) Navegacion.cancelar();
+                btnV.innerText = "⚓";
             };
 
             const spnTV = document.createElement("span");
