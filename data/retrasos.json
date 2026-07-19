@@ -41,5 +41,6 @@
     {"nodoA": "GRANDIHA", "nodoB": "SANTUARIO", "retraso": 2891},
     {"nodoA": "NARVO", "nodoB": "ILIYA", "retraso": -482},
     {"nodoA": "ILIYA", "nodoB": "BALVEGE", "retraso": -263},
-    {"nodoA": "OLVIA", "nodoB": "GRANDIHA", "retraso": 2200}
+    {"nodoA": "OLVIA", "nodoB": "GRANDIHA", "retraso": 2200},
+    {"nodoA": "HAKOVEN", "nodoB": "PUESTO EPHERIA", "retraso": 9896}
 ]
