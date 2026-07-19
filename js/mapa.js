@@ -253,6 +253,15 @@ function pausarBarco() {
     barcoAnim.congelado = Math.min(1, (Date.now() - barcoAnim.inicio) / dur);
 }
 
+// Llamado desde Navegacion.reanudar ("."): retoma la animación donde quedó.
+function reanudarBarco() {
+    if (!barcoAnim || barcoAnim.congelado === undefined) return;
+    const dur = Math.max(1, barcoAnim.fin - barcoAnim.inicio);
+    barcoAnim.inicio = Date.now() - barcoAnim.congelado * dur;
+    barcoAnim.fin = barcoAnim.inicio + dur;
+    delete barcoAnim.congelado;
+}
+
 // ============================================
 // INICIALIZACIÓN
 // ============================================

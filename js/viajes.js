@@ -22,6 +22,8 @@ function tiempoViajeXY(viaje) {
     const { vel, acc } = Navegacion.stats();
     let total = 0;
     for (let i = 0; i < viaje.length - 1; i++) {
+        // tramo nulo (mismo nodo, ej: la última parada ES el inicial): no suma
+        if (viaje[i].titulo === viaje[i + 1].titulo) continue;
         const retr = retrasoEntre(viaje[i].titulo, viaje[i + 1].titulo);
         total += Navegacion.estimarSegundos(
             dist2(viaje[i].x, viaje[i].y, viaje[i + 1].x, viaje[i + 1].y), vel, acc, retr);
@@ -148,8 +150,10 @@ function renderizarViajes(viajes, contenedor) {
             totalNodos++;
         });
 
-        // Fila extra: regreso al nodo inicial
-        if (paradas.length > 0) {
+        // Fila extra: regreso al nodo inicial. Si la última parada YA ES el
+        // nodo inicial, el barco quedó ahí y no hay tramo de vuelta.
+        if (paradas.length > 0
+            && rgeneral[rgeneral.length - 2].titulo !== rgeneral[rgeneral.length - 1].titulo) {
             const filaV = document.createElement("div");
             filaV.className = "cboxnodo fila-vuelta";
             const origenV = rgeneral[rgeneral.length - 2];

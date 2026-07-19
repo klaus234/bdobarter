@@ -41,10 +41,12 @@ const Atajos = (function () {
         marcar();
     }
 
-    // tecla ".": click en play del primer tramo disponible desde el puntero.
-    // Los tramos ya viajados (⚓) o en curso se saltean; si hay un viaje
-    // activo o pausado, no hace nada (para no cancelarlo por accidente).
+    // tecla ".": si el viaje está pausado (ESC), lo reanuda; si hay un viaje
+    // en curso no hace nada (para no cancelarlo por accidente); si no,
+    // click en play del primer tramo disponible desde el puntero
+    // (los tramos ya viajados ⚓ se saltean).
     function zarparActual() {
+        if (Navegacion.estaPausado()) { Navegacion.reanudar(); return; }
         if (Navegacion.enViaje()) return;
         const btns = botones();
         if (btns.length === 0) return;

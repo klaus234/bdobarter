@@ -177,15 +177,19 @@ window.onload = function () {
     };
 
     // Atajos de teclado (se ignoran al escribir en inputs/textarea)
+    // Atajos: . y , (clásicos) + Q/E/R alrededor de WASD; ESC y R pausan/cancelan
     document.addEventListener("keydown", function (e) {
         if (e.target && e.target.matches && e.target.matches("input, textarea, select")) return;
-        if (e.key === ".") {
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        const k = e.key.toLowerCase();
+        if (k === "." || k === "e") {
             e.preventDefault();
             Atajos.zarparActual();
-        } else if (e.key === ",") {
+        } else if (k === "," || k === "q") {
             e.preventDefault();
             Atajos.siguiente();
-        } else if (e.key === "Escape") {
+        } else if (k === "escape" || k === "r") {
+            if (k === "r") e.preventDefault();
             Navegacion.escTimer();
         }
     });

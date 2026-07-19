@@ -13,6 +13,8 @@ const Navegacion = (function () {
     let audioCtx = null;
     let pausado = false;
     let destinoActual = "";
+    let hookPausar = null;   // congela el tiempo restante del viaje activo
+    let hookReanudar = null; // retoma el countdown donde quedó
     const tituloOriginal = document.title;
 
     function stats() {
@@ -46,15 +48,24 @@ const Navegacion = (function () {
     }
 
     // ESC: primer toque detiene el reloj; el segundo cancela el viaje
-    // como si nunca se hubiese apretado play. La pausa no se reanuda.
+    // como si nunca se hubiese apretado play. Con "." se reanuda la pausa.
     function pausar() {
         if (!intervalo || pausado) return;
         clearInterval(intervalo);
         intervalo = null;
         pausado = true;
+        if (hookPausar) hookPausar();
         document.getElementById("timerDestino").innerText = "⏸ " + destinoActual;
         document.title = "⏸ " + destinoActual + " — " + tituloOriginal;
         if (typeof pausarBarco === "function") pausarBarco();
+    }
+
+    function reanudar() {
+        if (!pausado || !hookReanudar) return;
+        pausado = false;
+        document.getElementById("timerDestino").innerText = "→ " + destinoActual;
+        if (typeof reanudarBarco === "function") reanudarBarco();
+        hookReanudar();
     }
 
     function escTimer() {
@@ -64,6 +75,10 @@ const Navegacion = (function () {
 
     function enViaje() {
         return intervalo !== null || pausado;
+    }
+
+    function estaPausado() {
+        return pausado;
     }
 
     function cancelar() {
@@ -88,7 +103,8 @@ const Navegacion = (function () {
         const distancia = dist2(origen.x, origen.y, destino.x, destino.y);
         const retraso = retrasoEntre(origen.titulo, destino.titulo);
         const totalSeg = estimarSegundos(distancia, vel, acc, retraso);
-        const llegada = Date.now() + totalSeg * 1000;
+        let llegada = Date.now() + totalSeg * 1000;
+        let msRestantes = 0;
 
         // animación del barco en el mapa (se dibuja solo si el checkbox está activo)
         if (typeof iniciarBarco === "function") iniciarBarco(origen, destino, totalSeg);
@@ -128,10 +144,20 @@ const Navegacion = (function () {
             btn.innerText = fmt(rest);
             document.title = "⏱ " + fmt(rest) + " → " + destinoNombre;
         }
+        // hooks de pausa/reanudación para este viaje (cierran sobre llegada/tick)
+        hookPausar = function () {
+            msRestantes = llegada - Date.now();
+        };
+        hookReanudar = function () {
+            llegada = Date.now() + msRestantes;
+            tick();
+            intervalo = setInterval(tick, 250);
+        };
+
         tick();
         intervalo = setInterval(tick, 250);
     }
 
-    return { zarpar, cancelar, pausar, escTimer, enViaje, estimarSegundos, stats, fmt };
+    return { zarpar, cancelar, pausar, reanudar, escTimer, enViaje, estaPausado, estimarSegundos, stats, fmt };
 })();
 window.Navegacion = Navegacion;

@@ -35,6 +35,17 @@ h2 {
     font-size: 28px;
 }
 
+/* el título es un link a index.html (permite abrir varias instancias) */
+h2 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+h2 a:hover {
+    color: var(--accent-gold);
+    text-decoration: underline;
+}
+
 .layout-container {
     display: flex;
     gap: 20px;
