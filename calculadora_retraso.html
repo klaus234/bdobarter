@@ -169,6 +169,10 @@
                 'Línea para agregar a data/retrasos.json:\n' +
                 '  {"nodoA": "' + nA + '", "nodoB": "' + nB + '", "retraso": ' + retraso + '}';
         };
+        const barcoVel = document.getElementById('vel');
+        const barcoAcc = document.getElementById('acc');
+        if (localStorage.getItem("BarcoVel")) barcoVel.value = localStorage.getItem("BarcoVel");
+        if (localStorage.getItem("BarcoAcc")) barcoAcc.value = localStorage.getItem("BarcoAcc");
     </script>
 </body>
 </html>

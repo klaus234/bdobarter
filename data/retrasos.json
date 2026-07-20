@@ -20,7 +20,7 @@
     {"nodoA": "SAUSAN", "nodoB": "ILIYA", "retraso": -91},
     {"nodoA": "ILIYA", "nodoB": "PUJARA", "retraso": 56},
     {"nodoA": "PUJARA", "nodoB": "PILAVA", "retraso": -361},
-    {"nodoA": "PILAVA", "nodoB": "THEONIL", "retraso": -178},
+    {"nodoA": "PILAVA", "nodoB": "THEONIL", "retraso": 508},
     {"nodoA": "THEONIL", "nodoB": "RAMEDA", "retraso": 83},
     {"nodoA": "RAMEDA", "nodoB": "PADIX", "retraso": 100},
     {"nodoA": "PADIX", "nodoB": "BAREMI", "retraso": 577},

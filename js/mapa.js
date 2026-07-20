@@ -25,8 +25,8 @@ let szFixOY = -80;
 let zoomValue = 1;
 let recNodos = [];
 
-// Animación del barco (barco.png) durante un tramo con aviso activo
-let imgBarco = null;
+// Animación del barco durante un tramo con aviso activo. El barco se
+// dibuja en vectores (nítido a cualquier zoom, a diferencia del PNG).
 let barcoAnim = null; // {x1,y1,x2,y2,inicio,fin} en coords de datos.json
 
 // Colores
@@ -220,13 +220,50 @@ function mouseDragged() {
 // ============================================
 function preload() {
     data = loadJSON("data/datos.json");
-    imgBarco = loadImage("assets/barco.png", undefined, () => { imgBarco = null; });
 }
 
-// ¿Hay que dibujar el barco? (checkbox activo + imagen cargada + viaje iniciado)
+// ¿Hay que dibujar el barco? (checkbox activo + viaje iniciado)
 function animBarcoActiva() {
     const chk = document.getElementById("chkAnimBarco");
-    return !!(chk && chk.checked && barcoAnim && imgBarco && imgBarco.width > 0);
+    return !!(chk && chk.checked && barcoAnim);
+}
+
+// Barco estilizado en vectores, diseñado en una caja de 100 unidades
+// mirando a la derecha (casco marrón + franja dorada, velas crema,
+// banderín rojo). Se dibuja centrado en el origen actual del canvas.
+function dibujarBarcoVector(tam) {
+    const s = tam / 100;
+
+    // bauprés y mástiles
+    stroke(70, 45, 20);
+    strokeWeight(Math.max(1, 2.5 * s));
+    line(44 * s, 6 * s, 60 * s, -6 * s);
+    line(0, 8 * s, 0, -48 * s);
+    line(27 * s, 8 * s, 27 * s, -30 * s);
+
+    // velas
+    stroke(150, 140, 120);
+    strokeWeight(Math.max(1, 1.5 * s));
+    fill(242, 238, 222);
+    triangle(3 * s, -46 * s, 3 * s, -10 * s, 36 * s, -16 * s);
+    triangle(30 * s, -28 * s, 30 * s, -6 * s, 52 * s, -10 * s);
+
+    // banderín
+    noStroke();
+    fill(231, 76, 60);
+    triangle(0, -48 * s, 14 * s, -43 * s, 0, -38 * s);
+
+    // casco
+    stroke(40, 25, 12);
+    strokeWeight(Math.max(1, 1.5 * s));
+    fill(101, 67, 33);
+    quad(-44 * s, 6 * s, 46 * s, 6 * s, 32 * s, 30 * s, -34 * s, 30 * s);
+
+    // franja dorada
+    stroke(212, 175, 55);
+    strokeWeight(Math.max(1, 3 * s));
+    line(-42 * s, 11 * s, 44 * s, 11 * s);
+    noStroke();
 }
 
 // Llamado desde Navegacion.zarpar (index.html): inicia el viaje del barco.
@@ -370,10 +407,9 @@ function draw() {
         const sy = (by * szFixY + szFixOY) * zoomValue + offsetY;
         const tam = Math.max(20, 48 * zoomValue);
         push();
-        imageMode(CENTER);
-        translate(sx, sy - tam * 0.25); // apenas por encima del nodo
-        if (barcoAnim.x2 < barcoAnim.x1) scale(-1, 1); // la imagen mira a la derecha
-        image(imgBarco, 0, 0, tam, tam);
+        translate(sx, sy - tam * 0.24); // apenas por encima del nodo
+        if (barcoAnim.x2 < barcoAnim.x1) scale(-1, 1); // el diseño mira a la derecha
+        dibujarBarcoVector(tam);
         pop();
     }
 

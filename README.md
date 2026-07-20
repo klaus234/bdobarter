@@ -43,7 +43,6 @@ python -m http.server 8123
 │   ├── datos.json           ← nodos (título + coordenadas del mapa)
 │   ├── retrasos.json        ← residuos geográficos medidos por tramo
 │   └── cache_nodes_v1.json  ← cache de rutas precalculadas (>9 nodos)
-├── assets/barco.png
 ├── lib/                     ← p5.js, jQuery, jQuery UI css
 └── tools/editor_nodos.html
 ```
