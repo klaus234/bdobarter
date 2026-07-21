@@ -8,7 +8,7 @@
     {"nodoA": "PILAVA", "nodoB": "ILIYA", "retraso": -171},
     {"nodoA": "ILIYA", "nodoB": "PUERTO NOCHE", "retraso": 6226},
     {"nodoA": "PUERTO NOCHE", "nodoB": "GRANDIHA", "retraso": 324},
-    {"nodoA": "ILIYA", "nodoB": "AREHAZA", "retraso": 5385},
+    {"nodoA": "ILIYA", "nodoB": "AREHAZA", "retraso": 5485},
     {"nodoA": "AREHAZA", "nodoB": "HAKOVEN", "retraso": -511},
     {"nodoA": "HAKOVEN", "nodoB": "OLVIA", "retraso": 5124},
     {"nodoA": "OLVIA", "nodoB": "PUESTO EPHERIA", "retraso": 1180},

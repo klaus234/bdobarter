@@ -166,6 +166,7 @@ window.onload = function () {
         localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
         localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
         localStorage.setItem("VolAlarma", document.getElementById("volAlarma").value);
+        localStorage.setItem("RutaCargada", SaveStates.nombreCargado());
         showMessageGuardando();
     };
 
@@ -173,6 +174,7 @@ window.onload = function () {
     document.getElementById("chkManual").checked = localStorage.getItem("ModoManual") === "1";
     if (localStorage.getItem("AnimBarco") !== null)
         document.getElementById("chkAnimBarco").checked = localStorage.getItem("AnimBarco") === "1";
+    SaveStates.setCargada(localStorage.getItem("RutaCargada") || "");
     SaveStates.render();
 
     // Cambiar titulo boton de Calcular
@@ -290,6 +292,7 @@ window.onload = function () {
         if (posx < 4) posx = 4;
         if (posx >= maxX) {
             Ruta.limpiar();
+            SaveStates.limpiarCargada(); // ya no hay ruta cargada
         }
         slideErase.style.left = posx + "px";
     };

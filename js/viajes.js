@@ -80,8 +80,13 @@ function renderizarViajes(viajes, contenedor) {
         tiempoTotal += tViaje;
         const liGeneral = document.createElement("li");
         const identificador = document.createElement("div");
-        identificador.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)} · ⏱ ${Navegacion.fmt(tViaje)}`;
         identificador.className = "identificadorViaje";
+        // base fija + span de restante (se actualiza igual que el total)
+        const idBase = document.createElement("span");
+        idBase.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)} · ⏱ ${Navegacion.fmt(tViaje)}`;
+        const idRest = document.createElement("span");
+        idRest.className = "viajeRestante";
+        identificador.append(idBase, idRest);
         
         if (indiceViaje === 0) {
             identificador.classList.add("viajeActivo");
@@ -131,6 +136,7 @@ function renderizarViajes(viajes, contenedor) {
             const retr = retrasoEntre(origen.titulo, rnodo.titulo);
             const est = Navegacion.estimarSegundos(
                 dist2(origen.x, origen.y, rnodo.x, rnodo.y), vel, acc, retr);
+            btnPlay.dataset.est = est; // segundos, para el "tiempo restante"
             btnPlay.title = `Zarpé de ${origen.titulo} hacia ${rnodo.titulo} · llegada ≈ ${Navegacion.fmt(est)}`
                 + (retr !== 0 ? ` · retraso ${retr}` : "");
             if (tieneRetrasoMedido(origen.titulo, rnodo.titulo)) btnPlay.classList.add("conRetraso");
@@ -143,6 +149,7 @@ function renderizarViajes(viajes, contenedor) {
                 if (Navegacion.botonActivo() === btnPlay) Navegacion.cancelar();
                 btnPlay.innerText = "⚓";
                 if (cbox && !cbox.checked) cbox.click();
+                actualizarTiempoRestante();
             };
 
             // tiempo estimado del tramo, visible al lado del nombre
@@ -183,6 +190,7 @@ function renderizarViajes(viajes, contenedor) {
             const retrV = retrasoEntre(origenV.titulo, destinoV.titulo);
             const estV = Navegacion.estimarSegundos(
                 dist2(origenV.x, origenV.y, destinoV.x, destinoV.y), velV, accV, retrV);
+            btnV.dataset.est = estV;
             btnV.title = `Zarpé de ${origenV.titulo} de vuelta a ${destinoV.titulo} · llegada ≈ ${Navegacion.fmt(estV)}`
                 + (retrV !== 0 ? ` · retraso ${retrV}` : "");
             if (tieneRetrasoMedido(origenV.titulo, destinoV.titulo)) btnV.classList.add("conRetraso");
@@ -193,6 +201,7 @@ function renderizarViajes(viajes, contenedor) {
                 ev.preventDefault();
                 if (Navegacion.botonActivo() === btnV) Navegacion.cancelar();
                 btnV.innerText = "⚓";
+                actualizarTiempoRestante();
             };
 
             const spnTV = document.createElement("span");
@@ -210,16 +219,61 @@ function renderizarViajes(viajes, contenedor) {
         contenedor.append(liGeneral);
     }
 
-    // Resumen final: tiempo total de todos los viajes (con vueltas)
+    // Resumen final: tiempo total de todos los viajes (con vueltas) + restante
     if (viajes.length > 0) {
         const resumen = document.createElement("li");
         resumen.id = "resumenTiempoTotal";
         resumen.innerText = `⏱ Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${Modelo.fmtHMS(tiempoTotal)}`;
         contenedor.append(resumen);
+
+        const restanteLi = document.createElement("li");
+        restanteLi.id = "resumenTiempoRestante";
+        contenedor.append(restanteLi);
     }
 
     // reposicionar el puntero de atajos de teclado ("." y ",")
     if (typeof Atajos !== "undefined") Atajos.reset();
+    actualizarTiempoRestante();
 
     return { nodos: totalNodos, dist: distTotal };
+}
+
+// Tiempo restante = suma de los tramos que aún no tienen ancla (⚓). El tramo
+// activo aporta su cuenta regresiva (por eso baja cada segundo mientras viajás);
+// los completados aportan 0. Cuando están todos completos: "COMPLETADO".
+function actualizarTiempoRestante() {
+    // suma los tramos pendientes de un conjunto de botones ▶
+    const restanteDe = (btns) => {
+        let total = 0;
+        for (const b of btns) {
+            const t = b.innerText.trim();
+            if (t === "⚓") continue; // tramo completado
+            const m = t.match(/^(\d+):(\d\d)$/); // activo o pausado: cuenta mostrada
+            if (m) total += (+m[1]) * 60 + (+m[2]);
+            else total += parseFloat(b.dataset.est) || 0; // no iniciado: estimado completo
+        }
+        return total;
+    };
+    const completos = (btns) => btns.length > 0 && btns.every(b => b.innerText.trim() === "⚓");
+
+    // restante por viaje, al lado del título
+    document.querySelectorAll("#outputnodos > li").forEach(liViaje => {
+        const span = liViaje.querySelector(".viajeRestante");
+        if (!span) return;
+        const btns = [...liViaje.querySelectorAll(".btn-play")];
+        if (btns.length === 0) { span.innerText = ""; return; }
+        const listo = completos(btns);
+        span.classList.toggle("completado", listo);
+        span.innerText = listo ? " | ✅ COMPLETADO" : " | ⏳ " + Navegacion.fmt(restanteDe(btns));
+    });
+
+    // restante total (todos los viajes)
+    const li = document.getElementById("resumenTiempoRestante");
+    if (!li) return;
+    const btns = [...document.querySelectorAll("#outputnodos .btn-play")];
+    if (btns.length === 0) { li.style.display = "none"; return; }
+    li.style.display = "";
+    const todosCompletos = completos(btns);
+    li.classList.toggle("completado", todosCompletos);
+    li.innerText = todosCompletos ? "✅ COMPLETADO" : "⏳ Tiempo restante: " + Modelo.fmtHMS(restanteDe(btns));
 }

@@ -99,6 +99,7 @@ const Navegacion = (function () {
         if (!enViaje() || !hookAjustar) return;
         hookAjustar(deltaSeg);
         if (typeof ajustarBarco === "function") ajustarBarco(deltaSeg);
+        if (typeof actualizarTiempoRestante === "function") actualizarTiempoRestante();
     }
 
     // botón ▶ del viaje activo (o null): lo usa el click derecho para saber
@@ -119,6 +120,7 @@ const Navegacion = (function () {
         }
         document.getElementById("timerViaje").style.display = "none";
         document.title = tituloOriginal;
+        if (typeof actualizarTiempoRestante === "function") actualizarTiempoRestante();
     }
 
     // origen/destino: objetos con x,y (Nodo o plano del cache)
@@ -158,6 +160,7 @@ const Navegacion = (function () {
                 btn.innerText = "⚓";
                 if (fila) fila.classList.remove("enNavegacion");
                 filaActiva = null;
+                if (typeof actualizarTiempoRestante === "function") actualizarTiempoRestante();
                 setTimeout(() => {
                     if (!intervalo) {
                         widget.style.display = "none";
@@ -169,6 +172,7 @@ const Navegacion = (function () {
             wCuenta.innerText = fmt(rest);
             btn.innerText = fmt(rest);
             document.title = "⏱ " + fmt(rest) + " → " + destinoNombre;
+            if (typeof actualizarTiempoRestante === "function") actualizarTiempoRestante();
         }
         // hooks de pausa/reanudación/ajuste para este viaje (cierran sobre llegada/tick)
         hookPausar = function () {

@@ -8,6 +8,23 @@
 // ============================================
 const SaveStates = (function () {
     const MAX = 10;
+    let cargadaNombre = ""; // savestate cargado/guardado por última vez
+
+    // Etiqueta junto al título: "Savestates de Rutas | NOMBRE"
+    function actualizarEtiqueta() {
+        const sp = document.getElementById("rutaCargadaNombre");
+        if (!sp) return;
+        sp.innerText = "| " + (cargadaNombre || "Ninguna ruta cargada");
+        sp.classList.toggle("sinRuta", !cargadaNombre);
+    }
+
+    function setCargada(nombre) {
+        cargadaNombre = (nombre || "").trim();
+        actualizarEtiqueta();
+    }
+
+    function limpiarCargada() { setCargada(""); }
+    function nombreCargado() { return cargadaNombre; }
 
     function leer() {
         try {
@@ -45,6 +62,7 @@ const SaveStates = (function () {
             manual: document.getElementById("chkManual").checked
         };
         escribir(slots);
+        setCargada(slots[i].nombre);
         render();
         showMessageGuardando();
     }
@@ -57,6 +75,7 @@ const SaveStates = (function () {
         document.getElementById("chkManual").checked = !!slot.manual;
         document.getElementById("chkManual").dispatchEvent(new Event("change"));
         Ruta.cargarTexto(slot.ruta);
+        setCargada(slot.nombre);
     }
 
     function render() {
@@ -85,6 +104,7 @@ const SaveStates = (function () {
             bX.onclick = function () {
                 const s = leer();
                 if (s[i] && !confirm(`¿Borrar el savestate "${s[i].nombre}"?`)) return;
+                if (s[i] && s[i].nombre === cargadaNombre) limpiarCargada();
                 s[i] = null;
                 escribir(s);
                 render();
@@ -94,8 +114,9 @@ const SaveStates = (function () {
             li.append(inp, bG, bC, bX);
             ul.append(li);
         });
+        actualizarEtiqueta();
     }
 
-    return { render };
+    return { render, setCargada, limpiarCargada, nombreCargado };
 })();
 window.SaveStates = SaveStates;
