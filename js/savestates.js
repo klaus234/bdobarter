@@ -55,6 +55,7 @@ const SaveStates = (function () {
         document.getElementById("inicial").value = slot.inicial || "ILIYA";
         document.getElementById("viajes").value = slot.viajes || 3;
         document.getElementById("chkManual").checked = !!slot.manual;
+        document.getElementById("chkManual").dispatchEvent(new Event("change"));
         Ruta.cargarTexto(slot.ruta);
     }
 

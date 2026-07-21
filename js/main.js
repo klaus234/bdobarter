@@ -175,6 +175,15 @@ window.onload = function () {
         document.getElementById("chkAnimBarco").checked = localStorage.getItem("AnimBarco") === "1";
     SaveStates.render();
 
+    // Cambiar titulo boton de Calcular
+    // (si está en modo manual, el botón dice "Generar viaje/s" en vez de "Calcular viaje/s")
+    document.getElementById("chkManual").addEventListener("change", function () {
+        const btn = document.getElementById("btnmateriales");
+        if (this.checked) btn.innerText = "⚡ Generar viaje/s";
+        else btn.innerText = "⚡ Calcular viaje/s";
+    });
+    // Fuerzo como si hubiese un change en chkManual para que el botón tenga el texto correcto al cargar la página
+    document.getElementById("chkManual").dispatchEvent(new Event("change"));
     // Volumen de alarma: restaurar, mostrar el % y probar el sonido al soltar
     const volAlarma = document.getElementById("volAlarma");
     const volAlarmaVal = document.getElementById("volAlarmaVal");
