@@ -24,11 +24,22 @@ const Navegacion = (function () {
         return { vel, acc };
     }
 
-    // Campanita suave sintetizada (C5-E5-G5, volumen bajo), sin archivos.
+    // Volumen de alarma: el slider (0-300%) escala el pico base. 100% = el
+    // sonido original ("está bien" por default); más alto = más fuerte.
+    const GANANCIA_BASE = 0.09;
+    function volumenAlarma() {
+        const sl = document.getElementById("volAlarma");
+        const pct = sl ? parseFloat(sl.value) : 100;
+        return GANANCIA_BASE * (isNaN(pct) ? 100 : pct) / 100;
+    }
+
+    // Campanita suave sintetizada (C5-E5-G5), sin archivos.
     function sonarAlerta() {
         try {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === "suspended") audioCtx.resume();
+            const pico = Math.max(0.0002, volumenAlarma());
+            if (pico <= 0.0002) return; // volumen en 0: silencio
             const notas = [523.25, 659.25, 783.99];
             for (let rep = 0; rep < 2; rep++) {
                 notas.forEach((f, i) => {
@@ -38,7 +49,7 @@ const Navegacion = (function () {
                     osc.type = "sine";
                     osc.frequency.value = f;
                     gan.gain.setValueAtTime(0.0001, t0);
-                    gan.gain.exponentialRampToValueAtTime(0.09, t0 + 0.03);
+                    gan.gain.exponentialRampToValueAtTime(pico, t0 + 0.03);
                     gan.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
                     osc.connect(gan).connect(audioCtx.destination);
                     osc.start(t0);
@@ -185,6 +196,6 @@ const Navegacion = (function () {
         intervalo = setInterval(tick, 250);
     }
 
-    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, estimarSegundos, stats, fmt };
+    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, sonarAlerta, estimarSegundos, stats, fmt };
 })();
 window.Navegacion = Navegacion;

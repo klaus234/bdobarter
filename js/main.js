@@ -165,6 +165,7 @@ window.onload = function () {
         localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
         localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
         localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
+        localStorage.setItem("VolAlarma", document.getElementById("volAlarma").value);
         showMessageGuardando();
     };
 
@@ -173,6 +174,15 @@ window.onload = function () {
     if (localStorage.getItem("AnimBarco") !== null)
         document.getElementById("chkAnimBarco").checked = localStorage.getItem("AnimBarco") === "1";
     SaveStates.render();
+
+    // Volumen de alarma: restaurar, mostrar el % y probar el sonido al soltar
+    const volAlarma = document.getElementById("volAlarma");
+    const volAlarmaVal = document.getElementById("volAlarmaVal");
+    if (localStorage.getItem("VolAlarma") !== null) volAlarma.value = localStorage.getItem("VolAlarma");
+    const mostrarVol = () => { volAlarmaVal.innerText = volAlarma.value + "%"; };
+    volAlarma.addEventListener("input", mostrarVol);
+    volAlarma.addEventListener("change", () => { mostrarVol(); Navegacion.sonarAlerta(); });
+    mostrarVol();
 
     // Datos del barco: restaurar y mostrar estimación de referencia
     const barcoVel = document.getElementById("barcoVel");

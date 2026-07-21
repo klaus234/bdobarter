@@ -101,9 +101,16 @@
                 <span><i style="background:#2ecc71"></i> Marcado</span>
                 <span><i style="background:#e74c3c;border-radius:2px;height:4px;margin-top:4px"></i> Viaje activo</span>
             </div>
-            <div class="input-group" style="flex-direction: row; align-items: center; justify-content: center; margin: 10px 0 0;">
-                <input type="checkbox" id="chkAnimBarco" checked>
-                <label for="chkAnimBarco" style="margin-bottom: 0; cursor: pointer;" title="Al apretar ▶, el barco navega en el mapa del nodo origen al destino">🚢 Mostrar animación del barco</label>
+            <div id="opcionesMapa">
+                <div class="opcion-inline">
+                    <input type="checkbox" id="chkAnimBarco" checked>
+                    <label for="chkAnimBarco" style="margin-bottom: 0; cursor: pointer;" title="Al apretar ▶, el barco navega en el mapa del nodo origen al destino">🚢 Mostrar animación del barco</label>
+                </div>
+                <div class="opcion-inline" title="Volumen de la campanita de llegada. Al soltar se reproduce una prueba.">
+                    <label for="volAlarma" style="margin-bottom: 0;">🔔 Volumen de alarma</label>
+                    <input type="range" id="volAlarma" min="0" max="300" step="10" value="100">
+                    <span id="volAlarmaVal">100%</span>
+                </div>
             </div>
             <p id="ayudaMapa">💡 Click en un nodo del mapa para agregarlo o quitarlo de la ruta planeada · rueda del mouse para zoom · arrastrar para mover</p>
 
