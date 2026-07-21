@@ -284,19 +284,37 @@ function cancelarBarco() {
 }
 
 // Llamado desde Navegacion.pausar (ESC): congela el barco donde está.
+// Guarda la fracción de progreso y el tiempo restante (para ajustes en pausa).
 function pausarBarco() {
     if (!barcoAnim) return;
     const dur = Math.max(1, barcoAnim.fin - barcoAnim.inicio);
     barcoAnim.congelado = Math.min(1, (Date.now() - barcoAnim.inicio) / dur);
+    barcoAnim.restanteMs = Math.max(0, barcoAnim.fin - Date.now());
 }
 
-// Llamado desde Navegacion.reanudar ("."): retoma la animación donde quedó.
+// Llamado desde Navegacion.reanudar ("."): retoma la animación donde quedó,
+// respetando el tiempo restante (que pudo cambiar con las flechas ←/→).
 function reanudarBarco() {
     if (!barcoAnim || barcoAnim.congelado === undefined) return;
-    const dur = Math.max(1, barcoAnim.fin - barcoAnim.inicio);
-    barcoAnim.inicio = Date.now() - barcoAnim.congelado * dur;
-    barcoAnim.fin = barcoAnim.inicio + dur;
+    const p = barcoAnim.congelado;
+    const restante = barcoAnim.restanteMs || 0;
+    const durNueva = (p < 1) ? (restante / (1 - p)) : Math.max(1, barcoAnim.fin - barcoAnim.inicio);
+    barcoAnim.inicio = Date.now() - p * durNueva;
+    barcoAnim.fin = barcoAnim.inicio + durNueva;
     delete barcoAnim.congelado;
+    delete barcoAnim.restanteMs;
+}
+
+// Llamado desde Navegacion.ajustar (flechas): suma/resta al viaje del barco,
+// manteniéndolo sincronizado con el timer (mismo delta, mismo origen de tiempo).
+function ajustarBarco(deltaSeg) {
+    if (!barcoAnim) return;
+    const dms = deltaSeg * 1000;
+    if (barcoAnim.congelado !== undefined) {
+        barcoAnim.restanteMs = Math.max(0, (barcoAnim.restanteMs || 0) + dms);
+    } else {
+        barcoAnim.fin = Math.max(Date.now(), barcoAnim.fin + dms);
+    }
 }
 
 // ============================================

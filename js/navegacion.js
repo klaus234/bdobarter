@@ -15,6 +15,7 @@ const Navegacion = (function () {
     let destinoActual = "";
     let hookPausar = null;   // congela el tiempo restante del viaje activo
     let hookReanudar = null; // retoma el countdown donde quedó
+    let hookAjustar = null;  // suma/resta segundos al viaje activo (flechas ←/→)
     const tituloOriginal = document.title;
 
     function stats() {
@@ -79,6 +80,14 @@ const Navegacion = (function () {
 
     function estaPausado() {
         return pausado;
+    }
+
+    // Flechas ←/→: resta/suma segundos al viaje activo (corriendo o en pausa).
+    // El barco del mapa se ajusta en paralelo para no desincronizarse.
+    function ajustar(deltaSeg) {
+        if (!enViaje() || !hookAjustar) return;
+        hookAjustar(deltaSeg);
+        if (typeof ajustarBarco === "function") ajustarBarco(deltaSeg);
     }
 
     // botón ▶ del viaje activo (o null): lo usa el click derecho para saber
@@ -150,7 +159,7 @@ const Navegacion = (function () {
             btn.innerText = fmt(rest);
             document.title = "⏱ " + fmt(rest) + " → " + destinoNombre;
         }
-        // hooks de pausa/reanudación para este viaje (cierran sobre llegada/tick)
+        // hooks de pausa/reanudación/ajuste para este viaje (cierran sobre llegada/tick)
         hookPausar = function () {
             msRestantes = llegada - Date.now();
         };
@@ -159,11 +168,23 @@ const Navegacion = (function () {
             tick();
             intervalo = setInterval(tick, 250);
         };
+        hookAjustar = function (deltaSeg) {
+            const dms = deltaSeg * 1000;
+            if (pausado) {
+                msRestantes = Math.max(0, msRestantes + dms);
+                const s = msRestantes / 1000;
+                wCuenta.innerText = fmt(s);
+                btn.innerText = fmt(s);
+            } else {
+                llegada = Math.max(Date.now(), llegada + dms);
+                tick(); // refresca (o dispara la llegada si quedó en 0)
+            }
+        };
 
         tick();
         intervalo = setInterval(tick, 250);
     }
 
-    return { zarpar, cancelar, pausar, reanudar, escTimer, enViaje, estaPausado, botonActivo, estimarSegundos, stats, fmt };
+    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, estimarSegundos, stats, fmt };
 })();
 window.Navegacion = Navegacion;

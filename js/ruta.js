@@ -35,10 +35,11 @@ const Ruta = (function () {
     }
 
     // Nodos que se pueden ofrecer como "después de" para el nodo i sin generar ciclos.
+    // Los separadores (SEP) no participan de las dependencias.
     function candidatos(i) {
         const self = modelo[i];
         return modelo
-            .filter((n, j) => j !== i
+            .filter((n, j) => j !== i && !n.sep
                 && self.deps.indexOf(n.name) === -1
                 && !dependeTransitivo(n.name, self.name))
             .map(n => n.name);
@@ -51,6 +52,7 @@ const Ruta = (function () {
             if (idx(dep) !== -1 && !ids[dep]) ids[dep] = next++;
         }));
         return modelo.map(n => {
+            if (n.sep) return "SEP";
             let s = n.name;
             if (ids[n.name]) s += "#o_" + ids[n.name];
             n.deps.forEach(dep => { if (ids[dep]) s += "#d_" + ids[dep]; });
@@ -74,11 +76,12 @@ const Ruta = (function () {
             }).filter(x => x.name !== "");
 
         const id2name = {};
-        crudo.forEach(x => x.oid.forEach(id => { id2name[id] = x.name; }));
+        crudo.forEach(x => { if (x.name !== "SEP") x.oid.forEach(id => { id2name[id] = x.name; }); });
 
         const vistos = {}, res = [];
         crudo.forEach(x => {
-            if (vistos[x.name]) return; // sin duplicados
+            if (x.name === "SEP") { res.push({ name: "SEP", sep: true, deps: [] }); return; }
+            if (vistos[x.name]) return; // sin duplicados (los SEP sí pueden repetirse)
             vistos[x.name] = 1;
             let deps = x.did.map(id => id2name[id]).filter(n => n && n !== x.name);
             deps = deps.filter((n, i) => deps.indexOf(n) === i);
@@ -108,6 +111,22 @@ const Ruta = (function () {
             grip.className = "ruta-grip";
             grip.textContent = "⠿";
             grip.setAttribute("aria-hidden", "true");
+
+            // Separador: fila divisoria que corta el viaje (solo en Modo Manual)
+            if (nd.sep) {
+                li.classList.add("ruta-sep");
+                const etiqueta = document.createElement("span");
+                etiqueta.className = "ruta-sep-label";
+                etiqueta.textContent = "✂ Separador · corta el viaje (Modo Manual)";
+                const delSep = document.createElement("button");
+                delSep.className = "ruta-del";
+                delSep.type = "button";
+                delSep.setAttribute("aria-label", "Quitar separador");
+                delSep.textContent = "✕";
+                li.append(grip, etiqueta, delSep);
+                lista.appendChild(li);
+                return;
+            }
 
             const nombre = document.createElement("span");
             nombre.className = "ruta-nombre";
@@ -161,8 +180,19 @@ const Ruta = (function () {
     function agregar(nombre) {
         nombre = (nombre || "").trim().toUpperCase();
         if (!nombre) return;
+        // SEP: separador de viaje (se permiten varios, no se valida contra nodosDic)
+        if (nombre === "SEP") { modelo.push({ name: "SEP", sep: true, deps: [] }); actualizar(); return; }
         if (!existeEnDic(nombre)) { console.warn("Nodo desconocido:", nombre); return; }
         if (idx(nombre) === -1) modelo.push({ name: nombre, deps: [] });
+        actualizar();
+    }
+
+    // quita la entrada en la posición i (nodo o separador), limpiando deps
+    function quitarIdx(i) {
+        const q = modelo[i];
+        if (!q) return;
+        modelo.splice(i, 1);
+        if (!q.sep) modelo.forEach(n => { n.deps = n.deps.filter(d => d !== q.name); });
         actualizar();
     }
 
@@ -180,7 +210,7 @@ const Ruta = (function () {
     }
 
     function limpiar() { modelo = []; actualizar(); }
-    function planeados() { return modelo.map(n => n.name); }
+    function planeados() { return modelo.filter(n => !n.sep).map(n => n.name); }
     function cargarTexto(texto) { modelo = parsear(texto || ""); actualizar(); }
 
     function init() {
@@ -210,7 +240,7 @@ const Ruta = (function () {
                 return;
             }
             const del = e.target.closest(".ruta-del");
-            if (del) quitar(del.dataset.del);
+            if (del) quitarIdx(+del.closest(".ruta-item").dataset.i);
         });
 
         // Reordenar arrastrando

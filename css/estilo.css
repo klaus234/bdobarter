@@ -449,6 +449,22 @@ input[type="checkbox"] {
 .ruta-item:hover { background: rgba(52, 152, 219, 0.2); }
 .ruta-item.dragging { opacity: 0.4; }
 
+/* separador de viaje (SEP): fila divisoria discreta y punteada */
+.ruta-item.ruta-sep {
+    background: rgba(212, 175, 55, 0.08);
+    border-style: dashed;
+    border-color: var(--accent-gold);
+}
+.ruta-item.ruta-sep:hover { background: rgba(212, 175, 55, 0.14); }
+.ruta-sep-label {
+    flex: 1;
+    color: var(--accent-gold);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 .ruta-grip {
     color: var(--accent-gold);
     cursor: grab;

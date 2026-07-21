@@ -73,12 +73,25 @@ function calcularNodos() {
     }
 
     if (modoManual) {
-        // Modo manual: sin optimización, en el orden ingresado,
-        // partiendo en viajes según el máximo de nodos por viaje.
+        // Modo manual: sin optimización, en el orden ingresado. Se corta un
+        // viaje al llegar al máximo de nodos O al encontrar un separador (SEP).
         resultadoViajes = [];
-        for (let i = 0; i < recorrido.length; i += maxNodosPViaje) {
-            resultadoViajes.push([actual, ...recorrido.slice(i, i + maxNodosPViaje), actual]);
+        let viajeActual = [];
+        const cerrar = () => {
+            if (viajeActual.length) {
+                resultadoViajes.push([actual, ...viajeActual, actual]);
+                viajeActual = [];
+            }
+        };
+        for (let linea of nodosRecorridos) {
+            const nombre = nombreDeLinea(linea);
+            if (nombre === "") continue;
+            if (nombre === "SEP") { cerrar(); continue; }
+            if (!(nombre in nodosDic)) continue;
+            viajeActual.push(nodosDic[nombre]);
+            if (viajeActual.length === maxNodosPViaje) cerrar();
         }
+        cerrar();
         recNodos = resultadoViajes[0];
     } else if (dependenciasEncadenadas) {
         resultadoViajes = calcularRutaConCadenasDP(nodosRecorridos, actual, maxNodosPViaje, nodosDic);
@@ -140,6 +153,11 @@ window.onload = function () {
     // Botones principales
     document.getElementById("btnmateriales").onclick = calcularNodos;
 
+    // Separador de viaje (solo afecta en Modo Manual)
+    document.getElementById("btnSeparador").onclick = function () {
+        Ruta.agregar("SEP");
+    };
+
     document.getElementById("guardar").onclick = function () {
         Ruta.sincronizar();
         localStorage.setItem("NodosR", nmm.value);
@@ -192,6 +210,10 @@ window.onload = function () {
         } else if (k === "escape" || k === "r") {
             if (k === "r") e.preventDefault();
             Navegacion.escTimer();
+        } else if (e.key === "ArrowLeft") {
+            if (Navegacion.enViaje()) { e.preventDefault(); Navegacion.ajustar(-10); }
+        } else if (e.key === "ArrowRight") {
+            if (Navegacion.enViaje()) { e.preventDefault(); Navegacion.ajustar(10); }
         }
     });
 
