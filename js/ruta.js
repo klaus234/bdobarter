@@ -243,28 +243,70 @@ const Ruta = (function () {
             if (del) quitarIdx(+del.closest(".ruta-item").dataset.i);
         });
 
-        // Reordenar arrastrando
+        // Reordenar arrastrando, con una línea dorada que marca dónde va a caer
         let dragI = null;
+
+        function limpiarIndicadores() {
+            lista.querySelectorAll(".drop-antes, .drop-despues")
+                .forEach(li => li.classList.remove("drop-antes", "drop-despues"));
+        }
+
+        // índice de inserción (en el orden actual) según la altura del puntero
+        function posicionInsercion(y) {
+            const items = [...lista.querySelectorAll(".ruta-item")];
+            for (let i = 0; i < items.length; i++) {
+                const r = items[i].getBoundingClientRect();
+                if (y < r.top + r.height / 2) return i;
+            }
+            return items.length;
+        }
+
+        function marcarIndicador(pos) {
+            limpiarIndicadores();
+            const items = [...lista.querySelectorAll(".ruta-item")];
+            if (items.length === 0) return;
+            if (pos >= items.length) items[items.length - 1].classList.add("drop-despues");
+            else items[pos].classList.add("drop-antes");
+        }
+
         lista.addEventListener("dragstart", e => {
             const li = e.target.closest(".ruta-item");
             if (!li) return;
             dragI = +li.dataset.i;
             li.classList.add("dragging");
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = "move";
+                // Firefox exige datos en el dataTransfer para iniciar el arrastre
+                try { e.dataTransfer.setData("text/plain", String(dragI)); } catch (err) { }
+            }
         });
-        lista.addEventListener("dragend", e => {
-            const li = e.target.closest(".ruta-item");
-            if (li) li.classList.remove("dragging");
+
+        lista.addEventListener("dragend", () => {
+            lista.querySelectorAll(".dragging").forEach(li => li.classList.remove("dragging"));
+            limpiarIndicadores();
             dragI = null;
         });
-        lista.addEventListener("dragover", e => e.preventDefault());
+
+        lista.addEventListener("dragover", e => {
+            if (dragI === null) return;
+            e.preventDefault();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+            marcarIndicador(posicionInsercion(e.clientY));
+        });
+
+        lista.addEventListener("dragleave", e => {
+            if (!lista.contains(e.relatedTarget)) limpiarIndicadores();
+        });
+
         lista.addEventListener("drop", e => {
             e.preventDefault();
-            const li = e.target.closest(".ruta-item");
-            if (!li || dragI === null) return;
-            const to = +li.dataset.i;
-            if (to === dragI) return;
+            if (dragI === null) return;
+            let pos = posicionInsercion(e.clientY);
+            limpiarIndicadores();
             const m = modelo.splice(dragI, 1)[0];
-            modelo.splice(to, 0, m);
+            if (pos > dragI) pos--; // compensar el hueco que dejó el elemento movido
+            modelo.splice(Math.max(0, Math.min(pos, modelo.length)), 0, m);
+            dragI = null;
             actualizar();
         });
 

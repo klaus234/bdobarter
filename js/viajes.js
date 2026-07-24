@@ -73,6 +73,16 @@ function renderizarViajes(viajes, contenedor) {
     let distTotal = 0;
     let tiempoTotal = 0;
 
+    // Marca un viaje como activo (lo resalta y dibuja su ruta en el mapa).
+    // centrar=false cuando viene de un ▶: mover el mapa ahí sería molesto.
+    function activarViaje(ident, centrar) {
+        recNodos = viajes[ident.validx];
+        document.querySelectorAll(".identificadorViaje")
+            .forEach(k => k.classList.remove("viajeActivo"));
+        ident.classList.add("viajeActivo");
+        if (centrar && ident.firstNodoSpan) ident.firstNodoSpan.click();
+    }
+
     for (let rgeneral of viajes) {
         const distViaje = distanciaViajeXY(rgeneral);
         distTotal += distViaje;
@@ -96,13 +106,7 @@ function renderizarViajes(viajes, contenedor) {
         identificador.validx = indiceViaje;
 
         identificador.onclick = function () {
-            recNodos = viajes[this.validx];
-            const allIds = document.querySelectorAll(".identificadorViaje");
-            allIds.forEach(k => k.classList.remove("viajeActivo"));
-            this.classList.add("viajeActivo");
-            if (identificador.firstNodoSpan) {
-                identificador.firstNodoSpan.click();
-            }
+            activarViaje(this, true);
         };
 
         liGeneral.append(identificador);
@@ -141,6 +145,7 @@ function renderizarViajes(viajes, contenedor) {
                 + (retr !== 0 ? ` · retraso ${retr}` : "");
             if (tieneRetrasoMedido(origen.titulo, rnodo.titulo)) btnPlay.classList.add("conRetraso");
             btnPlay.onclick = function () {
+                activarViaje(identificador, false); // el viaje de este tramo pasa a ser el activo
                 Navegacion.zarpar(origen, rnodo, rnodo.titulo, btnPlay, cbox);
             };
             // click derecho: marcar el tramo como terminado (⚓) sin esperar
@@ -195,6 +200,7 @@ function renderizarViajes(viajes, contenedor) {
                 + (retrV !== 0 ? ` · retraso ${retrV}` : "");
             if (tieneRetrasoMedido(origenV.titulo, destinoV.titulo)) btnV.classList.add("conRetraso");
             btnV.onclick = function () {
+                activarViaje(identificador, false);
                 Navegacion.zarpar(origenV, destinoV, destinoV.titulo, btnV, null);
             };
             btnV.oncontextmenu = function (ev) {
@@ -241,6 +247,69 @@ function renderizarViajes(viajes, contenedor) {
 // Tiempo restante = suma de los tramos que aún no tienen ancla (⚓). El tramo
 // activo aporta su cuenta regresiva (por eso baja cada segundo mientras viajás);
 // los completados aportan 0. Cuando están todos completos: "COMPLETADO".
+// Borra de la pantalla los viajes ya calculados y su progreso. El localStorage
+// no se toca acá: se actualiza al apretar Guardar Estado (igual que la ruta).
+function limpiarViajesCalculados() {
+    if (typeof Navegacion !== "undefined") Navegacion.cancelar(); // aviso en curso
+    resultadoViajes = [];
+    recNodos = [];          // saca la línea roja del mapa
+    resetearNodosColor();   // y los nodos marcados en verde
+    const dom1 = document.getElementById("outputnodos");
+    if (dom1) dom1.innerHTML = "";
+    const tot = document.getElementById("totales");
+    if (tot) tot.innerText = "0";
+    if (typeof Atajos !== "undefined") Atajos.reset();
+}
+
+// ============================================
+// PERSISTENCIA DE LOS VIAJES CALCULADOS
+// Guarda los viajes (por título) y el progreso: tramos completados (⚓) y
+// checkboxes marcados, para poder retomar la ruta donde se dejó.
+// ============================================
+function estadoViajesCalculados() {
+    if (!Array.isArray(resultadoViajes) || resultadoViajes.length === 0) return null;
+    return {
+        viajes: resultadoViajes.map(v => v.map(n => n.titulo)),
+        anclas: [...document.querySelectorAll("#outputnodos .btn-play")]
+            .map(b => b.innerText.trim() === "⚓"),
+        checks: [...document.querySelectorAll("#outputnodos .cboxnodo input[type=checkbox]")]
+            .map(c => c.checked)
+    };
+}
+
+// Rehidrata lo guardado por estadoViajesCalculados(). Requiere nodosDic y
+// retrasosDic ya cargados (los ETA dependen de los retrasos medidos).
+function restaurarViajesCalculados() {
+    let g = null;
+    try { g = JSON.parse(localStorage.getItem("ViajesCalc")); } catch (e) { return; }
+    if (!g || !Array.isArray(g.viajes) || g.viajes.length === 0) return;
+
+    // si algún nodo dejó de existir, se descarta ese viaje
+    const viajes = g.viajes
+        .map(v => v.map(t => nodosDic[t]).filter(Boolean))
+        .filter(v => v.length >= 2);
+    if (viajes.length === 0) return;
+
+    resultadoViajes = viajes;
+    recNodos = viajes[0];
+    const dom1 = document.getElementById("outputnodos");
+    const res = renderizarViajes(viajes, dom1);
+    document.getElementById("totales").innerText =
+        `${res.nodos} nodos · dist ${Math.round(res.dist)}`;
+
+    // progreso: anclas y nodos marcados
+    const btns = [...document.querySelectorAll("#outputnodos .btn-play")];
+    (g.anclas || []).forEach((ancla, i) => {
+        if (ancla && btns[i]) btns[i].innerText = "⚓";
+    });
+    const cboxes = [...document.querySelectorAll("#outputnodos .cboxnodo input[type=checkbox]")];
+    (g.checks || []).forEach((marcado, i) => {
+        // .click() para que corra colorearNodo y el nodo se pinte en el mapa
+        if (marcado && cboxes[i] && !cboxes[i].checked) cboxes[i].click();
+    });
+    actualizarTiempoRestante();
+}
+
 function actualizarTiempoRestante() {
     // suma los tramos pendientes de un conjunto de botones ▶
     const restanteDe = (btns) => {

@@ -40,10 +40,11 @@ const Navegacion = (function () {
             if (audioCtx.state === "suspended") audioCtx.resume();
             const pico = Math.max(0.0002, volumenAlarma());
             if (pico <= 0.0002) return; // volumen en 0: silencio
-            const notas = [523.25, 659.25, 783.99];
+            // Do-Mi-Sol-Do-Mi ascendente: 5 notas para que la alerta dure más
+            const notas = [523.25, 659.25, 783.99, 1046.50, 1318.51];
             for (let rep = 0; rep < 2; rep++) {
                 notas.forEach((f, i) => {
-                    const t0 = audioCtx.currentTime + rep * 1.15 + i * 0.28;
+                    const t0 = audioCtx.currentTime + rep * 1.7 + i * 0.28;
                     const osc = audioCtx.createOscillator();
                     const gan = audioCtx.createGain();
                     osc.type = "sine";

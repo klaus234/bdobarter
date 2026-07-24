@@ -46,7 +46,8 @@ function calcularNodos() {
             .then(response => response.json())
             .then(data => {
                 if (clavetitulo in data[recorrido_titulo.length]) {
-                    const resultadoViajes = data[recorrido_titulo.length][clavetitulo];
+                    // sin "const": asigna el global, así se puede guardar el estado
+                    resultadoViajes = data[recorrido_titulo.length][clavetitulo];
                     recNodos = resultadoViajes[0];
                     dom1.innerHTML = "";
                     const res = renderizarViajes(resultadoViajes, dom1);
@@ -109,34 +110,28 @@ function calcularNodos() {
 // INICIALIZACIÓN
 // ============================================
 window.onload = function () {
-    // Cargar datos de nodos
-    fetch('data/datos.json')
-        .then(response => response.json())
-        .then(data => {
-            ndata = data;
-            for (let nodo of ndata) {
-                nodosDic[nodo.titulo] = new Nodo(nodo.x, nodo.y, nodo.titulo);
-            }
-            
-            $("#inicial").autocomplete({
-                source: Object.keys(nodosDic)
-            });
-            
-            $("#agregar").autocomplete({
-                source: Object.keys(nodosDic)
-            });
-        });
+    // Cargar nodos y retrasos. Recién con AMBOS listos se restauran los viajes
+    // calculados, porque los ETA dependen de los retrasos medidos.
+    Promise.all([
+        fetch('data/datos.json').then(response => response.json()),
+        fetch('data/retrasos.json').then(response => response.json())
+            .catch(() => { console.warn("retrasos.json no disponible"); return []; })
+    ]).then(([data, listaRetrasos]) => {
+        ndata = data;
+        for (let nodo of ndata) {
+            nodosDic[nodo.titulo] = new Nodo(nodo.x, nodo.y, nodo.titulo);
+        }
 
-    // Cargar retrasos medidos entre nodos (si el archivo no existe, sin retrasos)
-    fetch('data/retrasos.json')
-        .then(response => response.json())
-        .then(lista => {
-            for (const r of lista) {
-                const clave = [String(r.nodoA).toUpperCase(), String(r.nodoB).toUpperCase()].sort().join("|");
-                retrasosDic[clave] = r.retraso;
-            }
-        })
-        .catch(() => console.warn("retrasos.json no disponible"));
+        $("#inicial").autocomplete({ source: Object.keys(nodosDic) });
+        $("#agregar").autocomplete({ source: Object.keys(nodosDic) });
+
+        for (const r of listaRetrasos) {
+            const clave = [String(r.nodoA).toUpperCase(), String(r.nodoB).toUpperCase()].sort().join("|");
+            retrasosDic[clave] = r.retraso;
+        }
+
+        restaurarViajesCalculados();
+    });
 
     // Lista visual de la ruta (carga lo guardado desde localStorage)
     const nmm = document.getElementById("nodosm");
@@ -167,6 +162,12 @@ window.onload = function () {
         localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
         localStorage.setItem("VolAlarma", document.getElementById("volAlarma").value);
         localStorage.setItem("RutaCargada", SaveStates.nombreCargado());
+        localStorage.setItem("MaxNodos", document.getElementById("viajes").value);
+        localStorage.setItem("NodoInicial", document.getElementById("inicial").value);
+        // viajes calculados + progreso (⚓ y nodos marcados); null si no hay
+        const calc = estadoViajesCalculados();
+        if (calc) localStorage.setItem("ViajesCalc", JSON.stringify(calc));
+        else localStorage.removeItem("ViajesCalc");
         showMessageGuardando();
     };
 
@@ -174,6 +175,23 @@ window.onload = function () {
     document.getElementById("chkManual").checked = localStorage.getItem("ModoManual") === "1";
     if (localStorage.getItem("AnimBarco") !== null)
         document.getElementById("chkAnimBarco").checked = localStorage.getItem("AnimBarco") === "1";
+    if (localStorage.getItem("MaxNodos")) document.getElementById("viajes").value = localStorage.getItem("MaxNodos");
+    if (localStorage.getItem("NodoInicial")) document.getElementById("inicial").value = localStorage.getItem("NodoInicial");
+
+    // Colapsar / mostrar el bloque de Ruta Planeada (se recuerda solo)
+    const btnToggleRuta = document.getElementById("btnToggleRuta");
+    const bloqueRuta = document.getElementById("rutaPlaneadaBloque");
+    function aplicarColapsoRuta(oculto) {
+        bloqueRuta.style.display = oculto ? "none" : "";
+        btnToggleRuta.innerText = oculto ? "+" : "−";
+        btnToggleRuta.setAttribute("aria-expanded", oculto ? "false" : "true");
+    }
+    aplicarColapsoRuta(localStorage.getItem("RutaOculta") === "1");
+    btnToggleRuta.onclick = function () {
+        const ocultar = bloqueRuta.style.display !== "none";
+        aplicarColapsoRuta(ocultar);
+        localStorage.setItem("RutaOculta", ocultar ? "1" : "0");
+    };
     SaveStates.setCargada(localStorage.getItem("RutaCargada") || "");
     SaveStates.render();
 
@@ -292,7 +310,8 @@ window.onload = function () {
         if (posx < 4) posx = 4;
         if (posx >= maxX) {
             Ruta.limpiar();
-            SaveStates.limpiarCargada(); // ya no hay ruta cargada
+            SaveStates.limpiarCargada();  // ya no hay ruta cargada
+            limpiarViajesCalculados();    // y tampoco viajes generados
         }
         slideErase.style.left = posx + "px";
     };

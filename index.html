@@ -22,7 +22,7 @@
     <script src="js/main.js"></script>
 </head>
 <body>
-    <h2><a href="index.html" title="Abrir otra instancia (click con la rueda o Ctrl+click para nueva pestaña)">🗺️ Calcular Ruta Óptima v4.9.0</a></h2>
+    <h2><a href="index.html" title="Abrir otra instancia (click con la rueda o Ctrl+click para nueva pestaña)">🗺️ Calcular Ruta Óptima v4.10.0</a></h2>
     <div class="layout-container">
         <div class="columnaA">
             <div class="input-group">
@@ -47,23 +47,27 @@
 
             <input type="checkbox" id="chkDependencias" style="display: none;">
 
-            <label class="lbl">📋 Ruta Planeada:</label>
-            <ul id="rutaLista" class="ruta-lista"></ul>
-            <p id="rutaVacia" class="ruta-vacia">Agregá nodos desde el buscador, el mapa o el selector de niveles. Con «después de» encadenás el orden (ej: OLVIA antes que AREHAZA).</p>
+            <label class="lbl lbl-con-boton">📋 Ruta Planeada:
+                <button type="button" id="btnToggleRuta" class="btn-toggle" title="Ocultar / mostrar la ruta planeada" aria-expanded="true">−</button>
+            </label>
+            <div id="rutaPlaneadaBloque">
+                <ul id="rutaLista" class="ruta-lista"></ul>
+                <p id="rutaVacia" class="ruta-vacia">Agregá nodos desde el buscador, el mapa o el selector de niveles. Con «después de» encadenás el orden (ej: OLVIA antes que AREHAZA).</p>
 
-            <div class="ruta-acciones">
-                <button type="button" id="btnTextoAvanzado" class="btn-mini" title="Editar los marcadores #o_/#d_ a mano">📝 Texto avanzado</button>
-                <button type="button" id="btnSeparador" class="btn-mini" title="Agrega un separador: corta el viaje en ese punto (solo en Modo Manual)">✂️ Separador</button>
-            </div>
-            <div id="textoAvanzadoWrap" style="display: none;">
-                <textarea name="nodosm" id="nodosm" placeholder="NODO#o_1   (origen)&#10;OTRO#d_1   (va después)" cols="30" rows="10"></textarea>
-                <p class="hint">Formato: <code>NOMBRE#o_1</code> marca un origen y <code>OTRO#d_1</code> lo hace ir después. Al cerrar, la lista se re-sincroniza.</p>
+                <div class="ruta-acciones">
+                    <button type="button" id="btnTextoAvanzado" class="btn-mini" title="Editar los marcadores #o_/#d_ a mano">📝 Texto avanzado</button>
+                    <button type="button" id="btnSeparador" class="btn-mini" title="Agrega un separador: corta el viaje en ese punto (solo en Modo Manual)">✂️ Separador</button>
+                </div>
+                <div id="textoAvanzadoWrap" style="display: none;">
+                    <textarea name="nodosm" id="nodosm" placeholder="NODO#o_1   (origen)&#10;OTRO#d_1   (va después)" cols="30" rows="10"></textarea>
+                    <p class="hint">Formato: <code>NOMBRE#o_1</code> marca un origen y <code>OTRO#d_1</code> lo hace ir después. Al cerrar, la lista se re-sincroniza.</p>
+                </div>
+
+                <div class="btn_slide_container" title="Desliza hacia la derecha para limpiar toda la ruta">
+                    <div class="slider" id="slider_erase"></div>
+                </div>
             </div>
 
-            <div class="btn_slide_container" title="Desliza hacia la derecha para limpiar toda la ruta">
-                <div class="slider" id="slider_erase"></div>
-            </div>
-            
             <div class="contenedor-puntos-principal">
                 <h3>🎲 Selector de Nodos por Nivel</h3>
                 <ul id="contenedor-puntos"></ul>
