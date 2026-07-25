@@ -34,9 +34,21 @@
     </form>
     <datalist id="listaNodos"></datalist>
 
+    <h2>Retrasos locales</h2>
+    <p>
+        Los retrasos guardados acá quedan en <b>este navegador</b> y se suman a los de
+        <code>data/retrasos.json</code> (agregan pares nuevos y pisan los que ya existen).
+        La calculadora de rutas los usa automáticamente.
+    </p>
+    <button type="button" id="btnAgregarLocal">➕ Agregar a retrasos (local)</button>
+    <button type="button" id="btnVerLocal">📋 Ver JSON retrasos local</button>
+    <button type="button" id="btnGenerarJSON">🧾 Generar retrasos.json</button>
+    <button type="button" id="btnBorrarLocales">🗑️ Borrar retrasos locales</button>
+
     <pre id="salida"></pre>
 
     <script src="js/modelo.js"></script>
+    <script src="js/retrasos.js"></script>
     <script>
         // El modelo físico (constantes, estimación e inversión) vive en
         // js/modelo.js, compartido con index.html.
@@ -100,7 +112,8 @@
         };
 
         let nodos = {};
-        let retrasos = [];
+        let retrasosBase = [];      // los de data/retrasos.json
+        let ultimoCalculo = null;   // para el botón "Agregar a retrasos (local)"
 
         fetch('data/datos.json')
             .then(r => r.json())
@@ -117,7 +130,7 @@
 
         fetch('data/retrasos.json')
             .then(r => r.json())
-            .then(d => { retrasos = d; })
+            .then(d => { retrasosBase = d; })
             .catch(() => {});
 
         function parseTiempo(s) {
@@ -150,8 +163,10 @@
             const retraso = Math.round(dMedida - dModelo);
             const segResiduo = Math.round(retraso / v);
 
-            const previo = retrasos.find(r =>
-                (r.nodoA === nA && r.nodoB === nB) || (r.nodoA === nB && r.nodoB === nA));
+            ultimoCalculo = { nodoA: nA, nodoB: nB, retraso: retraso };
+
+            const previoLocal = RetrasosLocal.buscar(RetrasosLocal.leer(), nA, nB);
+            const previoBase = RetrasosLocal.buscar(retrasosBase, nA, nB);
 
             salida.textContent =
                 'Distancia en línea recta:      ' + Math.round(dRecta) + ' unidades\n' +
@@ -163,11 +178,76 @@
                 (Math.abs(segResiduo) < 30
                     ? 'El modelo ya estima bien este tramo (residuo < 30 s): no hace falta registrarlo.\n\n'
                     : '') +
-                (previo
-                    ? 'Ojo: ya hay un retraso registrado para este par en retrasos.json: ' + previo.retraso + '\n\n'
-                    : 'Sin retraso registrado aún para este par.\n\n') +
-                'Línea para agregar a data/retrasos.json:\n' +
+                (previoLocal
+                    ? 'Ya hay un retraso LOCAL para este par: ' + previoLocal.retraso + ' (se reemplaza al guardar)\n'
+                    : '') +
+                (previoBase
+                    ? 'Ya hay un retraso en data/retrasos.json para este par: ' + previoBase.retraso + '\n'
+                    : '') +
+                (!previoLocal && !previoBase ? 'Sin retraso registrado aún para este par.\n' : '') +
+                '\n' +
+                'Podés apretar «➕ Agregar a retrasos (local)» o copiar esta línea a data/retrasos.json:\n' +
                 '  {"nodoA": "' + nA + '", "nodoB": "' + nB + '", "retraso": ' + retraso + '}';
+        };
+
+        // ---- Retrasos locales (guardados en este navegador) ----
+        const salidaEl = document.getElementById('salida');
+
+        document.getElementById('btnAgregarLocal').onclick = function () {
+            if (!ultimoCalculo) {
+                salidaEl.textContent = 'Primero calculá un retraso con el formulario de arriba.';
+                return;
+            }
+            const yaEstaba = RetrasosLocal.buscar(RetrasosLocal.leer(), ultimoCalculo.nodoA, ultimoCalculo.nodoB);
+            const e = RetrasosLocal.guardar(ultimoCalculo.nodoA, ultimoCalculo.nodoB, ultimoCalculo.retraso);
+            salidaEl.textContent =
+                (yaEstaba ? 'Retraso local ACTUALIZADO' : 'Retraso local AGREGADO') + ':\n' +
+                '  {"nodoA": "' + e.nodoA + '", "nodoB": "' + e.nodoB + '", "retraso": ' + e.retraso + '}\n' +
+                (yaEstaba ? '  (antes era ' + yaEstaba.retraso + ')\n' : '') +
+                '\nRetrasos locales guardados: ' + RetrasosLocal.leer().length +
+                '\nLa calculadora de rutas ya lo usa (recargala si la tenés abierta).';
+        };
+
+        document.getElementById('btnVerLocal').onclick = function () {
+            const locales = RetrasosLocal.leer();
+            salidaEl.textContent = locales.length === 0
+                ? 'No hay retrasos guardados localmente.'
+                : 'Retrasos locales (' + locales.length + '):\n\n' + RetrasosLocal.formatear(locales);
+        };
+
+        document.getElementById('btnGenerarJSON').onclick = function () {
+            const locales = RetrasosLocal.leer();
+            let nuevos = 0, modificados = 0;
+            for (const l of locales) {
+                if (RetrasosLocal.buscar(retrasosBase, l.nodoA, l.nodoB)) modificados++;
+                else nuevos++;
+            }
+            const texto = RetrasosLocal.generarJSON(retrasosBase);
+            salidaEl.textContent =
+                'retrasos.json actualizado: ' + RetrasosLocal.fusionar(retrasosBase).length + ' entradas\n' +
+                '  · ' + retrasosBase.length + ' del archivo actual\n' +
+                '  · ' + modificados + ' modificadas por retrasos locales\n' +
+                '  · ' + nuevos + ' agregadas por retrasos locales\n' +
+                '\nSe descargó como retrasos.json (reemplazá con él data/retrasos.json):\n\n' + texto;
+
+            // descargar el archivo generado
+            const blob = new Blob([texto], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'retrasos.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+
+        document.getElementById('btnBorrarLocales').onclick = function () {
+            const n = RetrasosLocal.leer().length;
+            if (n === 0) { salidaEl.textContent = 'No hay retrasos locales para borrar.'; return; }
+            if (!confirm('¿Borrar los ' + n + ' retrasos locales? Los de data/retrasos.json no se tocan.')) return;
+            RetrasosLocal.borrarTodo();
+            salidaEl.textContent = 'Se borraron los ' + n + ' retrasos locales. Quedan solo los de data/retrasos.json.';
         };
         const barcoVel = document.getElementById('vel');
         const barcoAcc = document.getElementById('acc');

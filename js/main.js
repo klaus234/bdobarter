@@ -125,9 +125,16 @@ window.onload = function () {
         $("#inicial").autocomplete({ source: Object.keys(nodosDic) });
         $("#agregar").autocomplete({ source: Object.keys(nodosDic) });
 
-        for (const r of listaRetrasos) {
-            const clave = [String(r.nodoA).toUpperCase(), String(r.nodoB).toUpperCase()].sort().join("|");
-            retrasosDic[clave] = r.retraso;
+        // retrasos del archivo + los guardados localmente (los locales pisan)
+        for (const r of RetrasosLocal.fusionar(listaRetrasos)) {
+            retrasosDic[RetrasosLocal.clave(r.nodoA, r.nodoB)] = r.retraso;
+        }
+        const nLocales = RetrasosLocal.leer().length;
+        const infoLocal = document.getElementById("infoRetrasosLocales");
+        if (infoLocal) {
+            infoLocal.innerText = nLocales
+                ? `(${nLocales} retraso${nLocales > 1 ? "s" : ""} local${nLocales > 1 ? "es" : ""} aplicado${nLocales > 1 ? "s" : ""})`
+                : "";
         }
 
         restaurarViajesCalculados();
@@ -250,9 +257,9 @@ window.onload = function () {
             if (k === "r") e.preventDefault();
             Navegacion.escTimer();
         } else if (e.key === "ArrowLeft") {
-            if (Navegacion.enViaje()) { e.preventDefault(); Navegacion.ajustar(-10); }
-        } else if (e.key === "ArrowRight") {
             if (Navegacion.enViaje()) { e.preventDefault(); Navegacion.ajustar(10); }
+        } else if (e.key === "ArrowRight") {
+            if (Navegacion.enViaje()) { e.preventDefault(); Navegacion.ajustar(-10); }
         }
     });
 
@@ -312,6 +319,9 @@ window.onload = function () {
             Ruta.limpiar();
             SaveStates.limpiarCargada();  // ya no hay ruta cargada
             limpiarViajesCalculados();    // y tampoco viajes generados
+            const chkManualH = document.getElementById("chkManual");
+            chkManualH.checked = false;  // desactivar modo manual
+            chkManualH.dispatchEvent(new Event("change"));  // actualizar texto del botón
         }
         slideErase.style.left = posx + "px";
     };
