@@ -11,6 +11,7 @@ const Navegacion = (function () {
     let intervalo = null;
     let filaActiva = null;
     let audioCtx = null;
+    let notasSonando = []; // osciladores agendados, para poder cortarlos
     let pausado = false;
     let destinoActual = "";
     let hookPausar = null;   // congela el tiempo restante del viaje activo
@@ -67,14 +68,28 @@ const Navegacion = (function () {
         }, 450);
     }
 
-    // Campanita suave sintetizada (C5-E5-G5), sin archivos.
+    // Corta la campanita que esté sonando (o agendada). Sin esto, mover
+    // el slider de volumen varias veces superpone las notas.
+    function detenerAlerta() {
+        const ahora = audioCtx ? audioCtx.currentTime : 0;
+        for (const { osc, gan } of notasSonando) {
+            try {
+                gan.gain.cancelScheduledValues(ahora);
+                gan.gain.setValueAtTime(0.0001, ahora);
+                osc.stop(ahora); // si aún no empezó, ya no suena
+            } catch (e) { /* ya estaba detenida */ }
+        }
+        notasSonando = [];
+    }
+
+    // Campanita suave sintetizada (Do-Mi-Sol-Do-Mi), sin archivos.
     function sonarAlerta() {
         try {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === "suspended") audioCtx.resume();
+            detenerAlerta(); // una alarma a la vez
             const pico = Math.max(0.0002, volumenAlarma());
             if (pico <= 0.0002) return; // volumen en 0: silencio
-            // Do-Mi-Sol-Do-Mi ascendente: 5 notas para que la alerta dure más
             const notas = [523.25, 659.25, 783.99, 1046.50, 1318.51];
             for (let rep = 0; rep < 2; rep++) {
                 notas.forEach((f, i) => {
@@ -89,6 +104,13 @@ const Navegacion = (function () {
                     osc.connect(gan).connect(audioCtx.destination);
                     osc.start(t0);
                     osc.stop(t0 + 1);
+                    // registrar para poder cortarla, y soltarla al terminar
+                    const voz = { osc, gan };
+                    notasSonando.push(voz);
+                    osc.onended = () => {
+                        notasSonando = notasSonando.filter(v => v !== voz);
+                        try { osc.disconnect(); gan.disconnect(); } catch (e) { }
+                    };
                 });
             }
         } catch (e) { console.warn("Audio no disponible:", e); }
