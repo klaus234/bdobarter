@@ -143,7 +143,8 @@ function renderizarViajes(viajes, contenedor) {
             btnPlay.dataset.est = est; // segundos, para el "tiempo restante"
             btnPlay.title = `Zarpé de ${origen.titulo} hacia ${rnodo.titulo} · llegada ≈ ${Navegacion.fmt(est)}`
                 + (retr !== 0 ? ` · retraso ${retr}` : "");
-            if (tieneRetrasoMedido(origen.titulo, rnodo.titulo)) btnPlay.classList.add("conRetraso");
+            const medido = tieneRetrasoMedido(origen.titulo, rnodo.titulo);
+            if (medido) btnPlay.classList.add("conRetraso");
             btnPlay.onclick = function () {
                 activarViaje(identificador, false); // el viaje de este tramo pasa a ser el activo
                 Navegacion.zarpar(origen, rnodo, rnodo.titulo, btnPlay, cbox);
@@ -157,10 +158,14 @@ function renderizarViajes(viajes, contenedor) {
                 actualizarTiempoRestante();
             };
 
-            // tiempo estimado del tramo, visible al lado del nombre
+            // tiempo estimado del tramo, visible al lado del nombre.
+            // Sin retraso medido va subrayado punteado (el dato puede fallar).
             const spnT = document.createElement("span");
-            spnT.className = "tiempoTramo";
+            spnT.className = "tiempoTramo" + (medido ? "" : " estimado");
             spnT.innerText = "≈ " + Navegacion.fmt(est);
+            spnT.title = medido
+                ? "Tiempo corregido con un retraso medido para este tramo"
+                : "Estimado sin medición: el tiempo real puede diferir";
 
             lit.append(cbox);
             lit.append(spn);
@@ -198,7 +203,8 @@ function renderizarViajes(viajes, contenedor) {
             btnV.dataset.est = estV;
             btnV.title = `Zarpé de ${origenV.titulo} de vuelta a ${destinoV.titulo} · llegada ≈ ${Navegacion.fmt(estV)}`
                 + (retrV !== 0 ? ` · retraso ${retrV}` : "");
-            if (tieneRetrasoMedido(origenV.titulo, destinoV.titulo)) btnV.classList.add("conRetraso");
+            const medidoV = tieneRetrasoMedido(origenV.titulo, destinoV.titulo);
+            if (medidoV) btnV.classList.add("conRetraso");
             btnV.onclick = function () {
                 activarViaje(identificador, false);
                 Navegacion.zarpar(origenV, destinoV, destinoV.titulo, btnV, null);
@@ -211,8 +217,11 @@ function renderizarViajes(viajes, contenedor) {
             };
 
             const spnTV = document.createElement("span");
-            spnTV.className = "tiempoTramo";
+            spnTV.className = "tiempoTramo" + (medidoV ? "" : " estimado");
             spnTV.innerText = "≈ " + Navegacion.fmt(estV);
+            spnTV.title = medidoV
+                ? "Tiempo corregido con un retraso medido para este tramo"
+                : "Estimado sin medición: el tiempo real puede diferir";
 
             filaV.append(spnV);
             filaV.append(spnTV);

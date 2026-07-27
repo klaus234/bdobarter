@@ -716,6 +716,7 @@ input[type="checkbox"] {
 }
 
 .btn-play {
+    position: relative;
     width: auto;
     min-width: 52px;
     margin: 0 0 0 auto;
@@ -728,6 +729,52 @@ input[type="checkbox"] {
     border-radius: 12px;
     letter-spacing: 0;
     flex: 0 0 auto;
+    --colorLuz: rgba(46, 204, 113, 0.95);
+}
+
+/* Ángulo animable para la luz que gira (necesita @property) */
+@property --anguloLuz {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes luzGirando {
+    to { --anguloLuz: 360deg; }
+}
+
+/* Tramo SIN retraso medido: una luz recorre el contorno del botón para
+   avisar que el tiempo es un estimado sin medición que lo corrija.
+   Es un aro por fuera del botón: si el navegador no soporta @property
+   simplemente no se ve, y el botón queda igual que siempre. */
+.btn-play:not(.conRetraso)::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 15px;
+    padding: 2px;
+    background: conic-gradient(from var(--anguloLuz),
+        transparent 0deg,
+        transparent 205deg,
+        var(--colorLuz) 288deg,
+        #ffffff 318deg,
+        var(--colorLuz) 344deg,
+        transparent 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: luzGirando 2.6s linear infinite;
+    pointer-events: none;
+}
+
+/* en la fila de vuelta los botones son azules: la luz acompaña */
+.fila-vuelta .btn-play {
+    --colorLuz: rgba(52, 152, 219, 0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-play:not(.conRetraso)::before { animation: none; }
 }
 
 .btn-play:hover {
@@ -765,6 +812,14 @@ input[type="checkbox"] {
     margin-left: 8px;
     white-space: nowrap;
     cursor: default;
+}
+
+/* tiempo de un tramo SIN retraso medido: subrayado punteado = estimado */
+.tiempoTramo.estimado {
+    text-decoration: underline dashed;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    cursor: help;
 }
 
 .cboxnodo.atajoSel {
