@@ -106,10 +106,45 @@ function calcularNodos() {
     document.getElementById("totales").innerText = `${res.nodos} nodos · dist ${Math.round(res.dist)}`;
 }
 
+// Reemplaza las flechitas nativas de los <input type="number"> (distintas en
+// cada navegador y fuera del estilo de la página) por botones ▲▼ propios.
+function estilizarNumeros() {
+    document.querySelectorAll('input[type="number"]').forEach(inp => {
+        if (inp.parentNode.classList.contains("num-wrap")) return;
+
+        const wrap = document.createElement("div");
+        wrap.className = "num-wrap";
+        inp.parentNode.insertBefore(wrap, inp);
+        wrap.appendChild(inp);
+
+        const flechas = document.createElement("div");
+        flechas.className = "num-flechas";
+
+        const boton = (txt, sube) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "num-btn";
+            b.tabIndex = -1;
+            b.innerText = txt;
+            b.title = (sube ? "Subir" : "Bajar") + " (respeta el mínimo y el máximo)";
+            b.onclick = function () {
+                try { sube ? inp.stepUp() : inp.stepDown(); } catch (e) { return; }
+                inp.dispatchEvent(new Event("input", { bubbles: true }));
+                inp.dispatchEvent(new Event("change", { bubbles: true }));
+            };
+            return b;
+        };
+
+        flechas.append(boton("▲", true), boton("▼", false));
+        wrap.appendChild(flechas);
+    });
+}
+
 // ============================================
 // INICIALIZACIÓN
 // ============================================
 window.onload = function () {
+    estilizarNumeros();
     // Cargar nodos y retrasos. Recién con AMBOS listos se restauran los viajes
     // calculados, porque los ETA dependen de los retrasos medidos.
     Promise.all([
@@ -169,6 +204,7 @@ window.onload = function () {
         localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
         localStorage.setItem("VolAlarma", document.getElementById("volAlarma").value);
         localStorage.setItem("RutaCargada", SaveStates.nombreCargado());
+        localStorage.setItem("RutaCargadaIdx", SaveStates.indiceCargado());
         localStorage.setItem("MaxNodos", document.getElementById("viajes").value);
         localStorage.setItem("NodoInicial", document.getElementById("inicial").value);
         // viajes calculados + progreso (⚓ y nodos marcados); null si no hay
@@ -199,7 +235,9 @@ window.onload = function () {
         aplicarColapsoRuta(ocultar);
         localStorage.setItem("RutaOculta", ocultar ? "1" : "0");
     };
-    SaveStates.setCargada(localStorage.getItem("RutaCargada") || "");
+    SaveStates.setCargada(
+        localStorage.getItem("RutaCargada") || "",
+        parseInt(localStorage.getItem("RutaCargadaIdx"), 10));
     SaveStates.render();
 
     // Cambiar titulo boton de Calcular

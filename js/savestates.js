@@ -8,7 +8,8 @@
 // ============================================
 const SaveStates = (function () {
     const MAX = 10;
-    let cargadaNombre = ""; // savestate cargado/guardado por última vez
+    let cargadaNombre = "";  // savestate cargado/guardado por última vez
+    let cargadaIdx = -1;     // y en qué slot está (para resaltarlo en la lista)
 
     // Etiqueta junto al título: "Savestates de Rutas | NOMBRE"
     function actualizarEtiqueta() {
@@ -18,13 +19,23 @@ const SaveStates = (function () {
         sp.classList.toggle("sinRuta", !cargadaNombre);
     }
 
-    function setCargada(nombre) {
-        cargadaNombre = (nombre || "").trim();
-        actualizarEtiqueta();
+    // resalta en amarillo el slot cargado (sin re-renderizar toda la lista)
+    function marcarSlotCargado() {
+        document.querySelectorAll("#savestates .savestate").forEach((li, i) => {
+            li.classList.toggle("cargado", i === cargadaIdx && cargadaNombre !== "");
+        });
     }
 
-    function limpiarCargada() { setCargada(""); }
+    function setCargada(nombre, idx) {
+        cargadaNombre = (nombre || "").trim();
+        cargadaIdx = Number.isInteger(idx) ? idx : -1; // NaN si no había nada guardado
+        actualizarEtiqueta();
+        marcarSlotCargado();
+    }
+
+    function limpiarCargada() { setCargada("", -1); }
     function nombreCargado() { return cargadaNombre; }
+    function indiceCargado() { return cargadaIdx; }
 
     function leer() {
         try {
@@ -62,7 +73,7 @@ const SaveStates = (function () {
             manual: document.getElementById("chkManual").checked
         };
         escribir(slots);
-        setCargada(slots[i].nombre);
+        setCargada(slots[i].nombre, i);
         render();
         showMessageGuardando();
     }
@@ -75,7 +86,7 @@ const SaveStates = (function () {
         document.getElementById("chkManual").checked = !!slot.manual;
         document.getElementById("chkManual").dispatchEvent(new Event("change"));
         Ruta.cargarTexto(slot.ruta);
-        setCargada(slot.nombre);
+        setCargada(slot.nombre, i);
     }
 
     function render() {
@@ -104,7 +115,7 @@ const SaveStates = (function () {
             bX.onclick = function () {
                 const s = leer();
                 if (s[i] && !confirm(`¿Borrar el savestate "${s[i].nombre}"?`)) return;
-                if (s[i] && s[i].nombre === cargadaNombre) limpiarCargada();
+                if (i === cargadaIdx) limpiarCargada();
                 s[i] = null;
                 escribir(s);
                 render();
@@ -115,8 +126,9 @@ const SaveStates = (function () {
             ul.append(li);
         });
         actualizarEtiqueta();
+        marcarSlotCargado();
     }
 
-    return { render, setCargada, limpiarCargada, nombreCargado };
+    return { render, setCargada, limpiarCargada, nombreCargado, indiceCargado };
 })();
 window.SaveStates = SaveStates;

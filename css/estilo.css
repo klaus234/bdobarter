@@ -378,16 +378,93 @@ input[type="checkbox"] {
 
 .btn_slide_container {
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 2rem;
-    border: 3px solid var(--accent-red);
-    background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
-    width: 50%;
-    padding: 0.4rem;
-    padding-block: 0.7rem;
+    border: 2px solid var(--accent-red);
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.12), rgba(192, 57, 43, 0.12));
+    width: 45%;
+    min-width: 200px;
+    height: 2rem;
     margin-block: 0.6rem;
-    text-align: center;
-    height: 2.5rem;
+    overflow: hidden;
     cursor: grab;
+    user-select: none;
+}
+
+/* ---- Inputs numéricos: flechas propias ----
+   Las nativas se ven distintas (y feas) en Chrome y Firefox, y no siguen el
+   color de la página. Se ocultan y se reemplazan por ▲▼ (los crea main.js). */
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.num-wrap {
+    position: relative;
+    display: flex;
+}
+
+.num-wrap > input[type="number"] {
+    flex: 1;
+    min-width: 0;
+    padding-right: 30px; /* lugar para las flechas */
+}
+
+.num-flechas {
+    position: absolute;
+    right: 7px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.num-btn {
+    width: 19px;
+    height: 13px;
+    margin: 0;
+    padding: 0;
+    font-size: 8px;
+    line-height: 1;
+    letter-spacing: 0;
+    border: 1px solid var(--border-accent);
+    border-radius: 3px;
+    background: rgba(15, 52, 96, 0.95);
+    color: var(--accent-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.num-btn:hover {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border-color: var(--accent-gold);
+    transform: none;
+    box-shadow: none;
+}
+
+.num-btn:active {
+    transform: none;
+}
+
+/* rótulo centrado: deja claro qué hace la barra */
+.slide_label {
+    color: var(--accent-red);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    pointer-events: none;
 }
 
 .btn_slide_container:active {
@@ -399,16 +476,23 @@ input[type="checkbox"] {
     left: 4px;
     top: 50%;
     transform: translateY(-50%);
-    --size_box: 2.5rem;
+    --size_box: 1.5rem;
     background: linear-gradient(135deg, var(--accent-red), #c0392b);
     width: var(--size_box);
     height: var(--size_box);
     border-radius: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 1;
     cursor: grab;
     -webkit-user-drag: element;
     -moz-user-drag: element;
     transition: left 0.3s ease;
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
 }
 
 #slider_erase:active {
@@ -985,6 +1069,21 @@ input[type="checkbox"] {
     min-width: 0;
     padding: 7px 10px;
     font-size: 12px;
+}
+
+/* slot actualmente cargado: en amarillo, para ver en qué posición está */
+.savestate.cargado input[type="text"] {
+    color: var(--accent-gold);
+    border-color: var(--accent-gold);
+    background-color: rgba(212, 175, 55, 0.14);
+    font-weight: bold;
+}
+
+.savestate.cargado::before {
+    content: "▸";
+    color: var(--accent-gold);
+    font-weight: bold;
+    margin-right: -2px;
 }
 
 .btn-ss {
