@@ -31,6 +31,21 @@ function tiempoViajeXY(viaje) {
     return total;
 }
 
+// Link del tiempo estimado de un tramo a la Calculadora de Retraso, con el
+// tramo, el tiempo y los datos del barco ya cargados por GET (los lee el
+// bloque de parámetros al final de calculadora_retraso.html).
+// El tiempo que va es el ESTIMADO: allá se reemplaza por el real medido.
+function urlCalculadoraRetraso(nodoA, nodoB, seg) {
+    const { vel, acc } = Navegacion.stats();
+    return "calculadora_retraso.html?" + new URLSearchParams({
+        nodoA: nodoA,
+        nodoB: nodoB,
+        tiempo: Navegacion.fmt(seg),
+        vel: vel,
+        acc: acc
+    });
+}
+
 function showMessageGuardando() {
     setTimeout(function () {
         $("#popupguardando").fadeIn(1000);
@@ -159,18 +174,23 @@ function renderizarViajes(viajes, contenedor) {
                 actualizarTiempoRestante();
             };
 
-            // tiempo estimado del tramo, visible al lado del nombre.
+            // tiempo estimado del tramo, visible al lado del nombre. Es un link
+            // a la Calculadora de Retraso (otra pestaña) con el tramo cargado.
             // Sin retraso medido va subrayado punteado (el dato puede fallar).
-            const spnT = document.createElement("span");
-            spnT.className = "tiempoTramo" + (medido ? "" : " estimado");
-            spnT.innerText = "≈ " + Navegacion.fmt(est);
-            spnT.title = medido
+            const lnkT = document.createElement("a");
+            lnkT.className = "tiempoTramo" + (medido ? "" : " estimado");
+            lnkT.href = urlCalculadoraRetraso(origen.titulo, rnodo.titulo, est);
+            lnkT.target = "_blank";
+            lnkT.rel = "noopener";
+            lnkT.innerText = "≈ " + Navegacion.fmt(est);
+            lnkT.title = (medido
                 ? "Tiempo corregido con un retraso medido para este tramo"
-                : "Estimado sin medición: el tiempo real puede diferir";
+                : "Estimado sin medición: el tiempo real puede diferir")
+                + "\nAbrir la Calculadora de Retraso con este tramo cargado";
 
             lit.append(cbox);
             lit.append(spn);
-            lit.append(spnT);
+            lit.append(lnkT);
             lit.append(btnPlay);
             liGeneral.append(lit);
             totalNodos++;
@@ -217,15 +237,19 @@ function renderizarViajes(viajes, contenedor) {
                 actualizarTiempoRestante();
             };
 
-            const spnTV = document.createElement("span");
-            spnTV.className = "tiempoTramo" + (medidoV ? "" : " estimado");
-            spnTV.innerText = "≈ " + Navegacion.fmt(estV);
-            spnTV.title = medidoV
+            const lnkTV = document.createElement("a");
+            lnkTV.className = "tiempoTramo" + (medidoV ? "" : " estimado");
+            lnkTV.href = urlCalculadoraRetraso(origenV.titulo, destinoV.titulo, estV);
+            lnkTV.target = "_blank";
+            lnkTV.rel = "noopener";
+            lnkTV.innerText = "≈ " + Navegacion.fmt(estV);
+            lnkTV.title = (medidoV
                 ? "Tiempo corregido con un retraso medido para este tramo"
-                : "Estimado sin medición: el tiempo real puede diferir";
+                : "Estimado sin medición: el tiempo real puede diferir")
+                + "\nAbrir la Calculadora de Retraso con este tramo cargado";
 
             filaV.append(spnV);
-            filaV.append(spnTV);
+            filaV.append(lnkTV);
             filaV.append(btnV);
             liGeneral.append(filaV);
         }

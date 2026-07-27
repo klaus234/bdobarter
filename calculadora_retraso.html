@@ -24,6 +24,8 @@
 
     <hr>
 
+    <p id="avisoGet" hidden style="border-left: 4px solid #d4af37; padding: 6px 0 6px 10px; background: #fffaea;"></p>
+
     <form id="formRetraso">
         <label>Velocidad % del barco: <input type="number" id="vel" value="157" min="50" max="300"></label><br><br>
         <label>Aceleración % del barco: <input type="number" id="acc" value="127" min="50" max="300"></label><br><br>
@@ -253,6 +255,40 @@
         const barcoAcc = document.getElementById('acc');
         if (localStorage.getItem("BarcoVel")) barcoVel.value = localStorage.getItem("BarcoVel");
         if (localStorage.getItem("BarcoAcc")) barcoAcc.value = localStorage.getItem("BarcoAcc");
+
+        // ---- Parámetros GET ----
+        // El tiempo estimado de cada tramo de index.html linkea acá:
+        //   calculadora_retraso.html?nodoA=ILIYA&nodoB=EPHERIA&tiempo=2:36&vel=191&acc=196
+        // Todos son opcionales y lo que venga por URL pisa lo de localStorage
+        // (vel/acc). OJO: el tiempo llega ESTIMADO por el modelo, es solo un
+        // punto de partida; hay que reemplazarlo por el real del cronómetro.
+        (function () {
+            const q = new URLSearchParams(location.search);
+            const poner = (id, valor, mayus) => {
+                if (valor === null) return null;
+                const v = valor.trim();
+                if (v === '') return null;
+                document.getElementById(id).value = mayus ? v.toUpperCase() : v;
+                return v;
+            };
+            poner('vel', q.get('vel'));
+            poner('acc', q.get('acc'));
+            const gA = poner('nodoA', q.get('nodoA'), true);
+            const gB = poner('nodoB', q.get('nodoB'), true);
+            const gT = poner('tiempo', q.get('tiempo'));
+
+            if (!gA && !gB) return;
+            const aviso = document.getElementById('avisoGet');
+            aviso.hidden = false;
+            aviso.innerHTML = 'Tramo cargado desde la calculadora de rutas: <b>'
+                + (gA || '?') + ' → ' + (gB || '?') + '</b>'
+                + (gT ? '<br>El tiempo <b>' + gT + '</b> es el <b>estimado</b> del modelo:'
+                    + ' cronometrá el viaje en el juego y reemplazalo por el real.' : '');
+            // el tiempo es lo único que hay que reescribir: queda listo para tipear
+            const inpT = document.getElementById('tiempo');
+            inpT.focus();
+            inpT.select();
+        })();
     </script>
 </body>
 </html>

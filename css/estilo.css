@@ -903,14 +903,31 @@ input[type="number"]::-webkit-inner-spin-button {
     color: var(--accent-gold);
 }
 
-.uml1 span.tiempoTramo,
+.uml1 .tiempoTramo,
 .tiempoTramo {
     color: var(--accent-gold);
     font-size: 11px;
     font-weight: 600;
-    margin-left: 8px;
+    /* separado del nombre del nodo: el tiempo es un link a la Calculadora de
+       Retraso y no se tiene que clickear de rebote al querer centrar el nodo */
+    margin-left: 18px;
     white-space: nowrap;
     cursor: default;
+}
+
+/* El tiempo de la lista de rutas es un <a> a calculadora_retraso.html: se
+   queda dorado (no toma el azul de los links) y el hover lo subraya. */
+a.tiempoTramo,
+.uml1 a.tiempoTramo {
+    cursor: pointer;
+}
+
+a.tiempoTramo:hover,
+.uml1 a.tiempoTramo:hover {
+    color: var(--accent-gold);
+    /* solo la línea: los estimados conservan su punteado */
+    text-decoration-line: underline;
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
 }
 
 /* tiempo de un tramo SIN retraso medido: subrayado punteado = estimado */
