@@ -203,6 +203,7 @@ window.onload = function () {
         localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
         localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
         localStorage.setItem("VolAlarma", document.getElementById("volAlarma").value);
+        localStorage.setItem("AlarmaVoz", document.getElementById("chkVoz").checked ? "1" : "0");
         localStorage.setItem("RutaCargada", SaveStates.nombreCargado());
         localStorage.setItem("RutaCargadaIdx", SaveStates.indiceCargado());
         localStorage.setItem("MaxNodos", document.getElementById("viajes").value);
@@ -244,8 +245,7 @@ window.onload = function () {
     // (si está en modo manual, el botón dice "Generar viaje/s" en vez de "Calcular viaje/s")
     document.getElementById("chkManual").addEventListener("change", function () {
         const btn = document.getElementById("btnmateriales");
-        if (this.checked) btn.innerText = "⚡ Generar viaje/s";
-        else btn.innerText = "⚡ Calcular viaje/s";
+        btn.innerHTML = icono("rayo") + (this.checked ? " Generar viaje/s" : " Calcular viaje/s");
     });
     // Fuerzo como si hubiese un change en chkManual para que el botón tenga el texto correcto al cargar la página
     document.getElementById("chkManual").dispatchEvent(new Event("change"));
@@ -257,6 +257,18 @@ window.onload = function () {
     volAlarma.addEventListener("input", mostrarVol);
     volAlarma.addEventListener("change", () => { mostrarVol(); Navegacion.sonarAlerta(); });
     mostrarVol();
+
+    // Alarma con voz: restaurar (por defecto apagada) y probarla al activarla
+    const chkVoz = document.getElementById("chkVoz");
+    chkVoz.checked = localStorage.getItem("AlarmaVoz") === "1";
+    chkVoz.addEventListener("change", function () {
+        if (this.checked) Navegacion.hablarLlegada();
+    });
+    // el navegador carga las voces en diferido; esto las despierta
+    if (window.speechSynthesis) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
 
     // Datos del barco: restaurar y mostrar estimación de referencia
     const barcoVel = document.getElementById("barcoVel");

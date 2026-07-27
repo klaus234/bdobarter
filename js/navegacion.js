@@ -27,10 +27,44 @@ const Navegacion = (function () {
     // Volumen de alarma: el slider (0-300%) escala el pico base. 100% = el
     // sonido original ("está bien" por default); más alto = más fuerte.
     const GANANCIA_BASE = 0.09;
-    function volumenAlarma() {
+    function porcentajeVolumen() {
         const sl = document.getElementById("volAlarma");
         const pct = sl ? parseFloat(sl.value) : 100;
-        return GANANCIA_BASE * (isNaN(pct) ? 100 : pct) / 100;
+        return isNaN(pct) ? 100 : pct;
+    }
+    function volumenAlarma() {
+        return GANANCIA_BASE * porcentajeVolumen() / 100;
+    }
+
+    // ---- Voz de llegada (Web Speech API: nativa del navegador, sin internet) ----
+    function vozEspanol() {
+        const voces = window.speechSynthesis.getVoices() || [];
+        const es = voces.filter(v => /^es/i.test(v.lang));
+        if (es.length === 0) return null; // sin voz española instalada
+        // se prefiere español latino si el sistema lo tiene
+        return es.find(v => /^es[-_](AR|419|MX|US|CL|CO)/i.test(v.lang)) || es[0];
+    }
+
+    // Dice "Se llegó a destino" si el checkbox está activo. Sale un toque
+    // después de la campanita para que no se pisen.
+    function hablarLlegada() {
+        const chk = document.getElementById("chkVoz");
+        if (!chk || !chk.checked || !window.speechSynthesis) return;
+        const vol = Math.min(1, porcentajeVolumen() / 100);
+        if (vol <= 0) return;
+        setTimeout(() => {
+            try {
+                const u = new SpeechSynthesisUtterance("Se llegó a destino");
+                const v = vozEspanol();
+                if (v) u.voice = v;
+                u.lang = v ? v.lang : "es-ES";
+                u.volume = vol;
+                window.speechSynthesis.cancel(); // no encolar avisos viejos
+                window.speechSynthesis.speak(u);
+            } catch (e) {
+                console.warn("Voz no disponible:", e);
+            }
+        }, 450);
     }
 
     // Campanita suave sintetizada (C5-E5-G5), sin archivos.
@@ -157,6 +191,7 @@ const Navegacion = (function () {
                 wDest.innerText = "⚓ " + destinoNombre;
                 document.title = "⚓ " + destinoNombre + " — " + tituloOriginal;
                 sonarAlerta();
+                hablarLlegada();
                 if (cbox && !cbox.checked) cbox.click(); // marcar visitado en el mapa
                 btn.innerText = "⚓";
                 if (fila) fila.classList.remove("enNavegacion");
@@ -201,6 +236,6 @@ const Navegacion = (function () {
         intervalo = setInterval(tick, 250);
     }
 
-    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, sonarAlerta, estimarSegundos, stats, fmt };
+    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, sonarAlerta, hablarLlegada, estimarSegundos, stats, fmt };
 })();
 window.Navegacion = Navegacion;

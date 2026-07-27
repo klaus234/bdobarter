@@ -9,6 +9,7 @@ let mouseMove = false;
 let mouseClickV;
 let ultimoMovimiento = 0;
 let hoverNodo = null;
+let clickIzquierdo = false; // distingue el arrastre/click izquierdo del derecho
 
 const ZOOM_MIN = 0.08;
 const ZOOM_MAX = 3;
@@ -186,9 +187,20 @@ function ajustarVista() {
 // ============================================
 // EVENTOS DEL RATÓN
 // ============================================
+// nodo que está bajo el puntero en este momento (sin depender del frame)
+function nodoBajoPuntero() {
+    for (let i = nodosM.length - 1; i >= 0; i--) {
+        if (nodosM[i].bajoMouse()) return nodosM[i];
+    }
+    return null;
+}
+
 function mouseReleased(event) {
     if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
-    const fueClick = mouseClickV && dist(mouseX, mouseY, mouseClickV.x, mouseClickV.y) < 6;
+    // solo el botón izquierdo alterna el nodo (el derecho ya lo agregó al presionar)
+    const fueClick = clickIzquierdo && mouseClickV
+        && dist(mouseX, mouseY, mouseClickV.x, mouseClickV.y) < 6;
+    clickIzquierdo = false;
     mouseMove = false;
     if (fueClick && hoverNodo) toggleNodoPlaneado(hoverNodo.titulo);
     ultimoMovimiento = millis();
@@ -196,7 +208,17 @@ function mouseReleased(event) {
 
 function mousePressed(event) {
     if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
+
+    // click derecho sobre un nodo: lo AGREGA a la ruta planeada (nunca lo quita)
+    if (event.buttons === 2) {
+        const nodo = nodoBajoPuntero();
+        if (nodo && window.Ruta && window.Ruta.agregar) window.Ruta.agregar(nodo.titulo);
+        ultimoMovimiento = millis();
+        return false; // corta el menú contextual del navegador
+    }
+
     if (event.buttons === 1) {
+        clickIzquierdo = true;
         mouseMove = true;
         mouseClickV.x = mouseX;
         mouseClickV.y = mouseY;
@@ -327,6 +349,11 @@ function setup() {
     textSize(14);
     textStyle(BOLD);
     canvas.parent("mapa");
+
+    // Sin menú contextual sobre el mapa: el click derecho lo usamos para
+    // agregar nodos a la ruta planeada (ver mousePressed).
+    const contenedorMapa = document.getElementById("mapa");
+    if (contenedorMapa) contenedorMapa.addEventListener("contextmenu", e => e.preventDefault());
 
     // Cargar nodos desde datos
     for (let i = 0, dnodo = data[i]; dnodo !== undefined; i++, dnodo = data[i]) {

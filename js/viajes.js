@@ -93,7 +93,8 @@ function renderizarViajes(viajes, contenedor) {
         identificador.className = "identificadorViaje";
         // base fija + span de restante (se actualiza igual que el total)
         const idBase = document.createElement("span");
-        idBase.innerText = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)} · ⏱ ${Navegacion.fmt(tViaje)}`;
+        idBase.innerHTML = `Viaje ${indiceViaje + 1} · ${rgeneral.length - 2} nodos · dist ${Math.round(distViaje)} · `
+            + icono("reloj") + ` ${Navegacion.fmt(tViaje)}`;
         const idRest = document.createElement("span");
         idRest.className = "viajeRestante";
         identificador.append(idBase, idRest);
@@ -185,7 +186,7 @@ function renderizarViajes(viajes, contenedor) {
             const destinoV = rgeneral[rgeneral.length - 1];
 
             const spnV = document.createElement("span");
-            spnV.innerText = "↩ Vuelta a " + destinoV.titulo;
+            spnV.innerHTML = icono("vuelta") + " Vuelta a " + destinoV.titulo;
             spnV.onclick = function () {
                 const n = nodosDic[destinoV.titulo];
                 if (n) centrarEnNodo(n);
@@ -238,7 +239,8 @@ function renderizarViajes(viajes, contenedor) {
     if (viajes.length > 0) {
         const resumen = document.createElement("li");
         resumen.id = "resumenTiempoTotal";
-        resumen.innerText = `⏱ Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${Modelo.fmtHMS(tiempoTotal)}`;
+        resumen.innerHTML = icono("reloj")
+            + ` Tiempo total (${viajes.length} viaje${viajes.length > 1 ? "s" : ""}, con vueltas): ${Modelo.fmtHMS(tiempoTotal)}`;
         contenedor.append(resumen);
 
         const restanteLi = document.createElement("li");
@@ -342,7 +344,9 @@ function actualizarTiempoRestante() {
         if (btns.length === 0) { span.innerText = ""; return; }
         const listo = completos(btns);
         span.classList.toggle("completado", listo);
-        span.innerText = listo ? " | ✅ COMPLETADO" : " | ⏳ " + Navegacion.fmt(restanteDe(btns));
+        span.innerHTML = listo
+            ? " | " + icono("check") + " COMPLETADO"
+            : " | " + icono("arena") + " " + Navegacion.fmt(restanteDe(btns));
     });
 
     // restante total (todos los viajes)
@@ -353,5 +357,7 @@ function actualizarTiempoRestante() {
     li.style.display = "";
     const todosCompletos = completos(btns);
     li.classList.toggle("completado", todosCompletos);
-    li.innerText = todosCompletos ? "✅ COMPLETADO" : "⏳ Tiempo restante: " + Modelo.fmtHMS(restanteDe(btns));
+    li.innerHTML = todosCompletos
+        ? icono("check") + " COMPLETADO"
+        : icono("arena") + " Tiempo restante: " + Modelo.fmtHMS(restanteDe(btns));
 }

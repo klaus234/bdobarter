@@ -26,6 +26,20 @@ body {
     min-height: 100vh;
 }
 
+/* Íconos SVG del sprite (ver el <svg> al inicio del body de index.html).
+   Toman el color y el tamaño del texto que los rodea. */
+.ic {
+    width: 1.15em;
+    height: 1.15em;
+    vertical-align: -0.2em;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 h2 {
     color: var(--accent-gold);
     text-align: center;
@@ -533,6 +547,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .zoomBTN:hover {
     background-color: var(--accent-gold);
     color: var(--primary-dark);
+    text-decoration: none;
 }
 
 .lbl {
@@ -1177,6 +1192,11 @@ input[type="number"]::-webkit-inner-spin-button {
     letter-spacing: 1px;
 }
 
+#contenedor-puntos>li:hover {
+    color: white;
+    border-color: var(--accent-gold);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
 
 .puntomenu {
     background-color: rgba(52, 152, 219, 0.2);

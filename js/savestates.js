@@ -50,11 +50,11 @@ const SaveStates = (function () {
         localStorage.setItem("SaveStates", JSON.stringify(slots));
     }
 
-    function boton(txt, title) {
+    function boton(nombreIcono, title) {
         const b = document.createElement("button");
         b.type = "button";
         b.className = "btn-ss";
-        b.innerText = txt;
+        b.innerHTML = icono(nombreIcono);
         b.title = title;
         return b;
     }
@@ -104,14 +104,14 @@ const SaveStates = (function () {
             inp.placeholder = "Slot " + (i + 1) + " (vacío)";
             inp.value = slot ? slot.nombre : "";
 
-            const bG = boton("💾", "Guardar acá la ruta actual");
+            const bG = boton("guardar", "Guardar acá la ruta actual");
             bG.onclick = function () { guardar(i, inp.value); };
 
-            const bC = boton("📂", slot ? "Cargar: " + slot.nombre : "Slot vacío");
+            const bC = boton("carpeta", slot ? "Cargar: " + slot.nombre : "Slot vacío");
             bC.onclick = function () { cargar(i); };
             bC.disabled = !slot;
 
-            const bX = boton("✕", "Borrar este savestate");
+            const bX = boton("tacho", "Borrar este savestate");
             bX.onclick = function () {
                 const s = leer();
                 if (s[i] && !confirm(`¿Borrar el savestate "${s[i].nombre}"?`)) return;

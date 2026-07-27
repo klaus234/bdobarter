@@ -117,7 +117,7 @@ const Ruta = (function () {
                 li.classList.add("ruta-sep");
                 const etiqueta = document.createElement("span");
                 etiqueta.className = "ruta-sep-label";
-                etiqueta.textContent = "✂ Separador · corta el viaje (Modo Manual)";
+                etiqueta.innerHTML = icono("tijera") + " Separador · corta el viaje (Modo Manual)";
                 const delSep = document.createElement("button");
                 delSep.className = "ruta-del";
                 delSep.type = "button";
