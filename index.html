@@ -97,11 +97,14 @@
                     <textarea name="nodosm" id="nodosm" placeholder="NODO#o_1   (origen)&#10;OTRO#d_1   (va después)" cols="30" rows="10"></textarea>
                     <p class="hint">Formato: <code>NOMBRE#o_1</code> marca un origen y <code>OTRO#d_1</code> lo hace ir después. Al cerrar, la lista se re-sincroniza.</p>
                 </div>
+            </div>
 
-                <div class="btn_slide_container" title="Deslizá el círculo de punta a punta para borrar la ruta y los viajes calculados">
-                    <span class="slide_label">Borrar todo</span>
-                    <div class="slider" id="slider_erase">›</div>
-                </div>
+            <!-- Fuera de #rutaPlaneadaBloque a propósito: borra la ruta Y los
+                 viajes calculados, así que tiene que seguir a mano aunque la
+                 ruta planeada esté colapsada con el −/+ -->
+            <div class="btn_slide_container" title="Deslizá el círculo de punta a punta para borrar la ruta y los viajes calculados">
+                <span class="slide_label">Borrar todo</span>
+                <div class="slider" id="slider_erase">›</div>
             </div>
 
             <div class="contenedor-puntos-principal">
