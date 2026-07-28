@@ -36,15 +36,33 @@ python -m http.server 8123
 │   ├── navegacion.js        ← avisos de llegada, pausa (ESC), sonido
 │   ├── savestates.js
 │   ├── atajos.js            ← teclas . , ESC
-│   ├── mapa.js              ← mapa p5.js (nodos, zoom, barco animado)
+│   ├── mapa.js              ← mapa p5.js (nodos, zoom, barco animado, fondo real)
 │   ├── puntos_menu.js       ← selector de nodos por nivel
 │   └── main.js              ← wiring general
 ├── data/
 │   ├── datos.json           ← nodos (título + coordenadas del mapa)
 │   ├── retrasos.json        ← residuos geográficos medidos por tramo
 │   └── cache_nodes_v1.json  ← cache de rutas precalculadas (>9 nodos)
+├── img/mapa_fondo.webp      ← mapa real del juego, fondo opcional del canvas
 ├── lib/                     ← p5.js, jQuery, jQuery UI css
-└── tools/editor_nodos.html
+└── tools/
+    ├── editor_nodos.html
+    └── generar_fondo_mapa.py  ← regenera img/mapa_fondo.webp desde los tiles
 ```
+
+## Fondo real del mapa
+
+El canvas puede usar el mapa del juego de fondo (checkbox «Fondo real del mapa»,
+activado por defecto). La imagen son tiles de BDO Codex pegados en un solo
+archivo de ~1.6 MB, que se descarga en segundo plano recién la primera vez que
+se activa la opción: nunca demora la carga inicial, y apagada no se baja.
+
+El calce con `datos.json` es un escalado + traslación ajustado por mínimos
+cuadrados sobre 72 nodos: error mediano de 16 unidades (~3 s de viaje). ROSS y
+HAKOVEN están mal ubicados a mano desde antes y se ven fuera de su isla.
+
+Para regenerarlo (por ejemplo si se agregan nodos de una región nueva, fuera de
+la caja actual) correr `python tools/generar_fondo_mapa.py` y copiar las cuatro
+constantes `FONDO_*` que imprime a `js/mapa.js`.
 
 Ver [PLAN_REFACTOR.md](PLAN_REFACTOR.md) para el detalle de la reorganización.

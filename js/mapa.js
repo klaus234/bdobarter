@@ -30,6 +30,24 @@ let recNodos = [];
 // dibuja en vectores (nítido a cualquier zoom, a diferencia del PNG).
 let barcoAnim = null; // {x1,y1,x2,y2,inicio,fin} en coords de datos.json
 
+// ============================================
+// FONDO REAL DEL MAPA
+// Mosaico del mapa del juego (img/mapa_fondo.webp), generado con
+// tools/generar_fondo_mapa.py a partir de los tiles de BDO Codex. Se dibuja
+// estirado entre estas dos esquinas, en coordenadas de datos.json: el ajuste
+// es un escalado + traslacion, con error mediano de 16 unidades (~3 s de
+// viaje). Si se agregan nodos fuera de esta caja hay que regenerarlo.
+// ============================================
+const FONDO_URL = "img/mapa_fondo.webp";
+const FONDO_X0 = -4472.2;
+const FONDO_Y0 = -3259.9;
+const FONDO_X1 = 4585.3;
+const FONDO_Y1 = 3675.9;
+const FONDO_VELO = 115; // velo oscuro (~45%): el terreno claro no tapa las etiquetas
+
+let fondoImg = null;
+let fondoEstado = "vacio"; // vacio | cargando | listo | error
+
 // Colores
 const COLOR_NODO = [52, 152, 219];      // azul: nodo comun
 const COLOR_SELECCION = [46, 204, 113]; // verde: marcado en la ruta calculada
@@ -244,6 +262,47 @@ function preload() {
     data = loadJSON("data/datos.json");
 }
 
+// ¿Está pedido el fondo real? (checkbox; si aún no existe, se asume que sí)
+function fondoRealActivo() {
+    const chk = document.getElementById("chkFondoReal");
+    return !chk || chk.checked;
+}
+
+// El fondo pesa ~1.6 MB: se pide recién la primera vez que hace falta y en
+// segundo plano. loadImage() fuera de preload() no bloquea, así que el mapa
+// se dibuja desde el primer frame y la imagen entra cuando llega.
+function pedirFondo() {
+    if (fondoEstado !== "vacio") return;
+    fondoEstado = "cargando";
+    loadImage(FONDO_URL,
+        img => {
+            fondoImg = img;
+            fondoEstado = "listo";
+            ultimoMovimiento = millis(); // sale del framerate bajo para pintarlo ya
+        },
+        () => {
+            fondoEstado = "error"; // se sigue usando el océano estilizado
+            console.warn("No se pudo cargar " + FONDO_URL + ": queda el fondo estilizado.");
+        });
+}
+
+// Océano estilizado: el fondo de siempre, cuando el real está apagado,
+// todavía viajando o no se pudo cargar.
+function dibujarOceanoEstilizado() {
+    stroke(20, 40, 80, 100);
+    strokeWeight(1);
+    for (let y = offsetY % 40; y < height; y += 40) line(0, y, width, y);
+    for (let x = offsetX % 40; x < width; x += 40) line(x, 0, x, height);
+
+    // Reflejos de luz en el agua
+    fill(50, 100, 150, 50);
+    noStroke();
+    randomSeed(42);
+    for (let i = 0; i < 30; i++) {
+        ellipse(random(width), random(height), random(2, 8), random(2, 8));
+    }
+}
+
 // ¿Hay que dibujar el barco? (checkbox activo + viaje iniciado)
 function animBarcoActiva() {
     const chk = document.getElementById("chkAnimBarco");
@@ -377,25 +436,28 @@ function draw() {
     if (mouseMove || millis() - ultimoMovimiento < 1800 || barcoNavegando) frameRate(30);
     else frameRate(8);
 
-    // Fondo de océano estilizado
-    background(10, 20, 40);
-    stroke(20, 40, 80, 100);
-    strokeWeight(1);
-    for (let y = offsetY % 40; y < height; y += 40) line(0, y, width, y);
-    for (let x = offsetX % 40; x < width; x += 40) line(x, 0, x, height);
-
-    // Reflejos de luz en el agua
-    fill(50, 100, 150, 50);
-    noStroke();
-    randomSeed(42);
-    for (let i = 0; i < 30; i++) {
-        ellipse(random(width), random(height), random(2, 8), random(2, 8));
-    }
-
-    // Actualizar offset si se está arrastrando
+    // Actualizar offset si se está arrastrando (antes del fondo: si no, la
+    // imagen quedaría un frame atrás de los nodos al arrastrar)
     if (mouseMove) {
         offsetX = mox + (mouseX - mouseClickV.x);
         offsetY = moy + (mouseY - mouseClickV.y);
+    }
+
+    // Fondo: el mapa real del juego, o el océano estilizado mientras no esté
+    background(10, 20, 40);
+    const conFondoReal = fondoRealActivo();
+    if (conFondoReal) pedirFondo();
+    if (conFondoReal && fondoEstado === "listo") {
+        image(fondoImg,
+            (FONDO_X0 * szFixX + szFixOX) * zoomValue + offsetX,
+            (FONDO_Y0 * szFixY + szFixOY) * zoomValue + offsetY,
+            (FONDO_X1 - FONDO_X0) * szFixX * zoomValue,
+            (FONDO_Y1 - FONDO_Y0) * szFixY * zoomValue);
+        noStroke();
+        fill(10, 20, 40, FONDO_VELO);
+        rect(0, 0, width, height);
+    } else {
+        dibujarOceanoEstilizado();
     }
 
     const px = (p) => (p.x * szFixX + szFixOX) * zoomValue + offsetX;

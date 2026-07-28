@@ -202,6 +202,7 @@ window.onload = function () {
         localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
         localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
         localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
+        localStorage.setItem("FondoReal", document.getElementById("chkFondoReal").checked ? "1" : "0");
         localStorage.setItem("VolAlarma", document.getElementById("volAlarma").value);
         localStorage.setItem("AlarmaVoz", document.getElementById("chkVoz").checked ? "1" : "0");
         localStorage.setItem("RutaCargada", SaveStates.nombreCargado());
@@ -219,6 +220,8 @@ window.onload = function () {
     document.getElementById("chkManual").checked = localStorage.getItem("ModoManual") === "1";
     if (localStorage.getItem("AnimBarco") !== null)
         document.getElementById("chkAnimBarco").checked = localStorage.getItem("AnimBarco") === "1";
+    if (localStorage.getItem("FondoReal") !== null)
+        document.getElementById("chkFondoReal").checked = localStorage.getItem("FondoReal") === "1";
     if (localStorage.getItem("MaxNodos")) document.getElementById("viajes").value = localStorage.getItem("MaxNodos");
     if (localStorage.getItem("NodoInicial")) document.getElementById("inicial").value = localStorage.getItem("NodoInicial");
 
