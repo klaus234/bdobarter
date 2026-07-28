@@ -200,6 +200,8 @@ window.onload = function () {
         localStorage.setItem("NodosR", nmm.value);
         localStorage.setItem("BarcoVel", document.getElementById("barcoVel").value);
         localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
+        localStorage.setItem("BarcoMaestria", document.getElementById("barcoMaestria").value);
+        localStorage.setItem("DiarioManos", document.getElementById("chkDiarioManos").checked ? "1" : "0");
         localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
         localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
         localStorage.setItem("FondoReal", document.getElementById("chkFondoReal").checked ? "1" : "0");
@@ -276,9 +278,17 @@ window.onload = function () {
     // Datos del barco: restaurar y mostrar estimación de referencia
     const barcoVel = document.getElementById("barcoVel");
     const barcoAcc = document.getElementById("barcoAcc");
+    const barcoMaestria = document.getElementById("barcoMaestria");
+    const chkDiarioManos = document.getElementById("chkDiarioManos");
     if (localStorage.getItem("BarcoVel")) barcoVel.value = localStorage.getItem("BarcoVel");
     if (localStorage.getItem("BarcoAcc")) barcoAcc.value = localStorage.getItem("BarcoAcc");
+    if (localStorage.getItem("BarcoMaestria")) barcoMaestria.value = localStorage.getItem("BarcoMaestria");
+    if (localStorage.getItem("DiarioManos") !== null)
+        chkDiarioManos.checked = localStorage.getItem("DiarioManos") === "1";
 
+    // Solo la referencia de 750 unidades, como siempre: los tiempos ya
+    // calculados no se rehacen acá porque re-renderizar la lista borraría el
+    // progreso (⚓ y nodos marcados). Se actualizan al recalcular los viajes.
     function actualizarInfoBarco() {
         const { vel, acc } = Navegacion.stats();
         const t = Navegacion.estimarSegundos(750, vel, acc);
@@ -287,6 +297,8 @@ window.onload = function () {
     }
     barcoVel.addEventListener("input", actualizarInfoBarco);
     barcoAcc.addEventListener("input", actualizarInfoBarco);
+    barcoMaestria.addEventListener("input", actualizarInfoBarco);
+    chkDiarioManos.addEventListener("change", actualizarInfoBarco);
     actualizarInfoBarco();
 
     document.getElementById("timerCancelar").onclick = function () {

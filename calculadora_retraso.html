@@ -29,6 +29,8 @@
     <form id="formRetraso">
         <label>Velocidad % del barco: <input type="number" id="vel" value="157" min="50" max="300"></label><br><br>
         <label>Aceleración % del barco: <input type="number" id="acc" value="127" min="50" max="300"></label><br><br>
+        <label title="El mismo % se suma a la velocidad y a la aceleración. Los tramos se midieron con 11%.">Velocidad / Aceleración maestría %: <input type="number" id="maestria" value="11" min="0" max="100"></label><br><br>
+        <label title="Suma 5 puntos a la velocidad y a la aceleración. No estaba activo cuando se calibró la fórmula."><input type="checkbox" id="chkDiarioManos" checked> Diario de Navegación de Manos (+5%)</label><br><br>
         <label>Nodo A (origen): <input type="text" id="nodoA" list="listaNodos" required></label><br><br>
         <label>Nodo B (destino): <input type="text" id="nodoB" list="listaNodos" required></label><br><br>
         <label>Tiempo real que tardó (segundos, o m:ss): <input type="text" id="tiempo" placeholder="42  ó  1:23" required></label><br><br>
@@ -147,8 +149,14 @@
         document.getElementById('formRetraso').onsubmit = function (e) {
             e.preventDefault();
             const salida = document.getElementById('salida');
-            const vel = parseFloat(document.getElementById('vel').value) || 100;
-            const acc = parseFloat(document.getElementById('acc').value) || 100;
+            // mismo ajuste que en index.html: la maestría cuenta solo lo que se
+            // aparta del 11% con el que se midieron los tramos, y el Diario de
+            // Manos suma sus 5 puntos enteros (ver js/modelo.js)
+            const ajuste = Modelo.ajusteNavegacion(
+                document.getElementById('maestria').value,
+                document.getElementById('chkDiarioManos').checked);
+            const vel = (parseFloat(document.getElementById('vel').value) || 100) + ajuste;
+            const acc = (parseFloat(document.getElementById('acc').value) || 100) + ajuste;
             const nA = document.getElementById('nodoA').value.trim().toUpperCase();
             const nB = document.getElementById('nodoB').value.trim().toUpperCase();
             const t = parseTiempo(document.getElementById('tiempo').value);
@@ -255,6 +263,9 @@
         const barcoAcc = document.getElementById('acc');
         if (localStorage.getItem("BarcoVel")) barcoVel.value = localStorage.getItem("BarcoVel");
         if (localStorage.getItem("BarcoAcc")) barcoAcc.value = localStorage.getItem("BarcoAcc");
+        if (localStorage.getItem("BarcoMaestria")) document.getElementById('maestria').value = localStorage.getItem("BarcoMaestria");
+        if (localStorage.getItem("DiarioManos") !== null)
+            document.getElementById('chkDiarioManos').checked = localStorage.getItem("DiarioManos") === "1";
 
         // ---- Parámetros GET ----
         // El tiempo estimado de cada tramo de index.html linkea acá:
@@ -273,6 +284,9 @@
             };
             poner('vel', q.get('vel'));
             poner('acc', q.get('acc'));
+            poner('maestria', q.get('maestria'));
+            if (q.get('diario') !== null)
+                document.getElementById('chkDiarioManos').checked = q.get('diario') === '1';
             const gA = poner('nodoA', q.get('nodoA'), true);
             const gB = poner('nodoB', q.get('nodoB'), true);
             const gT = poner('tiempo', q.get('tiempo'));

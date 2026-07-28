@@ -18,6 +18,22 @@ const Modelo = (function () {
     const K_RUTA = 3.511;
     const D_FIJA = 307;
 
+    // ---- Bonos de navegación ----
+    // Se suman en PUNTOS al % del barco (191 + 11 + 5 = 207), no multiplican.
+    // Los tramos se midieron siempre con 11% de maestría y SIN el Diario de
+    // Manos, así que ese 11 ya quedó absorbido en V0/A0/K_RUTA/D_FIJA: al
+    // modelo solo hay que pasarle lo que se APARTA de ese 11. El diario, en
+    // cambio, no estaba cuando se calibró, así que suma sus 5 puntos enteros.
+    // Ej: 141% con 11 de maestría y diario tildado -> el modelo usa 146
+    // (los 157 reales menos los 11 que la fórmula ya tiene adentro).
+    const MAESTRIA_BASE = 11;
+    const DIARIO_BONO = 5;
+
+    function ajusteNavegacion(maestria, diario) {
+        const m = isNaN(parseFloat(maestria)) ? MAESTRIA_BASE : parseFloat(maestria);
+        return (m - MAESTRIA_BASE) + (diario ? DIARIO_BONO : 0);
+    }
+
     function velocidad(vel) { return V0 * vel / 100; }
     function aceleracion(acc) { return A0 * acc / 100; }
 
@@ -56,7 +72,8 @@ const Modelo = (function () {
         return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
     }
 
-    return { V0, A0, K_RUTA, D_FIJA, velocidad, aceleracion, distanciaModelo, estimarSegundos, distanciaMedida, fmt, fmtHMS };
+    return { V0, A0, K_RUTA, D_FIJA, MAESTRIA_BASE, DIARIO_BONO, ajusteNavegacion,
+        velocidad, aceleracion, distanciaModelo, estimarSegundos, distanciaMedida, fmt, fmtHMS };
 })();
 
 // distancia euclídea entre dos puntos del mapa (helper global histórico)

@@ -173,6 +173,14 @@
                         <label for="barcoAcc">Aceleración %</label>
                         <input type="number" id="barcoAcc" min="50" max="300" step="1" value="196">
                     </div>
+                    <div class="barco-campo" title="El mismo % se suma a la velocidad y a la aceleración. Los tramos se midieron con 11%, así que dejándolo en 11 los tiempos no cambian.">
+                        <label for="barcoMaestria">Vel. / Acel. maestría %</label>
+                        <input type="number" id="barcoMaestria" min="0" max="100" step="1" value="11">
+                    </div>
+                </div>
+                <div class="opcion-inline" id="opcionDiario" title="Suma 5 puntos a la velocidad y a la aceleración. No estaba activo cuando se calibró la fórmula, así que tildarlo acorta los tiempos.">
+                    <input type="checkbox" id="chkDiarioManos" checked>
+                    <label for="chkDiarioManos" style="margin-bottom: 0; cursor: pointer;">Diario de Navegación de Manos (+5%)</label>
                 </div>
                 <p class="hint" id="barcoInfo"></p>
                 <p class="hint">▶ en la lista de rutas = «zarpé hacia ese nodo»: cuenta regresiva y campanita al llegar. Se guarda con <svg class="ic"><use href="#ic-guardar"></use></svg> Guardar Estado.</p>

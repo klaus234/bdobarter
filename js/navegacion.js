@@ -19,10 +19,28 @@ const Navegacion = (function () {
     let hookAjustar = null;  // suma/resta segundos al viaje activo (flechas ←/→)
     const tituloOriginal = document.title;
 
+    // Valores tal cual están en el panel, sin corregir. Los usa el link a la
+    // Calculadora de Retraso, que aplica la corrección por su cuenta.
+    function statsCrudos() {
+        const chk = document.getElementById("chkDiarioManos");
+        const inpM = document.getElementById("barcoMaestria");
+        // campo vacío o sin el control = se asume el 11% de la calibración,
+        // que deja el ajuste en 0 (y no en -11, como haría un || 0)
+        const m = inpM ? parseFloat(inpM.value) : NaN;
+        return {
+            vel: parseFloat(document.getElementById("barcoVel").value) || 100,
+            acc: parseFloat(document.getElementById("barcoAcc").value) || 100,
+            maestria: isNaN(m) ? Modelo.MAESTRIA_BASE : m,
+            diario: !chk || chk.checked
+        };
+    }
+
+    // Velocidad y aceleración ya listas para el modelo: se les suma el ajuste
+    // por maestría y Diario de Manos (ver js/modelo.js).
     function stats() {
-        const vel = parseFloat(document.getElementById("barcoVel").value) || 100;
-        const acc = parseFloat(document.getElementById("barcoAcc").value) || 100;
-        return { vel, acc };
+        const c = statsCrudos();
+        const aj = Modelo.ajusteNavegacion(c.maestria, c.diario);
+        return { vel: c.vel + aj, acc: c.acc + aj };
     }
 
     // Volumen de alarma: el slider (0-300%) escala el pico base. 100% = el
@@ -258,6 +276,6 @@ const Navegacion = (function () {
         intervalo = setInterval(tick, 250);
     }
 
-    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, sonarAlerta, hablarLlegada, estimarSegundos, stats, fmt };
+    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, sonarAlerta, hablarLlegada, estimarSegundos, stats, statsCrudos, fmt };
 })();
 window.Navegacion = Navegacion;

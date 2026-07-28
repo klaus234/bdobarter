@@ -814,6 +814,12 @@ input[type="number"]::-webkit-inner-spin-button {
     text-align: center;
 }
 
+/* checkbox del Diario de Manos, debajo de los tres campos numéricos */
+#opcionDiario {
+    justify-content: center;
+    margin-top: 12px;
+}
+
 .btn-play {
     position: relative;
     width: auto;
