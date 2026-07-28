@@ -36,7 +36,8 @@ python -m http.server 8123
 │   ├── navegacion.js        ← avisos de llegada, pausa (ESC), sonido
 │   ├── savestates.js
 │   ├── atajos.js            ← teclas . , ESC
-│   ├── mapa.js              ← mapa p5.js (nodos, zoom, barco animado, fondo real)
+│   ├── mapa.js              ← mapa p5.js (nodos, zoom, barco animado, táctil)
+│   ├── fondo_mapa.js        ← caja y carga del fondo real (compartido)
 │   ├── puntos_menu.js       ← selector de nodos por nivel
 │   └── main.js              ← wiring general
 ├── data/
@@ -53,16 +54,19 @@ python -m http.server 8123
 ## Fondo real del mapa
 
 El canvas puede usar el mapa del juego de fondo (checkbox «Fondo real del mapa»,
-activado por defecto). La imagen son tiles de BDO Codex pegados en un solo
-archivo de ~1.6 MB, que se descarga en segundo plano recién la primera vez que
-se activa la opción: nunca demora la carga inicial, y apagada no se baja.
+activado por defecto, tanto en `index.html` como en el editor de nodos). La
+imagen son tiles de BDO Codex pegados en un solo archivo de ~1.6 MB, que se
+descarga en segundo plano recién la primera vez que se activa la opción: nunca
+demora la carga inicial, y apagada no se baja.
 
 El calce con `datos.json` es un escalado + traslación ajustado por mínimos
-cuadrados sobre 72 nodos: error mediano de 16 unidades (~3 s de viaje). ROSS y
-HAKOVEN están mal ubicados a mano desde antes y se ven fuera de su isla.
+cuadrados: error mediano de 16 unidades (~3 s de viaje). ROSS es un nodo de mar
+abierto (uno de los waypoints de Ross Sea), así que no tiene isla debajo: está
+bien puesto aunque se vea rodeado de agua.
 
 Para regenerarlo (por ejemplo si se agregan nodos de una región nueva, fuera de
 la caja actual) correr `python tools/generar_fondo_mapa.py` y copiar las cuatro
-constantes `FONDO_*` que imprime a `js/mapa.js`.
+constantes que imprime a `js/fondo_mapa.js`, que es de donde las leen las dos
+páginas.
 
 Ver [PLAN_REFACTOR.md](PLAN_REFACTOR.md) para el detalle de la reorganización.

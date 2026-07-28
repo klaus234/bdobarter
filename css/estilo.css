@@ -398,9 +398,9 @@ input[type="checkbox"] {
     border-radius: 2rem;
     border: 2px solid var(--accent-red);
     background: linear-gradient(135deg, rgba(231, 76, 60, 0.12), rgba(192, 57, 43, 0.12));
-    width: 45%;
-    min-width: 200px;
-    height: 2rem;
+    width: 38%;
+    min-width: 168px;
+    height: 1.7rem;
     margin-block: 0.6rem;
     overflow: hidden;
     cursor: grab;
@@ -474,9 +474,9 @@ input[type="number"]::-webkit-inner-spin-button {
 /* rótulo centrado: deja claro qué hace la barra */
 .slide_label {
     color: var(--accent-red);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: bold;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     pointer-events: none;
 }
@@ -490,7 +490,7 @@ input[type="number"]::-webkit-inner-spin-button {
     left: 4px;
     top: 50%;
     transform: translateY(-50%);
-    --size_box: 1.5rem;
+    --size_box: 1.3rem;
     background: linear-gradient(135deg, var(--accent-red), #c0392b);
     width: var(--size_box);
     height: var(--size_box);
@@ -499,7 +499,7 @@ input[type="number"]::-webkit-inner-spin-button {
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: bold;
     line-height: 1;
     cursor: grab;
@@ -1247,4 +1247,141 @@ a.tiempoTramo:hover,
     background-color: var(--accent-red) !important;
     color: white !important;
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4) !important;
+}
+
+/* ============================================================
+   CELULAR (<= 768px)
+   Todo lo de acá abajo vive dentro del @media: el diseño de escritorio
+   queda intacto. El corte coincide con MAPA_MOVIL_MAX de js/mapa.js, que
+   es el que redimensiona el canvas.
+   ============================================================ */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h2 {
+        font-size: 20px;
+        letter-spacing: 1px;
+        margin-bottom: 18px;
+    }
+
+    /* Una columna. El min-width de 350px desbordaría una pantalla de 360. */
+    .layout-container {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .columnaA,
+    .columnaB {
+        min-width: 0;
+        width: 100%;
+    }
+
+    /* el mapa pegajoso molesta en vertical: se va scrolleando con todo */
+    .columnaB {
+        position: static;
+    }
+
+    /* el canvas ya viene del tamaño justo (js/mapa.js), sin reescalar */
+    #defaultCanvas0 {
+        border-width: 2px;
+        border-radius: 8px;
+    }
+
+    /* arrastrar y pellizcar sobre el mapa no tiene que mover la página */
+    #mapa canvas {
+        touch-action: none;
+    }
+
+    /* Objetivos de toque más grandes en las listas */
+    .cboxnodo {
+        padding: 9px 0;
+    }
+
+    .cboxnodo input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+
+    .btn-play {
+        min-width: 62px;
+        padding: 7px 12px;
+    }
+
+    /* El tiempo del tramo es un link: con el dedo conviene más aire */
+    .uml1 .tiempoTramo,
+    .tiempoTramo {
+        margin-left: 12px;
+        padding: 4px 0;
+    }
+
+    /* la fila nombre + tiempo + ▶ no entra en 360px: el botón baja de línea */
+    .cboxnodo {
+        flex-wrap: wrap;
+        row-gap: 6px;
+    }
+
+    .uml1 li {
+        padding: 8px;
+    }
+
+    /* Ruta planeada: el select de dependencias no puede desbordar */
+    .ruta-item {
+        flex-wrap: wrap;
+        row-gap: 6px;
+    }
+
+    .ruta-item select {
+        max-width: 100%;
+    }
+
+    /* iOS hace zoom al enfocar un input de menos de 16px */
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+        font-size: 16px;
+    }
+
+    textarea {
+        width: 100%;
+    }
+
+    /* el slider de borrar ya es angosto: en el teléfono ocupa todo el ancho */
+    .btn_slide_container {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Controles del mapa: más grandes para el dedo */
+    #zoomer {
+        gap: 8px;
+        padding: 8px;
+        flex-wrap: wrap;
+    }
+
+    .zoomBTN {
+        min-width: 42px;
+        min-height: 38px;
+    }
+
+    #opcionesMapa {
+        gap: 10px 16px;
+    }
+
+    /* El aviso de viaje es fijo: que no tape media pantalla */
+    #timerViaje {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        justify-content: center;
+    }
+
+    /* Nada puede empujar el ancho de la página */
+    pre,
+    code {
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
 }

@@ -30,23 +30,9 @@ let recNodos = [];
 // dibuja en vectores (nítido a cualquier zoom, a diferencia del PNG).
 let barcoAnim = null; // {x1,y1,x2,y2,inicio,fin} en coords de datos.json
 
-// ============================================
-// FONDO REAL DEL MAPA
-// Mosaico del mapa del juego (img/mapa_fondo.webp), generado con
-// tools/generar_fondo_mapa.py a partir de los tiles de BDO Codex. Se dibuja
-// estirado entre estas dos esquinas, en coordenadas de datos.json: el ajuste
-// es un escalado + traslacion, con error mediano de 16 unidades (~3 s de
-// viaje). Si se agregan nodos fuera de esta caja hay que regenerarlo.
-// ============================================
+// Fondo real del mapa: la caja y la carga viven en js/fondo_mapa.js,
+// compartido con tools/editor_nodos.html.
 const FONDO_URL = "img/mapa_fondo.webp";
-const FONDO_X0 = -4472.2;
-const FONDO_Y0 = -3259.9;
-const FONDO_X1 = 4585.3;
-const FONDO_Y1 = 3675.9;
-const FONDO_VELO = 115; // velo oscuro (~45%): el terreno claro no tapa las etiquetas
-
-let fondoImg = null;
-let fondoEstado = "vacio"; // vacio | cargando | listo | error
 
 // Colores
 const COLOR_NODO = [52, 152, 219];      // azul: nodo comun
@@ -108,12 +94,14 @@ class NodoM {
     pantallaY() { return (this.y * szFixY + szFixOY) * zoomValue + offsetY; }
     diametro() { return Math.max(9, 30 * zoomValue); }
 
-    bajoMouse() {
-        const dx = mouseX - this.pantallaX();
-        const dy = mouseY - this.pantallaY();
+    bajoPunto(x, y) {
+        const dx = x - this.pantallaX();
+        const dy = y - this.pantallaY();
         const r = this.diametro() / 2 + 4;
         return dx * dx + dy * dy <= r * r;
     }
+
+    bajoMouse() { return this.bajoPunto(mouseX, mouseY); }
 
     dibujar(hover, planeado, esInicial) {
         const xd = this.pantallaX();
@@ -205,12 +193,17 @@ function ajustarVista() {
 // ============================================
 // EVENTOS DEL RATÓN
 // ============================================
-// nodo que está bajo el puntero en este momento (sin depender del frame)
-function nodoBajoPuntero() {
+// nodo que cae bajo un punto del canvas (el último dibujado gana)
+function nodoEn(x, y) {
     for (let i = nodosM.length - 1; i >= 0; i--) {
-        if (nodosM[i].bajoMouse()) return nodosM[i];
+        if (nodosM[i].bajoPunto(x, y)) return nodosM[i];
     }
     return null;
+}
+
+// nodo que está bajo el puntero en este momento (sin depender del frame)
+function nodoBajoPuntero() {
+    return nodoEn(mouseX, mouseY);
 }
 
 function mouseReleased(event) {
@@ -256,6 +249,102 @@ function mouseDragged() {
 }
 
 // ============================================
+// TÁCTIL (celular)
+// p5 solo llama a estas funciones si existen, y entonces ya no dispara las de
+// mouse: acá está todo el gesto. Un dedo arrastra el mapa (o lo toca para
+// marcar un nodo), dos dedos hacen zoom de pellizco.
+// ============================================
+let pellizcoPrevio = 0; // distancia entre los dos dedos en el frame anterior
+let dedoArrastro = false; // ¿el dedo se movió? (si no, el toque es un tap)
+
+function distanciaDedos() {
+    if (touches.length < 2) return 0;
+    return dist(touches[0].x, touches[0].y, touches[1].x, touches[1].y);
+}
+
+function touchStarted() {
+    if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return true;
+    if (touches.length >= 2) {
+        pellizcoPrevio = distanciaDedos();
+        mouseMove = false; // con dos dedos se hace zoom, no se arrastra
+        return false;
+    }
+    dedoArrastro = false;
+    mouseMove = true;
+    mouseClickV.x = mouseX;
+    mouseClickV.y = mouseY;
+    mox = offsetX;
+    moy = offsetY;
+    ultimoMovimiento = millis();
+    return false; // corta el scroll de la página mientras se usa el mapa
+}
+
+function touchMoved() {
+    if (touches.length >= 2) {
+        const d = distanciaDedos();
+        if (pellizcoPrevio > 0 && d > 0) {
+            // el zoom queda anclado en el punto medio entre los dos dedos
+            aplicarZoom(zoomValue * (d / pellizcoPrevio),
+                (touches[0].x + touches[1].x) / 2,
+                (touches[0].y + touches[1].y) / 2);
+        }
+        pellizcoPrevio = d;
+        return false;
+    }
+    if (!mouseMove) return true; // el toque empezó fuera del mapa: scroll normal
+    offsetX = mox + (mouseX - mouseClickV.x);
+    offsetY = moy + (mouseY - mouseClickV.y);
+    if (dist(mouseX, mouseY, mouseClickV.x, mouseClickV.y) > 8) dedoArrastro = true;
+    ultimoMovimiento = millis();
+    return false;
+}
+
+function touchEnded() {
+    // tap sin arrastre = mismo efecto que el click izquierdo. Se usa la
+    // posición donde empezó el toque: al soltar, mouseX/mouseY ya no sirven.
+    if (mouseMove && !dedoArrastro) {
+        const nodo = nodoEn(mouseClickV.x, mouseClickV.y);
+        if (nodo) toggleNodoPlaneado(nodo.titulo);
+    }
+    mouseMove = false;
+    dedoArrastro = false;
+    pellizcoPrevio = 0;
+    hoverNodo = null; // sin puntero no hay hover que mantener
+    ultimoMovimiento = millis();
+    return false;
+}
+
+// ============================================
+// TAMAÑO DEL CANVAS
+// En escritorio son los 800x600 de siempre. Por debajo del breakpoint el
+// canvas se recorta al ancho disponible y se hace más alto que ancho, que es
+// lo que sirve en un teléfono (achicarlo por CSS dejaría las etiquetas
+// ilegibles).
+// ============================================
+const MAPA_W = 800;
+const MAPA_H = 600;
+const MAPA_MOVIL_MAX = 768; // mismo corte que el @media de estilo.css
+
+function tamCanvas() {
+    if (window.innerWidth > MAPA_MOVIL_MAX) return { w: MAPA_W, h: MAPA_H };
+    const cont = document.getElementById("mapa");
+    const ancho = Math.round(Math.max(260, Math.min(MAPA_W, cont ? cont.clientWidth : MAPA_W)));
+    return { w: ancho, h: Math.round(Math.min(MAPA_H, ancho * 1.25)) };
+}
+
+function windowResized() {
+    const t = tamCanvas();
+    if (t.w === width && t.h === height) return;
+    // se mantiene fijo el punto del mundo que estaba en el centro del canvas
+    const cx = (width / 2 - offsetX) / zoomValue;
+    const cy = (height / 2 - offsetY) / zoomValue;
+    resizeCanvas(t.w, t.h);
+    offsetX = width / 2 - cx * zoomValue;
+    offsetY = height / 2 - cy * zoomValue;
+    ultimoMovimiento = millis();
+}
+
+// ============================================
 // CARGA DE DATOS
 // ============================================
 function preload() {
@@ -266,24 +355,6 @@ function preload() {
 function fondoRealActivo() {
     const chk = document.getElementById("chkFondoReal");
     return !chk || chk.checked;
-}
-
-// El fondo pesa ~1.6 MB: se pide recién la primera vez que hace falta y en
-// segundo plano. loadImage() fuera de preload() no bloquea, así que el mapa
-// se dibuja desde el primer frame y la imagen entra cuando llega.
-function pedirFondo() {
-    if (fondoEstado !== "vacio") return;
-    fondoEstado = "cargando";
-    loadImage(FONDO_URL,
-        img => {
-            fondoImg = img;
-            fondoEstado = "listo";
-            ultimoMovimiento = millis(); // sale del framerate bajo para pintarlo ya
-        },
-        () => {
-            fondoEstado = "error"; // se sigue usando el océano estilizado
-            console.warn("No se pudo cargar " + FONDO_URL + ": queda el fondo estilizado.");
-        });
 }
 
 // Océano estilizado: el fondo de siempre, cuando el real está apagado,
@@ -402,7 +473,8 @@ function ajustarBarco(deltaSeg) {
 // INICIALIZACIÓN
 // ============================================
 function setup() {
-    let canvas = createCanvas(800, 600);
+    const t = tamCanvas();
+    let canvas = createCanvas(t.w, t.h);
     mouseClickV = createVector(0, 0);
     frameRate(30);
     textSize(14);
@@ -446,15 +518,16 @@ function draw() {
     // Fondo: el mapa real del juego, o el océano estilizado mientras no esté
     background(10, 20, 40);
     const conFondoReal = fondoRealActivo();
-    if (conFondoReal) pedirFondo();
-    if (conFondoReal && fondoEstado === "listo") {
-        image(fondoImg,
-            (FONDO_X0 * szFixX + szFixOX) * zoomValue + offsetX,
-            (FONDO_Y0 * szFixY + szFixOY) * zoomValue + offsetY,
-            (FONDO_X1 - FONDO_X0) * szFixX * zoomValue,
-            (FONDO_Y1 - FONDO_Y0) * szFixY * zoomValue);
+    // al llegar la imagen se sale del framerate bajo para pintarla ya
+    if (conFondoReal) FondoMapa.pedir(FONDO_URL, () => { ultimoMovimiento = millis(); });
+    if (conFondoReal && FondoMapa.listo()) {
+        image(FondoMapa.imagen(),
+            (FondoMapa.X0 * szFixX + szFixOX) * zoomValue + offsetX,
+            (FondoMapa.Y0 * szFixY + szFixOY) * zoomValue + offsetY,
+            (FondoMapa.X1 - FondoMapa.X0) * szFixX * zoomValue,
+            (FondoMapa.Y1 - FondoMapa.Y0) * szFixY * zoomValue);
         noStroke();
-        fill(10, 20, 40, FONDO_VELO);
+        fill(10, 20, 40, FondoMapa.VELO);
         rect(0, 0, width, height);
     } else {
         dibujarOceanoEstilizado();

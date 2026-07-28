@@ -355,17 +355,21 @@ window.onload = function () {
     let currentXErase = 0;
     let isDragging = false;
 
-    slideErase.onmousedown = function (e) {
+    const empezarArrastre = function (clientX) {
         isDragging = true;
-        currentXErase = e.clientX - slideErase.offsetLeft;
+        currentXErase = clientX - slideErase.offsetLeft;
         slideErase.style.transition = "none";
+    };
+
+    slideErase.onmousedown = function (e) {
+        empezarArrastre(e.clientX);
     };
 
     const movGUIFnc = function (e) {
         if (!isDragging) return;
         e.preventDefault();
         const maxX = slideContainer.offsetWidth - slideErase.offsetWidth - 8;
-        let posx = e.clientX - currentXErase;
+        let posx = (e.touches ? e.touches[0].clientX : e.clientX) - currentXErase;
 
         if (posx < 4) posx = 4;
         if (posx >= maxX) {
@@ -388,4 +392,12 @@ window.onload = function () {
 
     document.addEventListener('mousemove', movGUIFnc);
     document.addEventListener('mouseup', movFncE);
+
+    // Mismo gesto con el dedo (celular). El touchmove va con passive:false
+    // para que movGUIFnc pueda cortar el scroll de la página al arrastrar.
+    slideErase.addEventListener('touchstart', function (e) {
+        empezarArrastre(e.touches[0].clientX);
+    }, { passive: true });
+    document.addEventListener('touchmove', movGUIFnc, { passive: false });
+    document.addEventListener('touchend', movFncE);
 };

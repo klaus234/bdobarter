@@ -5,14 +5,17 @@ Baja los tiles de BDO Codex (mismo mapa que usan las fan-sites), los pega en un
 mosaico que cubra todos los nodos de data/datos.json y lo guarda reescalado.
 
 Además imprime la caja del fondo en coordenadas de datos.json: son las cuatro
-constantes FONDO_* de js/mapa.js. Si se agregan nodos fuera de la zona actual
-(una región nueva), hay que correr esto de nuevo y actualizar esas constantes.
+constantes X0/Y0/X1/Y1 de js/fondo_mapa.js. Si se agregan nodos fuera de la
+zona actual (una región nueva), hay que correr esto de nuevo y actualizar esas
+constantes.
 
     python tools/generar_fondo_mapa.py
 
-El ajuste datos.json ↔ mapa real es un escalado + traslación por mínimos
-cuadrados sobre 72 nodos (se excluyen ROSS y HAKOVEN, mal ubicados a mano):
-error mediano 16 unidades (~3 s de viaje), p90 31.
+El ajuste datos.json <-> mapa real es un escalado + traslación por mínimos
+cuadrados sobre 72 nodos: error mediano 16 unidades (~3 s de viaje), p90 31.
+Del ajuste se excluyeron HAKOVEN (estaba mal ubicado a mano; ya se corrigió) y
+ROSS (su nombre, "Ross Sea", lo comparten 7 waypoints de mar y no se puede
+desambiguar por nombre; la posición a mano coincide con uno de ellos).
 """
 
 import io
@@ -101,11 +104,11 @@ def main():
     def a_datos(px_zoom, escala, origen):
         return px_zoom / factor * escala + origen
 
-    print("\nConstantes para js/mapa.js:")
-    print(f"const FONDO_X0 = {a_datos(tx0 * TILE, ESCALA_X, ORIGEN_X):.1f};")
-    print(f"const FONDO_Y0 = {a_datos(ty0 * TILE, ESCALA_Y, ORIGEN_Y):.1f};")
-    print(f"const FONDO_X1 = {a_datos((tx1 + 1) * TILE, ESCALA_X, ORIGEN_X):.1f};")
-    print(f"const FONDO_Y1 = {a_datos((ty1 + 1) * TILE, ESCALA_Y, ORIGEN_Y):.1f};")
+    print("\nConstantes para js/fondo_mapa.js:")
+    print(f"    const X0 = {a_datos(tx0 * TILE, ESCALA_X, ORIGEN_X):.1f};")
+    print(f"    const Y0 = {a_datos(ty0 * TILE, ESCALA_Y, ORIGEN_Y):.1f};")
+    print(f"    const X1 = {a_datos((tx1 + 1) * TILE, ESCALA_X, ORIGEN_X):.1f};")
+    print(f"    const Y1 = {a_datos((ty1 + 1) * TILE, ESCALA_Y, ORIGEN_Y):.1f};")
 
 
 if __name__ == "__main__":

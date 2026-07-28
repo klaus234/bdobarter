@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Visual de Nodos - BDO Barter</title>
     <script src="../lib/p5.min.js"></script>
+    <script src="../js/fondo_mapa.js"></script>
     <style>
         * {
             margin: 0;
@@ -341,6 +342,12 @@
                 Nodos en el mapa: <strong id="cantidadNodos">0</strong>
             </div>
 
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;"
+                 title="Usa el mapa real del juego en vez del océano estilizado. La imagen (~1.6 MB) se descarga en segundo plano la primera vez.">
+                <input type="checkbox" id="chkFondoReal" checked style="width: auto; cursor: pointer;">
+                <label for="chkFondoReal" style="margin: 0; cursor: pointer;">🗺️ Fondo real del mapa</label>
+            </div>
+
             <div id="canvasContainer">
                 <div id="mapa"></div>
             </div>
@@ -350,7 +357,8 @@
                     <strong>Controles del Mapa:</strong><br>
                     🖱️ Clic + Arrastrar = Mover<br>
                     🔄 Rueda del Ratón = Zoom<br>
-                    ➕ Modo Agregar = Haz click en el mapa para agregar nodos
+                    ➕ Modo Agregar = Haz click en el mapa para agregar nodos<br>
+                    🗺️ Fondo real = el mapa del juego, para ubicar el nodo sobre su isla
                 </p>
             </div>
         </div>
@@ -433,6 +441,7 @@
         let moy = 0;
         let datosNodos = [];
         let nodosM = [];
+        let canvasMapa = null; // el <canvas>, para saber si un click fue suyo
         let szFixX = 0.866;
         let szFixY = 0.866;
         let szFixOX = -170;
@@ -481,7 +490,14 @@
             let container = document.getElementById('mapa');
             let canvas = createCanvas(container.offsetWidth, 500);
             canvas.parent('mapa');
-            
+            canvasMapa = canvas.elt;
+
+            // El ancho del panel cambia cuando aparece su barra de scroll (al
+            // llenarse la lista de nodos) y al redimensionar la ventana. Sin
+            // esto el canvas quedaba más ancho que su contenedor y
+            // #canvasContainer le recortaba la franja derecha.
+            new ResizeObserver(ajustarCanvas).observe(container);
+
             mouseClickV = createVector(0, 0);
             frameRate(30);
             textSize(14);
@@ -494,30 +510,28 @@
         // DIBUJO - LOOP PRINCIPAL
         // ============================================
         function draw() {
-            background(10, 20, 40);
-            
-            stroke(20, 40, 80, 100);
-            strokeWeight(1);
-            
-            for (let y = offsetY % 40; y < height; y += 40) {
-                line(0, y, width, y);
-            }
-            for (let x = offsetX % 40; x < width; x += 40) {
-                line(x, 0, x, height);
-            }
-            
-            fill(50, 100, 150, 50);
-            noStroke();
-            randomSeed(42);
-            for (let i = 0; i < 30; i++) {
-                let px = random(width);
-                let py = random(height);
-                ellipse(px, py, random(2, 8), random(2, 8));
-            }
-            
+            // el offset va antes del fondo: si no, la imagen queda un frame
+            // atrás de los nodos mientras se arrastra el mapa
             if (mouseMove) {
                 offsetX = mox + (mouseX - mouseClickV.x);
                 offsetY = moy + (mouseY - mouseClickV.y);
+            }
+
+            // Fondo: el mapa real del juego, o el océano estilizado
+            background(10, 20, 40);
+            const conFondoReal = document.getElementById('chkFondoReal').checked;
+            if (conFondoReal) FondoMapa.pedir('../img/mapa_fondo.webp');
+            if (conFondoReal && FondoMapa.listo()) {
+                image(FondoMapa.imagen(),
+                    (FondoMapa.X0 * szFixX + szFixOX) * zoomValue + offsetX,
+                    (FondoMapa.Y0 * szFixY + szFixOY) * zoomValue + offsetY,
+                    (FondoMapa.X1 - FondoMapa.X0) * szFixX * zoomValue,
+                    (FondoMapa.Y1 - FondoMapa.Y0) * szFixY * zoomValue);
+                noStroke();
+                fill(10, 20, 40, FondoMapa.VELO);
+                rect(0, 0, width, height);
+            } else {
+                dibujarOceanoEstilizado();
             }
 
             for (let nodo of nodosM)
@@ -526,12 +540,41 @@
             noStroke();
         }
 
+        // Océano estilizado: el fondo de siempre, cuando el real está apagado,
+        // todavía viajando o no se pudo cargar.
+        function dibujarOceanoEstilizado() {
+            stroke(20, 40, 80, 100);
+            strokeWeight(1);
+
+            for (let y = offsetY % 40; y < height; y += 40) {
+                line(0, y, width, y);
+            }
+            for (let x = offsetX % 40; x < width; x += 40) {
+                line(x, 0, x, height);
+            }
+
+            fill(50, 100, 150, 50);
+            noStroke();
+            randomSeed(42);
+            for (let i = 0; i < 30; i++) {
+                let px = random(width);
+                let py = random(height);
+                ellipse(px, py, random(2, 8), random(2, 8));
+            }
+        }
+
         // ============================================
         // EVENTOS DEL RATÓN EN P5
         // ============================================
-        function mousePressed() {
+        function mousePressed(e) {
+            // p5 escucha el mouse en TODA la ventana, no solo en el canvas, así
+            // que hay que descartar los clicks que fueron a otra cosa. Sin esto,
+            // el botón "Confirmar" del modal (que queda encima del canvas)
+            // volvía a capturar coordenadas y el nodo terminaba lejos de donde
+            // se había hecho click.
+            if (e && e.target !== canvasMapa) return;
             if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
-            
+
             if (modoAgregar) {
                 // Convertir coordenadas de pantalla a coordenadas del mapa
                 ultimasCoordenadasClick = pantallaMapa({ x: mouseX, y: mouseY });
@@ -548,7 +591,8 @@
         }
 
         function mouseReleased() {
-            if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
+            // sin condición: si se soltaba fuera del canvas el arrastre quedaba
+            // pegado y el mapa seguía al puntero hasta el siguiente click
             mouseMove = false;
             frameRate(5);
         }
@@ -569,6 +613,16 @@
         // ============================================
         // FUNCIONES AUXILIARES
         // ============================================
+        // Deja el canvas del ancho exacto de su contenedor. Lo llama el
+        // ResizeObserver y también actualizarLista(), porque el observer
+        // entrega sus avisos junto al repintado y la barra de scroll aparece
+        // justo cuando se llena la lista.
+        function ajustarCanvas() {
+            if (typeof resizeCanvas !== 'function' || !canvasMapa) return;
+            const ancho = Math.round(document.getElementById('mapa').offsetWidth);
+            if (ancho > 0 && ancho !== width) resizeCanvas(ancho, 500);
+        }
+
         function pantallaMapa(pantalla) {
             const x = (pantalla.x - offsetX) / zoomValue;
             const y = (pantalla.y - offsetY) / zoomValue;
@@ -771,6 +825,7 @@
                 listaNodosDiv.appendChild(div);
             });
             cantidadNodosSpan.textContent = nodos.length;
+            ajustarCanvas(); // la lista puede haber hecho aparecer la barra de scroll
         }
 
         function actualizarJSON() {
