@@ -384,10 +384,100 @@ input[type="checkbox"] {
     display: flex;
     align-items: center;
     transition: all 0.2s ease;
+    position: relative; /* ancla las líneas de drop-antes / drop-despues */
 }
 
 .cboxnodo:hover {
     transform: translateX(3px);
+}
+
+/* ---- Reordenar paradas dentro de un viaje (mismo gesto que Ruta Planeada) ---- */
+.viaje-grip {
+    padding-right: 6px;
+}
+
+.cboxnodo.dragging {
+    opacity: 0.35;
+    transform: scale(0.98);
+}
+
+.cboxnodo.drop-antes::before,
+.cboxnodo.drop-despues::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gold);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.7);
+}
+
+.cboxnodo.drop-antes::before { top: -2px; }
+.cboxnodo.drop-despues::after { bottom: -2px; }
+
+/* La ✕ de quitar: siempre visible y roja. El margen la despega del ▶ para
+   que no se apriete de rebote al querer zarpar.
+   Los selectores llevan .cboxnodo delante a propósito: ".ruta-del" está más
+   abajo en este archivo y con la misma especificidad le ganaría, dejando el
+   margin en 0 y el width en auto. */
+.cboxnodo .viaje-quitar {
+    width: 24px;
+    margin-left: 16px;
+    color: var(--accent-red);
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+}
+
+.cboxnodo .viaje-quitar:hover,
+.cboxnodo .viaje-quitar:focus {
+    opacity: 1;
+}
+
+/* La fila de vuelta no lleva ✕: este hueco del mismo ancho mantiene sus
+   ◀ alineados con los ▶ de las paradas. */
+.cboxnodo .viaje-quitar-hueco {
+    width: 24px;
+    margin-left: 16px;
+    flex: 0 0 auto;
+}
+
+/* buscador para sumar una parada al final del viaje */
+.viaje-agregar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+/* más chico que un input normal: es un control secundario dentro de la fila */
+.uml1 input[type="text"].viaje-add {
+    width: 230px;
+    max-width: 100%;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 600;
+    border-width: 1px;
+    border-style: dashed;
+    border-color: var(--accent-blue);
+    border-radius: 12px;
+}
+
+.uml1 input[type="text"].viaje-add:focus {
+    border-style: solid;
+    border-color: var(--accent-gold);
+}
+
+.viaje-add::placeholder {
+    color: rgba(236, 240, 241, 0.5);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* el menú del buscador se cuelga del body: que quede por encima del mapa */
+.ui-autocomplete.viaje-add-menu {
+    z-index: 1200;
+    max-height: 260px;
+    overflow-y: auto;
 }
 
 .btn_slide_container {
@@ -1348,6 +1438,13 @@ a.tiempoTramo:hover,
     textarea,
     select {
         font-size: 16px;
+    }
+
+    /* el buscador de paradas define su propio tamaño: hay que repetirlo acá
+       para que no quede por debajo de los 16px y dispare el zoom de iOS */
+    .uml1 input[type="text"].viaje-add {
+        font-size: 16px;
+        width: 100%;
     }
 
     textarea {

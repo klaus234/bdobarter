@@ -72,7 +72,7 @@ function irNodo() {
 }
 
 function colorearNodo() {
-    const nombreNodo = this.parentNode.children[1].innerText;
+    const nombreNodo = this.parentNode.dataset.titulo;
     for (let ndo of nodosM) {
         if (ndo.titulo === nombreNodo) {
             ndo.seleccionado = !ndo.seleccionado;
@@ -83,9 +83,76 @@ function colorearNodo() {
 }
 
 // ============================================
+// EDICIÓN DE LOS VIAJES YA CALCULADOS
+// Cada viaje es [inicial, parada1, …, paradaN, inicial]: se puede agregar una
+// parada al final (antes de la vuelta), quitarla o reordenarlas arrastrando.
+// Como estadoViajesCalculados() guarda los viajes por título, todo esto
+// persiste solo al apretar Guardar Estado.
+// ============================================
+
+// Progreso visible (⚓ por tramo y nodos marcados), por viaje y por nodo, para
+// no perderlo al rehacer la lista. Se indexa por título y no por posición
+// porque justamente las posiciones cambian al reordenar.
+function leerProgresoViajes() {
+    return [...document.querySelectorAll("#outputnodos > li")].map(li => {
+        const est = { paradas: {}, vuelta: false };
+        li.querySelectorAll(".cboxnodo").forEach(fila => {
+            const btn = fila.querySelector(".btn-play");
+            const ancla = !!btn && btn.innerText.trim() === "⚓";
+            if (fila.classList.contains("fila-vuelta")) { est.vuelta = ancla; return; }
+            const cbox = fila.querySelector("input[type=checkbox]");
+            est.paradas[fila.dataset.titulo] = { ancla, marcado: !!cbox && cbox.checked };
+        });
+        return est;
+    });
+}
+
+function aplicarProgresoViajes(progreso) {
+    [...document.querySelectorAll("#outputnodos > li")].forEach((li, i) => {
+        const est = progreso[i];
+        if (!est) return;
+        li.querySelectorAll(".cboxnodo").forEach(fila => {
+            const btn = fila.querySelector(".btn-play");
+            if (fila.classList.contains("fila-vuelta")) {
+                if (est.vuelta && btn) btn.innerText = "⚓";
+                return;
+            }
+            const p = est.paradas[fila.dataset.titulo];
+            if (!p) return;
+            if (p.ancla && btn) btn.innerText = "⚓";
+            const cbox = fila.querySelector("input[type=checkbox]");
+            // se asigna sin .click(): el color del nodo en el mapa no cambió
+            if (cbox) cbox.checked = p.marcado;
+        });
+    });
+}
+
+// Rehace la lista después de tocar un viaje, conservando el progreso.
+function refrescarViajes() {
+    // el tramo en curso apunta a un botón que va a dejar de existir
+    if (typeof Navegacion !== "undefined" && Navegacion.enViaje()) Navegacion.cancelar();
+    const progreso = leerProgresoViajes();
+    const dom = document.getElementById("outputnodos");
+    const res = renderizarViajes(resultadoViajes, dom);
+    const tot = document.getElementById("totales");
+    if (tot) tot.innerText = `${res.nodos} nodos · dist ${Math.round(res.dist)}`;
+    aplicarProgresoViajes(progreso);
+    actualizarTiempoRestante();
+}
+
+// Nodos que todavía no están en el viaje (para el selector de "agregar")
+function nodosDisponiblesPara(viaje) {
+    const usados = new Set(viaje.map(n => n.titulo));
+    return Object.keys(nodosDic).filter(t => !usados.has(t)).sort();
+}
+
+// ============================================
 // RENDERIZADOR DE VIAJES
 // ============================================
 function renderizarViajes(viajes, contenedor) {
+    // los menús del buscador cuelgan del body: al rehacer la lista sus inputs
+    // desaparecen pero el menú queda, así que se barren antes de recrearlos
+    if (window.jQuery) jQuery("ul.viaje-add-menu").remove();
     contenedor.innerHTML = "";
     let indiceViaje = 0;
     let totalNodos = 0;
@@ -133,9 +200,21 @@ function renderizarViajes(viajes, contenedor) {
 
         let firstNodoSpan = undefined;
         const paradas = rgeneral.slice(1, rgeneral.length - 1);
+        const idxViaje = indiceViaje; // fijo para los handlers de esta iteración
         paradas.forEach((rnodo, j) => {
             const lit = document.createElement("div");
             lit.className = "cboxnodo";
+            lit.dataset.titulo = rnodo.titulo;
+            lit.dataset.viaje = idxViaje;
+            lit.dataset.parada = j;   // posición dentro de las paradas
+            lit.draggable = true;
+
+            // agarradera para reordenar, igual que en la Ruta Planeada
+            const grip = document.createElement("span");
+            grip.className = "ruta-grip viaje-grip";
+            grip.textContent = "⠿";
+            grip.title = "Arrastrar para cambiar el orden dentro del viaje";
+            grip.setAttribute("aria-hidden", "true");
 
             const cbox = document.createElement("input");
             cbox.type = "checkbox";
@@ -192,10 +271,24 @@ function renderizarViajes(viajes, contenedor) {
                 : "Estimado sin medición: el tiempo real puede diferir")
                 + "\nAbrir la Calculadora de Retraso con este tramo cargado";
 
+            // quitar la parada de este viaje (no toca la Ruta Planeada)
+            const btnQuitar = document.createElement("button");
+            btnQuitar.type = "button";
+            btnQuitar.className = "ruta-del viaje-quitar";
+            btnQuitar.textContent = "✕";
+            btnQuitar.title = "Quitar " + rnodo.titulo + " de este viaje";
+            btnQuitar.setAttribute("aria-label", "Quitar " + rnodo.titulo + " de este viaje");
+            btnQuitar.onclick = function () {
+                resultadoViajes[idxViaje].splice(j + 1, 1); // +1: el [0] es el nodo inicial
+                refrescarViajes();
+            };
+
+            lit.append(grip);
             lit.append(cbox);
             lit.append(spn);
             lit.append(lnkT);
             lit.append(btnPlay);
+            lit.append(btnQuitar);
             liGeneral.append(lit);
             totalNodos++;
         });
@@ -255,7 +348,63 @@ function renderizarViajes(viajes, contenedor) {
             filaV.append(spnV);
             filaV.append(lnkTV);
             filaV.append(btnV);
+            // La vuelta no se puede quitar, pero sin un hueco del ancho de la
+            // ✕ su ◀ se iría al borde y quedaría desalineado con los ▶.
+            const hueco = document.createElement("span");
+            hueco.className = "viaje-quitar-hueco";
+            hueco.setAttribute("aria-hidden", "true");
+            filaV.append(hueco);
             liGeneral.append(filaV);
+        }
+
+        // Agregar una parada extra al final del viaje (queda antes de la
+        // vuelta al nodo inicial). Es adicional a lo que calculó el solver.
+        const filaAdd = document.createElement("div");
+        filaAdd.className = "viaje-agregar";
+        const inpAdd = document.createElement("input");
+        inpAdd.type = "text";
+        inpAdd.className = "viaje-add";
+        inpAdd.placeholder = "＋ agregar parada al final…";
+        inpAdd.title = "Escribí para buscar, o hacé click para desplegar la lista";
+        inpAdd.setAttribute("autocomplete", "off");
+        filaAdd.append(inpAdd);
+        liGeneral.append(filaAdd);
+
+        // Inserta la parada si el nombre existe y no está ya en el viaje.
+        // Va diferido porque refrescarViajes() rehace la lista y se lleva
+        // puesto el propio input desde el que se está llamando.
+        const agregarParada = (titulo) => {
+            const nodo = nodosDic[(titulo || "").trim().toUpperCase()];
+            const v = resultadoViajes[idxViaje];
+            if (!nodo || v.some(n => n.titulo === nodo.titulo)) return;
+            setTimeout(() => {
+                v.splice(v.length - 1, 0, nodo); // antes del regreso al inicial
+                refrescarViajes();
+            }, 0);
+        };
+
+        inpAdd.addEventListener("keydown", e => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            agregarParada(inpAdd.value);
+        });
+
+        // Mismo buscador que "Agregar Nodo" (jQuery UI). Con minLength 0 la
+        // lista completa se despliega al hacer click, así sirve de las dos
+        // formas: escribiendo o eligiendo. El menú se cuelga del body, no del
+        // contenedor, porque ".uml1 li" le pisaría el estilo a sus opciones.
+        if (window.jQuery && jQuery.fn.autocomplete) {
+            jQuery(inpAdd).autocomplete({
+                source: nodosDisponiblesPara(rgeneral),
+                minLength: 0,
+                classes: { "ui-autocomplete": "viaje-add-menu" },
+                select: function (ev, ui) {
+                    agregarParada(ui.item.value);
+                    return false;
+                }
+            }).on("focus click", function () {
+                jQuery(this).autocomplete("search", this.value);
+            });
         }
 
         identificador.firstNodoSpan = firstNodoSpan;
@@ -278,9 +427,90 @@ function renderizarViajes(viajes, contenedor) {
 
     // reposicionar el puntero de atajos de teclado ("." y ",")
     if (typeof Atajos !== "undefined") Atajos.reset();
+    conectarArrastreViajes(contenedor);
     actualizarTiempoRestante();
 
     return { nodos: totalNodos, dist: distTotal };
+}
+
+// ============================================
+// REORDENAR PARADAS ARRASTRANDO
+// Mismo gesto que la Ruta Planeada (ver js/ruta.js), pero acotado a un viaje:
+// una parada no puede saltar a otro viaje ni pasar por delante del nodo
+// inicial. Los handlers van delegados en el contenedor y se enganchan una
+// sola vez, porque renderizarViajes() rehace todo su contenido.
+// ============================================
+function conectarArrastreViajes(contenedor) {
+    if (contenedor.dataset.arrastreListo) return;
+    contenedor.dataset.arrastreListo = "1";
+
+    let origen = null; // {viaje, parada}
+
+    const limpiar = () => contenedor.querySelectorAll(".drop-antes, .drop-despues")
+        .forEach(f => f.classList.remove("drop-antes", "drop-despues"));
+
+    // paradas del viaje que se está arrastrando (excluye la fila de vuelta)
+    const filasDe = (viaje) => [...contenedor.querySelectorAll(
+        `.cboxnodo[data-viaje="${viaje}"]:not(.fila-vuelta)`)];
+
+    function posicionInsercion(viaje, y) {
+        const filas = filasDe(viaje);
+        for (let i = 0; i < filas.length; i++) {
+            const r = filas[i].getBoundingClientRect();
+            if (y < r.top + r.height / 2) return i;
+        }
+        return filas.length;
+    }
+
+    contenedor.addEventListener("dragstart", e => {
+        const fila = e.target.closest(".cboxnodo[data-parada]");
+        if (!fila) return;
+        origen = { viaje: +fila.dataset.viaje, parada: +fila.dataset.parada };
+        fila.classList.add("dragging");
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = "move";
+            try { e.dataTransfer.setData("text/plain", fila.dataset.titulo); } catch (err) { }
+        }
+    });
+
+    contenedor.addEventListener("dragend", () => {
+        contenedor.querySelectorAll(".dragging").forEach(f => f.classList.remove("dragging"));
+        limpiar();
+        origen = null;
+    });
+
+    contenedor.addEventListener("dragover", e => {
+        if (!origen) return;
+        const fila = e.target.closest(".cboxnodo[data-parada]");
+        if (!fila || +fila.dataset.viaje !== origen.viaje) return; // solo dentro del mismo viaje
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        limpiar();
+        const filas = filasDe(origen.viaje);
+        const pos = posicionInsercion(origen.viaje, e.clientY);
+        if (pos >= filas.length) filas[filas.length - 1].classList.add("drop-despues");
+        else filas[pos].classList.add("drop-antes");
+    });
+
+    contenedor.addEventListener("dragleave", e => {
+        if (!contenedor.contains(e.relatedTarget)) limpiar();
+    });
+
+    contenedor.addEventListener("drop", e => {
+        if (!origen) return;
+        const fila = e.target.closest(".cboxnodo[data-parada]");
+        if (!fila || +fila.dataset.viaje !== origen.viaje) return;
+        e.preventDefault();
+        let pos = posicionInsercion(origen.viaje, e.clientY);
+        limpiar();
+        const v = resultadoViajes[origen.viaje];
+        // +1 en los índices: v[0] es el nodo inicial, las paradas arrancan en 1
+        const movido = v.splice(origen.parada + 1, 1)[0];
+        if (pos > origen.parada) pos--; // compensar el hueco que dejó
+        v.splice(Math.max(0, Math.min(pos, v.length - 2)) + 1, 0, movido);
+        origen = null;
+        refrescarViajes();
+    });
 }
 
 // Tiempo restante = suma de los tramos que aún no tienen ancla (⚓). El tramo
