@@ -27,9 +27,9 @@
     <p id="avisoGet" hidden style="border-left: 4px solid #d4af37; padding: 6px 0 6px 10px; background: #fffaea;"></p>
 
     <form id="formRetraso">
-        <label>Velocidad % del barco: <input type="number" id="vel" value="157" min="50" max="300"></label><br><br>
-        <label>Aceleración % del barco: <input type="number" id="acc" value="127" min="50" max="300"></label><br><br>
-        <label title="El mismo % se suma a la velocidad y a la aceleración. Los tramos se midieron con 11%.">Velocidad / Aceleración maestría %: <input type="number" id="maestria" value="11" min="0" max="100"></label><br><br>
+        <label>Velocidad % del barco: <input type="number" id="vel" value="157" min="50" max="300" step="0.1"></label><br><br>
+        <label>Aceleración % del barco: <input type="number" id="acc" value="127" min="50" max="300" step="0.1"></label><br><br>
+        <label title="El mismo % se suma a la velocidad y a la aceleración. Los tramos se midieron con 11%.">Velocidad / Aceleración maestría %: <input type="number" id="maestria" value="11" min="0" max="100" step="0.1"></label><br><br>
         <label title="Suma 5 puntos a la velocidad y a la aceleración. No estaba activo cuando se calibró la fórmula."><input type="checkbox" id="chkDiarioManos" checked> Diario de Navegación de Manos (+5%)</label><br><br>
         <label>Nodo A (origen): <input type="text" id="nodoA" list="listaNodos" required></label><br><br>
         <label>Nodo B (destino): <input type="text" id="nodoB" list="listaNodos" required></label><br><br>
