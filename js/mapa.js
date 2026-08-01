@@ -30,6 +30,26 @@ let recNodos = [];
 // dibuja en vectores (nítido a cualquier zoom, a diferencia del PNG).
 let barcoAnim = null; // {x1,y1,x2,y2,inicio,fin} en coords de datos.json
 
+// "Seguir barco": deja el barco fijo en el centro mientras navega. Es un
+// botón dibujado dentro del canvas (no en el DOM, para no sumar más controles
+// alrededor del mapa). Arranca apagado y no se guarda en ningún lado.
+let seguirBarco = false;
+const BTN_SEGUIR = { w: 124, h: 26, margen: 10 };
+
+function rectBotonSeguir() {
+    return {
+        x: width - BTN_SEGUIR.w - BTN_SEGUIR.margen,
+        y: height - BTN_SEGUIR.h - BTN_SEGUIR.margen,
+        w: BTN_SEGUIR.w,
+        h: BTN_SEGUIR.h
+    };
+}
+
+function enBotonSeguir(x, y) {
+    const r = rectBotonSeguir();
+    return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+}
+
 // Fondo real del mapa: la caja y la carga viven en js/fondo_mapa.js,
 // compartido con tools/editor_nodos.html.
 const FONDO_URL = "img/mapa_fondo.webp";
@@ -220,6 +240,13 @@ function mouseReleased(event) {
 function mousePressed(event) {
     if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
 
+    // el botón "seguir barco" se queda con el click antes que el mapa
+    if (event.buttons === 1 && enBotonSeguir(mouseX, mouseY)) {
+        seguirBarco = !seguirBarco;
+        ultimoMovimiento = millis();
+        return false;
+    }
+
     // click derecho sobre un nodo: lo AGREGA a la ruta planeada (nunca lo quita)
     if (event.buttons === 2) {
         const nodo = nodoBajoPuntero();
@@ -264,6 +291,11 @@ function distanciaDedos() {
 
 function touchStarted() {
     if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return true;
+    if (touches.length < 2 && enBotonSeguir(mouseX, mouseY)) {
+        seguirBarco = !seguirBarco;
+        ultimoMovimiento = millis();
+        return false;
+    }
     if (touches.length >= 2) {
         pellizcoPrevio = distanciaDedos();
         mouseMove = false; // con dos dedos se hace zoom, no se arrastra
@@ -349,6 +381,46 @@ function windowResized() {
 // ============================================
 function preload() {
     data = loadJSON("data/datos.json");
+}
+
+// Posición del barco en coordenadas de datos.json, o null si no está navegando
+function posicionBarco() {
+    if (!animBarcoActiva()) return null;
+    const dur = Math.max(1, barcoAnim.fin - barcoAnim.inicio);
+    const prog = (barcoAnim.congelado !== undefined)
+        ? barcoAnim.congelado
+        : Math.min(1, (Date.now() - barcoAnim.inicio) / dur);
+    return {
+        x: barcoAnim.x1 + (barcoAnim.x2 - barcoAnim.x1) * prog,
+        y: barcoAnim.y1 + (barcoAnim.y2 - barcoAnim.y1) * prog
+    };
+}
+
+// Botón "SEGUIR BARCO", abajo a la derecha del canvas. Verde cuando está
+// activo; apagado y en gris cuando no hay ningún barco navegando.
+function dibujarBotonSeguir() {
+    const r = rectBotonSeguir();
+    const hay = posicionBarco() !== null;
+    const hover = mouseX >= 0 && mouseX <= width && enBotonSeguir(mouseX, mouseY);
+    push();
+    rectMode(CORNER);
+    strokeWeight(hover ? 2 : 1.5);
+    if (seguirBarco) {
+        fill(46, 204, 113, hover ? 80 : 55);
+        stroke(46, 204, 113, 235);
+    } else {
+        fill(10, 20, 40, hover ? 225 : 190);
+        stroke(hay ? 212 : 130, hay ? 175 : 140, hay ? 55 : 150, hover ? 235 : 170);
+    }
+    rect(r.x, r.y, r.w, r.h, 13);
+    noStroke();
+    fill(seguirBarco ? 220 : (hay ? 212 : 150), seguirBarco ? 255 : (hay ? 175 : 160),
+        seguirBarco ? 230 : (hay ? 55 : 170));
+    textAlign(CENTER, CENTER);
+    textSize(11);
+    textStyle(BOLD);
+    text((seguirBarco ? "◉" : "○") + " SEGUIR BARCO", r.x + r.w / 2, r.y + r.h / 2 + 1);
+    pop();
 }
 
 // ¿Está pedido el fondo real? (checkbox; si aún no existe, se asume que sí)
@@ -515,6 +587,16 @@ function draw() {
         offsetY = moy + (mouseY - mouseClickV.y);
     }
 
+    // "Seguir barco": corre el mapa para dejarlo en el centro. Mientras se
+    // arrastra manda el arrastre; al soltar se vuelve a enganchar.
+    if (seguirBarco && !mouseMove) {
+        const pb = posicionBarco();
+        if (pb) {
+            offsetX = width / 2 - (pb.x * szFixX + szFixOX) * zoomValue;
+            offsetY = height / 2 - (pb.y * szFixY + szFixOY) * zoomValue;
+        }
+    }
+
     // Fondo: el mapa real del juego, o el océano estilizado mientras no esté
     background(10, 20, 40);
     const conFondoReal = fondoRealActivo();
@@ -576,15 +658,10 @@ function draw() {
     }
 
     // 4) Barco navegando o estacionado en el destino
-    if (animBarcoActiva()) {
-        const dur = Math.max(1, barcoAnim.fin - barcoAnim.inicio);
-        const prog = (barcoAnim.congelado !== undefined)
-            ? barcoAnim.congelado
-            : Math.min(1, (Date.now() - barcoAnim.inicio) / dur);
-        const bx = barcoAnim.x1 + (barcoAnim.x2 - barcoAnim.x1) * prog;
-        const by = barcoAnim.y1 + (barcoAnim.y2 - barcoAnim.y1) * prog;
-        const sx = (bx * szFixX + szFixOX) * zoomValue + offsetX;
-        const sy = (by * szFixY + szFixOY) * zoomValue + offsetY;
+    const pBarco = posicionBarco();
+    if (pBarco) {
+        const sx = (pBarco.x * szFixX + szFixOX) * zoomValue + offsetX;
+        const sy = (pBarco.y * szFixY + szFixOY) * zoomValue + offsetY;
         const tam = Math.max(20, 48 * zoomValue);
         push();
         translate(sx, sy - tam * 0.24); // apenas por encima del nodo
@@ -593,7 +670,11 @@ function draw() {
         pop();
     }
 
-    cursor(hoverNodo ? HAND : (mouseMove ? "grabbing" : ARROW));
+    // 5) Botón "seguir barco" (al final: va por encima de todo)
+    dibujarBotonSeguir();
+
+    cursor((hoverNodo || (dentro && enBotonSeguir(mouseX, mouseY)))
+        ? HAND : (mouseMove ? "grabbing" : ARROW));
 
     // Cancelar arrastre si el mouse salió del canvas
     if (!dentro) mouseMove = false;

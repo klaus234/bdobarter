@@ -98,6 +98,76 @@ const Consola = (function () {
         return n;
     }
 
+    // ---- autocompletado con TAB ----
+    // Prefijo común más largo de una lista (lo que bash completa cuando hay
+    // varios candidatos), respetando las mayúsculas del primero.
+    function prefijoComun(lista) {
+        if (!lista.length) return "";
+        let p = lista[0];
+        for (const s of lista) {
+            let i = 0;
+            while (i < p.length && i < s.length && p[i].toUpperCase() === s[i].toUpperCase()) i++;
+            p = p.slice(0, i);
+        }
+        return p;
+    }
+
+    const nombresSavestates = () =>
+        SaveStates.leer().filter(Boolean).map(s => s.nombre);
+    const nombresNodos = () =>
+        (typeof nodosDic === "undefined" ? [] : Object.keys(nodosDic));
+
+    // Aplica el resultado: completa solo, o completa lo común y lista el resto.
+    // A diferencia de bash, lista en el primer TAB en vez del segundo.
+    function aplicarCompletado(cands, parcial, set) {
+        if (!cands.length) return;
+        if (cands.length === 1) { set(cands[0] + " "); return; }
+        const comun = prefijoComun(cands);
+        if (comun.length > parcial.length) set(comun);
+        linea(cands.join("   "), "eco");
+    }
+
+    function autocompletar() {
+        const val = entrada.value;
+        const cab = val.match(/^(\s*\S+\s+)([\s\S]*)$/);
+
+        // primera palabra todavía sin cerrar: se completa el comando
+        if (!cab) {
+            const t = val.trim().toLowerCase();
+            const cands = Object.keys(comandos).filter(c => c.startsWith(t)).sort();
+            aplicarCompletado(cands, t, nuevo => { entrada.value = nuevo; });
+            return;
+        }
+
+        const cabecera = cab[1];
+        const resto = cab[2];
+        const cmd = comandos[cabecera.trim().toLowerCase()];
+        if (!cmd || !cmd.completar) return;
+        const lista = cmd.completar() || [];
+        if (!lista.length) return;
+
+        // con comas se completa lo que va después de la última (los nombres de
+        // nodo tienen espacios, así que no sirve cortar por palabra)
+        const iComa = resto.lastIndexOf(",");
+        const antes = iComa === -1 ? "" : resto.slice(0, iComa + 1) + " ";
+        let parcial = (iComa === -1 ? resto : resto.slice(iComa + 1)).replace(/^\s+/, "");
+
+        let cands = lista.filter(x => norm(x).startsWith(norm(parcial)));
+        // sin coma y sin coincidencias, se prueba con la última palabra sola:
+        // es el caso de "dist iliya orf" -> ORFFS
+        if (!cands.length && iComa === -1 && /\s/.test(parcial)) {
+            const corte = parcial.lastIndexOf(" ");
+            const ultima = parcial.slice(corte + 1);
+            cands = lista.filter(x => norm(x).startsWith(norm(ultima)));
+            if (cands.length) {
+                const previo = parcial.slice(0, corte + 1);
+                aplicarCompletado(cands, ultima, n => { entrada.value = cabecera + previo + n; });
+                return;
+            }
+        }
+        aplicarCompletado(cands, parcial, n => { entrada.value = cabecera + antes + n; });
+    }
+
     // ---- comandos ----
     const comandos = {
         help: {
@@ -109,6 +179,7 @@ const Consola = (function () {
                     linea("  " + comandos[n].uso.padEnd(22) + comandos[n].ayuda);
                 });
                 linea("");
+                linea("TAB autocompleta comandos, nodos y savestates.");
                 linea("Flechas ↑ ↓ para repetir comandos. | o Esc para cerrar.");
             }
         },
@@ -166,12 +237,14 @@ const Consola = (function () {
         load: {
             uso: "load <ruta>",
             ayuda: "carga un savestate por nombre (basta una parte)",
+            completar: nombresSavestates,
             correr(args) { cargarSavestate(args, "load"); }
         },
 
         loadr: {
             uso: "loadr <ruta>",
             ayuda: "igual que load, y además calcula los viajes",
+            completar: nombresSavestates,
             correr(args) {
                 if (!cargarSavestate(args, "loadr")) return;
                 const btn = document.getElementById("btnmateriales");
@@ -188,6 +261,7 @@ const Consola = (function () {
         find: {
             uso: "find <texto>",
             ayuda: "lista los nodos cuyo nombre contenga el texto",
+            completar: nombresNodos,
             correr(args) {
                 if (!args.length) {
                     error("find: falta el texto a buscar");
@@ -210,6 +284,7 @@ const Consola = (function () {
         dist: {
             uso: "dist <A> <B>",
             ayuda: "distancia y tiempo entre dos nodos, sin tocar la ruta",
+            completar: nombresNodos,
             correr(args) {
                 if (!args.length) {
                     error("dist: faltan los nodos");
@@ -238,6 +313,7 @@ const Consola = (function () {
         add: {
             uso: "add <nodo>…",
             ayuda: "agrega nodos a la ruta planeada",
+            completar: nombresNodos,
             correr(args) {
                 if (!args.length) {
                     error("add: falta el nombre del nodo");
@@ -262,6 +338,7 @@ const Consola = (function () {
         rm: {
             uso: "rm <nodo>…",
             ayuda: "quita nodos de la ruta planeada",
+            completar: () => (typeof Ruta === "undefined" ? [] : Ruta.planeados()),
             correr(args) {
                 if (!args.length) {
                     error("rm: falta el nombre del nodo");
@@ -411,6 +488,7 @@ const Consola = (function () {
         ss: {
             uso: "ss <nombre> | ss list",
             ayuda: "guarda la ruta actual en un savestate, o lista los guardados",
+            completar: () => ["list"].concat(nombresSavestates()),
             correr(args) {
                 if (!args.length) {
                     error("ss: falta el nombre del savestate");
@@ -447,6 +525,7 @@ const Consola = (function () {
         goto: {
             uso: "goto <nodo>",
             ayuda: "centra el mapa en un nodo (basta una parte)",
+            completar: nombresNodos,
             correr(args) {
                 if (!args.length) {
                     error("goto: falta el nombre del nodo");
@@ -575,6 +654,12 @@ const Consola = (function () {
 
         entrada.addEventListener("keydown", function (e) {
             if (e.key === "Escape") { e.preventDefault(); cerrar(); return; }
+            if (e.key === "Tab") {
+                e.preventDefault(); // que no se vaya el foco del campo
+                autocompletar();
+                entrada.setSelectionRange(entrada.value.length, entrada.value.length);
+                return;
+            }
             if (e.key === "Enter") {
                 e.preventDefault();
                 ejecutar(entrada.value);

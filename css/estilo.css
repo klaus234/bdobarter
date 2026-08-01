@@ -498,6 +498,16 @@ input[type="checkbox"] {
     z-index: 1200;
     max-height: 260px;
     overflow-y: auto;
+    /* Con overflow-y:auto el eje X pasa solo a "auto" (lo fuerza el spec):
+       basta que un nombre largo asome para que aparezca una barra horizontal
+       abajo, que tapa la última opción y no deja clickearla. */
+    overflow-x: hidden;
+}
+
+/* los nombres largos bajan de línea en vez de ensanchar el menú */
+.ui-autocomplete.viaje-add-menu .ui-menu-item-wrapper {
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .btn_slide_container {
