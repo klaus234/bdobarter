@@ -2,54 +2,103 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Calculadora de Retraso entre Nodos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Retraso | BDO</title>
+    <link rel="stylesheet" href="css/estilo.css">
 </head>
-<body>
-    <h1>Calculadora de Retraso entre Nodos</h1>
-    <p>
-        Calcula la variable <b>retraso</b> de un tramo: la distancia extra (en unidades del mapa)
-        que el barco recorre de más por giros, maniobras, etc., comparado con la línea recta.<br>
-        Es <b>universal</b>: no depende de la velocidad ni aceleración del barco usado para medirlo.<br>
-        El resultado se agrega a mano en <code>data/retrasos.json</code>.
-    </p>
+<body class="pagina-calc">
+    <h2><a href="index.html" title="Volver a la calculadora de rutas">⟵ Calculadora de Retraso</a></h2>
 
-    <h2>Cronómetro</h2>
-    <p style="font-size: 2em; font-family: monospace;">
-        <span id="cronoEstado" style="display: inline-block; width: 12px; height: 30px; background: red; vertical-align: middle; margin-right: 12px; border-radius: 2px;" title="Rojo: detenido · Verde: corriendo"></span><span id="cronoDisplay">00:00</span>
-    </p>
-    <button type="button" id="btnCronoStart">Iniciar</button>
-    <button type="button" id="btnCronoStop">Detener</button>
-    <button type="button" id="btnCronoReset">Reiniciar</button>
-    <button type="button" id="btnCronoUsar">Usar este tiempo ↓</button>
+    <div class="layout-container">
+        <div class="columnaA">
+            <div class="panel-calc">
+                <p class="hint">
+                    Calcula la variable <b>retraso</b> de un tramo: la distancia extra (en unidades del mapa)
+                    que el barco recorre de más por giros, maniobras, etc., comparado con la línea recta.
+                    Es <b>universal</b>: no depende de la velocidad ni aceleración del barco usado para medirlo.
+                    El resultado se agrega a <code>data/retrasos.json</code>, o se guarda local acá abajo.
+                </p>
+            </div>
 
-    <hr>
+            <div class="panel-calc">
+                <h3>⏱ Cronómetro</h3>
+                <p class="crono-display">
+                    <span id="cronoEstado" title="Rojo: detenido · Verde: corriendo"></span><span id="cronoDisplay">00:00</span>
+                </p>
+                <div class="fila-botones">
+                    <button type="button" id="btnCronoStart">Iniciar</button>
+                    <button type="button" id="btnCronoStop">Detener</button>
+                    <button type="button" id="btnCronoReset">Reiniciar</button>
+                    <button type="button" id="btnCronoUsar">Usar este tiempo ↓</button>
+                </div>
+            </div>
 
-    <p id="avisoGet" hidden style="border-left: 4px solid #d4af37; padding: 6px 0 6px 10px; background: #fffaea;"></p>
+            <div class="panel-calc">
+                <h3>📐 Medición del tramo</h3>
+                <p id="avisoGet" hidden></p>
 
-    <form id="formRetraso">
-        <label>Velocidad % del barco: <input type="number" id="vel" value="157" min="50" max="300" step="0.1"></label><br><br>
-        <label>Aceleración % del barco: <input type="number" id="acc" value="127" min="50" max="300" step="0.1"></label><br><br>
-        <label title="El mismo % se suma a la velocidad y a la aceleración. Los tramos se midieron con 11%.">Velocidad / Aceleración maestría %: <input type="number" id="maestria" value="11" min="0" max="100" step="0.1"></label><br><br>
-        <label title="Suma 5 puntos a la velocidad y a la aceleración. No estaba activo cuando se calibró la fórmula."><input type="checkbox" id="chkDiarioManos" checked> Diario de Navegación de Manos (+5%)</label><br><br>
-        <label>Nodo A (origen): <input type="text" id="nodoA" list="listaNodos" required></label><br><br>
-        <label>Nodo B (destino): <input type="text" id="nodoB" list="listaNodos" required></label><br><br>
-        <label>Tiempo real que tardó (segundos, o m:ss): <input type="text" id="tiempo" placeholder="42  ó  1:23" required></label><br><br>
-        <button type="submit">Calcular retraso</button>
-    </form>
-    <datalist id="listaNodos"></datalist>
+                <form id="formRetraso">
+                    <div class="barco-campos">
+                        <div class="barco-campo">
+                            <label for="vel">Velocidad %</label>
+                            <input type="number" id="vel" value="157" min="50" max="300" step="0.1">
+                        </div>
+                        <div class="barco-campo">
+                            <label for="acc">Aceleración %</label>
+                            <input type="number" id="acc" value="127" min="50" max="300" step="0.1">
+                        </div>
+                        <div class="barco-campo" title="El mismo % se suma a la velocidad y a la aceleración. Los tramos se midieron con 11%.">
+                            <label for="maestria">Vel. / Acel. maestría %</label>
+                            <input type="number" id="maestria" value="11" min="0" max="100" step="0.1">
+                        </div>
+                    </div>
 
-    <h2>Retrasos locales</h2>
-    <p>
-        Los retrasos guardados acá quedan en <b>este navegador</b> y se suman a los de
-        <code>data/retrasos.json</code> (agregan pares nuevos y pisan los que ya existen).
-        La calculadora de rutas los usa automáticamente.
-    </p>
-    <button type="button" id="btnAgregarLocal">➕ Agregar a retrasos (local)</button>
-    <button type="button" id="btnVerLocal">📋 Ver JSON retrasos local</button>
-    <button type="button" id="btnGenerarJSON">🧾 Generar retrasos.json</button>
-    <button type="button" id="btnBorrarLocales">🗑️ Borrar retrasos locales</button>
+                    <div class="opcion-inline" title="Suma 5 puntos a la velocidad y a la aceleración. No estaba activo cuando se calibró la fórmula.">
+                        <input type="checkbox" id="chkDiarioManos" checked>
+                        <label for="chkDiarioManos" style="margin-bottom: 0; cursor: pointer;">Diario de Navegación de Manos (+5%)</label>
+                    </div>
 
-    <pre id="salida"></pre>
+                    <div class="input-group">
+                        <label for="nodoA">Nodo A (origen)</label>
+                        <input type="text" id="nodoA" list="listaNodos" autocomplete="off" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="nodoB">Nodo B (destino)</label>
+                        <input type="text" id="nodoB" list="listaNodos" autocomplete="off" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="tiempo">Tiempo real que tardó (segundos, o m:ss)</label>
+                        <input type="text" id="tiempo" placeholder="42  ó  1:23" autocomplete="off" required>
+                    </div>
+
+                    <button type="submit">⚡ Calcular retraso</button>
+                </form>
+                <datalist id="listaNodos"></datalist>
+            </div>
+        </div>
+
+        <div class="columnaB">
+            <div class="panel-calc">
+                <h3>💾 Retrasos locales</h3>
+                <p class="hint">
+                    Los retrasos guardados acá quedan en <b>este navegador</b> y se suman a los de
+                    <code>data/retrasos.json</code> (agregan pares nuevos y pisan los que ya existen).
+                    La calculadora de rutas los usa automáticamente.
+                </p>
+
+                <div id="progresoRetrasos"></div>
+
+                <div class="fila-botones">
+                    <button type="button" id="btnAgregarLocal">➕ Agregar a retrasos (local)</button>
+                    <button type="button" id="btnVerLocal">📋 Ver JSON retrasos local</button>
+                    <button type="button" id="btnGenerarJSON">🧾 Generar retrasos.json</button>
+                    <button type="button" id="btnBorrarLocales" class="peligro">🗑️ Borrar retrasos locales</button>
+                </div>
+            </div>
+
+            <pre id="salida"></pre>
+        </div>
+    </div>
 
     <script src="js/modelo.js"></script>
     <script src="js/retrasos.js"></script>
@@ -129,13 +178,80 @@
                     op.value = n.titulo;
                     dl.appendChild(op);
                 }
+                actualizarProgreso();
             })
             .catch(() => { document.getElementById('salida').textContent = 'Error: no se pudo cargar datos.json (abrir desde un servidor local).'; });
 
         fetch('data/retrasos.json')
             .then(r => r.json())
-            .then(d => { retrasosBase = d; })
+            .then(d => { retrasosBase = d; actualizarProgreso(); })
             .catch(() => {});
+
+        // ============================================
+        // COBERTURA DE RETRASOS
+        // Entre n nodos hay n(n-1)/2 pares posibles. Se muestran tres lecturas
+        // del mismo número de mediciones, porque el denominador cambia mucho:
+        //   · todos los nodos de datos.json (el techo teórico)
+        //   · solo los nodos que ya tienen alguna medición (la zona que navegás)
+        //   · los nodos de la ruta guardada con Guardar Estado en index.html
+        // ============================================
+        function paresPosibles(n) { return n * (n - 1) / 2; }
+
+        // Nodos de la ruta planeada que index.html dejó en localStorage.
+        // El texto lleva marcadores #o_/#d_ que acá no interesan.
+        function nodosDeLaRuta() {
+            const txt = localStorage.getItem("NodosR") || "";
+            const vistos = new Set();
+            for (const linea of txt.split("\n")) {
+                const nombre = linea.split("#")[0].trim().toUpperCase();
+                if (nombre && nombre !== "SEP" && nombre in nodos) vistos.add(nombre);
+            }
+            return vistos;
+        }
+
+        function barra(titulo, medidos, total, nota) {
+            const pct = total > 0 ? (100 * medidos / total) : 0;
+            const texto = total > 0
+                ? `${medidos} de ${total} · ${pct < 10 ? pct.toFixed(2) : pct.toFixed(1)}%`
+                : "sin datos";
+            return `<div class="progreso-item">
+                <div class="progreso-fila">
+                    <span>${titulo}</span>
+                    <span class="progreso-dato">${texto}</span>
+                </div>
+                <div class="progreso-barra"><span style="width: ${Math.min(100, pct).toFixed(2)}%"></span></div>
+                ${nota ? `<p class="hint" style="margin: 3px 0 0; text-align: left;">${nota}</p>` : ""}
+            </div>`;
+        }
+
+        function actualizarProgreso() {
+            const cont = document.getElementById("progresoRetrasos");
+            if (!cont) return;
+            const totalNodos = Object.keys(nodos).length;
+            if (!totalNodos) { cont.innerHTML = ""; return; }
+
+            const medidos = RetrasosLocal.fusionar(retrasosBase); // json + locales, sin duplicar
+            const locales = RetrasosLocal.leer().length;
+
+            // nodos que aparecen en alguna medición
+            const conMedicion = new Set();
+            medidos.forEach(r => { conMedicion.add(r.nodoA); conMedicion.add(r.nodoB); });
+
+            // ruta guardada: solo cuentan los pares entre sus propios nodos
+            const enRuta = nodosDeLaRuta();
+            const medidosEnRuta = medidos.filter(r => enRuta.has(r.nodoA) && enRuta.has(r.nodoB)).length;
+
+            cont.innerHTML =
+                barra("Todos los nodos", medidos.length, paresPosibles(totalNodos),
+                    `${totalNodos} nodos en datos.json · ${locales} ${locales === 1 ? "medición local" : "mediciones locales"}`)
+                + barra("Zona ya medida", medidos.length, paresPosibles(conMedicion.size),
+                    `${conMedicion.size} nodos con al menos una medición`)
+                + (enRuta.size >= 2
+                    ? barra("Ruta guardada", medidosEnRuta, paresPosibles(enRuta.size),
+                        `${enRuta.size} nodos en la ruta planeada de la otra pestaña`)
+                    : `<div class="progreso-item"><p class="hint" style="margin:0; text-align:left;">
+                        Ruta guardada: sin ruta (guardá una con Guardar Estado en la calculadora de rutas).</p></div>`);
+        }
 
         function parseTiempo(s) {
             s = s.trim();
@@ -216,6 +332,7 @@
                 (yaEstaba ? '  (antes era ' + yaEstaba.retraso + ')\n' : '') +
                 '\nRetrasos locales guardados: ' + RetrasosLocal.leer().length +
                 '\nLa calculadora de rutas ya lo usa (recargala si la tenés abierta).';
+            actualizarProgreso();
         };
 
         document.getElementById('btnVerLocal').onclick = function () {
@@ -223,6 +340,7 @@
             salidaEl.textContent = locales.length === 0
                 ? 'No hay retrasos guardados localmente.'
                 : 'Retrasos locales (' + locales.length + '):\n\n' + RetrasosLocal.formatear(locales);
+            actualizarProgreso();
         };
 
         document.getElementById('btnGenerarJSON').onclick = function () {
@@ -258,6 +376,7 @@
             if (!confirm('¿Borrar los ' + n + ' retrasos locales? Los de data/retrasos.json no se tocan.')) return;
             RetrasosLocal.borrarTodo();
             salidaEl.textContent = 'Se borraron los ' + n + ' retrasos locales. Quedan solo los de data/retrasos.json.';
+            actualizarProgreso();
         };
         const barcoVel = document.getElementById('vel');
         const barcoAcc = document.getElementById('acc');

@@ -1655,3 +1655,172 @@ a.tiempoTramo:hover,
 #consola input[type="text"]#consolaEntrada::placeholder {
     color: rgba(236, 240, 241, 0.3);
 }
+
+/* ============================================================
+   CALCULADORA DE RETRASO (calculadora_retraso.html)
+   Reusa todo el tema de index.html; acá van solo los ajustes que
+   necesita esa página. Todo va bajo .pagina-calc para no tocar el índice.
+   ============================================================ */
+.pagina-calc .panel-calc {
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+    padding: 15px 18px;
+    border: 2px solid var(--border-accent);
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.pagina-calc .panel-calc h3 {
+    color: var(--accent-gold);
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.pagina-calc .panel-calc .hint {
+    text-align: left;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.pagina-calc code {
+    background: rgba(15, 52, 96, 0.8);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent-gold);
+    font-size: 12px;
+}
+
+/* Los botones del tema ocupan todo el ancho; acá van en fila. */
+.pagina-calc .fila-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.pagina-calc .fila-botones button {
+    width: auto;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 10px 16px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.pagina-calc button.peligro {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+}
+
+.pagina-calc button.peligro:hover {
+    background: linear-gradient(135deg, var(--accent-red) 0%, #c0392b 100%);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+}
+
+/* Sin main.js no existen las flechitas ▲▼ propias: se devuelven las nativas */
+.pagina-calc input[type="number"] {
+    -moz-appearance: number-input;
+    appearance: auto;
+}
+
+.pagina-calc input[type="number"]::-webkit-outer-spin-button,
+.pagina-calc input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: auto;
+    margin: 0;
+}
+
+/* ---- Cronómetro ---- */
+.pagina-calc .crono-display {
+    font-size: 2.4em;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: var(--accent-gold);
+    text-align: center;
+    margin: 0;
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+}
+
+.pagina-calc #cronoEstado {
+    display: inline-block;
+    width: 12px;
+    height: 30px;
+    background: var(--accent-red);
+    vertical-align: middle;
+    margin-right: 14px;
+    border-radius: 2px;
+    transition: background 0.2s ease;
+}
+
+/* ---- Aviso del tramo que llega por URL ---- */
+.pagina-calc #avisoGet {
+    border-left: 4px solid var(--accent-gold);
+    background: rgba(212, 175, 55, 0.12);
+    padding: 10px 12px;
+    border-radius: 4px;
+    margin: 0 0 15px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ---- Salida ---- */
+.pagina-calc #salida {
+    background: rgba(10, 20, 40, 0.75);
+    border: 2px solid var(--border-accent);
+    border-radius: 12px;
+    padding: 15px 18px;
+    margin: 0;
+    color: var(--text-light);
+    font-family: 'Courier New', monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 60px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* ---- Progreso de cobertura de retrasos ---- */
+.progreso-item {
+    margin-bottom: 10px;
+}
+
+.progreso-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-gold);
+    font-weight: bold;
+}
+
+.progreso-fila .progreso-dato {
+    color: var(--text-light);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.progreso-barra {
+    height: 8px;
+    background: rgba(15, 52, 96, 0.9);
+    border: 1px solid var(--border-accent);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.progreso-barra > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    border-radius: 5px 0 0 5px;
+    transition: width 0.4s ease;
+}
