@@ -161,6 +161,61 @@ function completarViajeActivo() {
     return { viaje: ident.validx + 1, cambiados: cambiados, total: btns.length };
 }
 
+// Marca ⚓ el tramo en curso; si no hay ninguno navegando, el próximo
+// pendiente del viaje activo. Devuelve el nombre del destino, o null si no
+// quedaba nada por marcar. Lo usa el comando `done` de la consola.
+function completarTramoActual() {
+    let btn = Navegacion.botonActivo();
+    if (btn) Navegacion.cancelar(); // cancelar primero: repone el símbolo del botón
+    if (!btn) {
+        const ident = document.querySelector("#outputnodos .identificadorViaje.viajeActivo");
+        if (!ident) return null;
+        btn = [...ident.closest("li").querySelectorAll(".btn-play")]
+            .find(b => b.innerText.trim() !== "⚓") || null;
+    }
+    if (!btn) return null;
+    btn.innerText = "⚓";
+    const fila = btn.closest(".cboxnodo");
+    const cbox = fila && fila.querySelector("input[type=checkbox]");
+    if (cbox && !cbox.checked) cbox.click(); // pinta el nodo en el mapa
+    actualizarTiempoRestante();
+    return (fila && fila.dataset.titulo) || "la vuelta";
+}
+
+// Tiempos por viaje y totales. Lee los botones porque son los que llevan el
+// progreso (⚓ en los terminados, cuenta atrás en el que está navegando).
+// Devuelve null si no hay viajes calculados. Lo usa el comando `eta`.
+function resumenTiempos() {
+    const lis = [...document.querySelectorAll("#outputnodos > li")]
+        .filter(li => li.querySelector(".btn-play"));
+    if (!lis.length) return null;
+    const restanteDe = (btns) => {
+        let t = 0;
+        for (const b of btns) {
+            const s = b.innerText.trim();
+            if (s === "⚓") continue;
+            const m = s.match(/^(\d+):(\d\d)$/); // navegando o en pausa
+            t += m ? (+m[1]) * 60 + (+m[2]) : (parseFloat(b.dataset.est) || 0);
+        }
+        return t;
+    };
+    const viajes = lis.map((li, i) => {
+        const btns = [...li.querySelectorAll(".btn-play")];
+        return {
+            n: i + 1,
+            tramos: btns.length,
+            total: btns.reduce((s, b) => s + (parseFloat(b.dataset.est) || 0), 0),
+            restante: restanteDe(btns),
+            completo: btns.every(b => b.innerText.trim() === "⚓")
+        };
+    });
+    return {
+        viajes,
+        total: viajes.reduce((s, v) => s + v.total, 0),
+        restante: viajes.reduce((s, v) => s + v.restante, 0)
+    };
+}
+
 // Nodos que todavía no están en el viaje (para el selector de "agregar")
 function nodosDisponiblesPara(viaje) {
     const usados = new Set(viaje.map(n => n.titulo));

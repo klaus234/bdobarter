@@ -48,6 +48,56 @@ const Consola = (function () {
         return { estado: "ambiguo", candidatos };
     }
 
+    // Resuelve un nombre de nodo, informando el error si no se puede.
+    // Devuelve el título exacto, o null.
+    function resolverNodo(texto, cmd) {
+        if (typeof nodosDic === "undefined" || !Object.keys(nodosDic).length) {
+            error(`${cmd}: todavía no se cargaron los nodos`);
+            return null;
+        }
+        const r = buscar(texto, Object.keys(nodosDic));
+        if (r.estado === "ninguno") {
+            error(`${cmd}: nodo desconocido: "${texto}"`);
+            return null;
+        }
+        if (r.estado === "ambiguo") {
+            error(`${cmd}: "${texto}" es ambiguo, coincide con ${r.candidatos.length} nodos:`);
+            linea("  " + r.candidatos.slice(0, 12).join(", ")
+                + (r.candidatos.length > 12 ? ", …" : ""));
+            return null;
+        }
+        return r.valor;
+    }
+
+    // Parte los argumentos en dos nombres. Con coma se respetan los nombres
+    // de varias palabras ("dist solas chico, orffs"); sin coma tienen que ser
+    // exactamente dos palabras.
+    function dosNodos(args, cmd) {
+        const crudo = args.join(" ");
+        let partes;
+        if (crudo.includes(",")) partes = crudo.split(",").map(s => s.trim()).filter(Boolean);
+        else partes = args;
+        if (partes.length !== 2) {
+            error(`${cmd}: hacen falta dos nodos`);
+            error(`uso: ${cmd} <A> <B>   ·   con nombres de varias palabras: ${cmd} <A>, <B>`);
+            return null;
+        }
+        const a = resolverNodo(partes[0], cmd);
+        if (!a) return null;
+        const b = resolverNodo(partes[1], cmd);
+        if (!b) return null;
+        return [a, b];
+    }
+
+    // Lee un número de un argumento, con rango. Devuelve null si algo falla
+    // (ya deja el error impreso).
+    function leerNumero(txt, min, max, cmd, que) {
+        const n = parseFloat(txt);
+        if (isNaN(n)) { error(`${cmd}: ${que} tiene que ser un número, no "${txt}"`); return null; }
+        if (n < min || n > max) { error(`${cmd}: ${que} tiene que estar entre ${min} y ${max} (recibí ${n})`); return null; }
+        return n;
+    }
+
     // ---- comandos ----
     const comandos = {
         help: {
@@ -116,34 +166,281 @@ const Consola = (function () {
         load: {
             uso: "load <ruta>",
             ayuda: "carga un savestate por nombre (basta una parte)",
+            correr(args) { cargarSavestate(args, "load"); }
+        },
+
+        loadr: {
+            uso: "loadr <ruta>",
+            ayuda: "igual que load, y además calcula los viajes",
+            correr(args) {
+                if (!cargarSavestate(args, "loadr")) return;
+                const btn = document.getElementById("btnmateriales");
+                if (!btn) { error("loadr: no se encontró el botón Calcular viaje/s"); return; }
+                btn.click();
+                // con más de 9 nodos el cálculo pasa por el cache y es asíncrono,
+                // así que puede no haber resultado todavía en esta misma línea
+                const n = (typeof resultadoViajes !== "undefined" && resultadoViajes.length) || 0;
+                if (n) ok(`Viajes calculados: ${n}.`);
+                else ok("Calculando viajes…");
+            }
+        },
+
+        find: {
+            uso: "find <texto>",
+            ayuda: "lista los nodos cuyo nombre contenga el texto",
             correr(args) {
                 if (!args.length) {
-                    error("load: falta el nombre de la ruta");
-                    error("uso: load <ruta>");
+                    error("find: falta el texto a buscar");
+                    error("uso: find <texto>");
+                    return;
+                }
+                if (typeof nodosDic === "undefined" || !Object.keys(nodosDic).length) {
+                    error("find: todavía no se cargaron los nodos");
+                    return;
+                }
+                const t = norm(args.join(" "));
+                const hits = Object.keys(nodosDic).filter(n => norm(n).includes(t)).sort();
+                if (!hits.length) { error(`find: ningún nodo contiene "${args.join(" ")}"`); return; }
+                const planeados = new Set(typeof Ruta !== "undefined" ? Ruta.planeados() : []);
+                ok(`${hits.length} nodo${hits.length > 1 ? "s" : ""}:`);
+                hits.forEach(n => linea(`  ${n}${planeados.has(n) ? "   (en la ruta)" : ""}`));
+            }
+        },
+
+        dist: {
+            uso: "dist <A> <B>",
+            ayuda: "distancia y tiempo entre dos nodos, sin tocar la ruta",
+            correr(args) {
+                if (!args.length) {
+                    error("dist: faltan los nodos");
+                    error("uso: dist <A> <B>   ·   con nombres de varias palabras: dist <A>, <B>");
+                    return;
+                }
+                const par = dosNodos(args, "dist");
+                if (!par) return;
+                const [ta, tb] = par;
+                if (ta === tb) { error("dist: son el mismo nodo"); return; }
+                const A = nodosDic[ta], B = nodosDic[tb];
+                const d = dist2(A.x, A.y, B.x, B.y);
+                const retr = retrasoEntre(ta, tb);
+                const { vel, acc } = Navegacion.stats();
+                const t = Navegacion.estimarSegundos(d, vel, acc, retr);
+                const medido = tieneRetrasoMedido(ta, tb);
+                ok(`${ta} → ${tb}`);
+                linea(`  distancia en línea recta: ${Math.round(d)} unidades`);
+                linea(`  tiempo estimado:          ${Navegacion.fmt(t)}   (vel ${Math.round(vel)}%, acel ${Math.round(acc)}% efectivas)`);
+                linea(medido
+                    ? `  retraso medido:           ${retr}`
+                    : `  sin retraso medido: el tiempo real puede diferir`);
+            }
+        },
+
+        add: {
+            uso: "add <nodo>…",
+            ayuda: "agrega nodos a la ruta planeada",
+            correr(args) {
+                if (!args.length) {
+                    error("add: falta el nombre del nodo");
+                    error("uso: add <nodo>…   ·   varios nombres separados por coma");
+                    return;
+                }
+                const pedidos = args.join(" ").includes(",")
+                    ? args.join(" ").split(",").map(s => s.trim()).filter(Boolean)
+                    : args;
+                let sumados = 0;
+                for (const p of pedidos) {
+                    const t = resolverNodo(p, "add");
+                    if (!t) continue;
+                    if (Ruta.planeados().includes(t)) { linea(`  ${t} ya estaba en la ruta`); continue; }
+                    Ruta.agregar(t);
+                    sumados++;
+                }
+                if (sumados) ok(`Agregado${sumados > 1 ? "s" : ""} ${sumados} nodo${sumados > 1 ? "s" : ""}. Ruta: ${Ruta.planeados().length}.`);
+            }
+        },
+
+        rm: {
+            uso: "rm <nodo>…",
+            ayuda: "quita nodos de la ruta planeada",
+            correr(args) {
+                if (!args.length) {
+                    error("rm: falta el nombre del nodo");
+                    error("uso: rm <nodo>…   ·   varios nombres separados por coma");
+                    return;
+                }
+                const planeados = Ruta.planeados();
+                if (!planeados.length) { error("rm: la ruta planeada está vacía"); return; }
+                const pedidos = args.join(" ").includes(",")
+                    ? args.join(" ").split(",").map(s => s.trim()).filter(Boolean)
+                    : args;
+                let quitados = 0;
+                for (const p of pedidos) {
+                    // se busca solo entre los planeados: "rm orf" saca ORFFS
+                    const r = buscar(p, Ruta.planeados());
+                    if (r.estado === "ninguno") { error(`rm: "${p}" no está en la ruta planeada`); continue; }
+                    if (r.estado === "ambiguo") {
+                        error(`rm: "${p}" es ambiguo dentro de la ruta: ${r.candidatos.join(", ")}`);
+                        continue;
+                    }
+                    Ruta.quitar(r.valor);
+                    quitados++;
+                }
+                if (quitados) ok(`Quitado${quitados > 1 ? "s" : ""} ${quitados} nodo${quitados > 1 ? "s" : ""}. Ruta: ${Ruta.planeados().length}.`);
+            }
+        },
+
+        ship: {
+            uso: "ship <vel> <acel>",
+            ayuda: "cambia velocidad y aceleración del barco",
+            correr(args) {
+                const iv = document.getElementById("barcoVel");
+                const ia = document.getElementById("barcoAcc");
+                if (!args.length) {
+                    const s = Navegacion.stats();
+                    ok(`Barco: velocidad ${iv.value}%, aceleración ${ia.value}%`);
+                    linea(`  efectivas con maestría y diario: ${Math.round(s.vel)}% / ${Math.round(s.acc)}%`);
+                    linea("  uso: ship <vel> <acel>");
+                    return;
+                }
+                if (args.length !== 2) {
+                    error(`ship: hacen falta dos valores (velocidad y aceleración), recibí ${args.length}`);
+                    error("uso: ship <vel> <acel>");
+                    return;
+                }
+                const v = leerNumero(args[0], 50, 300, "ship", "la velocidad");
+                if (v === null) return;
+                const a = leerNumero(args[1], 50, 300, "ship", "la aceleración");
+                if (a === null) return;
+                iv.value = v; ia.value = a;
+                iv.dispatchEvent(new Event("input", { bubbles: true }));
+                ia.dispatchEvent(new Event("input", { bubbles: true }));
+                const s = Navegacion.stats();
+                ok(`Barco: ${v}% / ${a}%  →  efectivas ${Math.round(s.vel)}% / ${Math.round(s.acc)}%`);
+                linea("  los viajes ya calculados no se rehacen: volvé a calcular para ver los tiempos nuevos");
+            }
+        },
+
+        mastery: {
+            uso: "mastery <n>",
+            ayuda: "cambia el % de maestría (se suma a vel y acel)",
+            correr(args) {
+                const inp = document.getElementById("barcoMaestria");
+                if (!args.length) {
+                    ok(`Maestría: ${inp.value}%   (la fórmula se calibró con ${Modelo.MAESTRIA_BASE}%)`);
+                    linea("  uso: mastery <n>");
+                    return;
+                }
+                const n = leerNumero(args[0], 0, 100, "mastery", "la maestría");
+                if (n === null) return;
+                inp.value = n;
+                inp.dispatchEvent(new Event("input", { bubbles: true }));
+                const s = Navegacion.stats();
+                ok(`Maestría: ${n}%  →  efectivas ${Math.round(s.vel)}% / ${Math.round(s.acc)}%`);
+            }
+        },
+
+        vol: {
+            uso: "vol <0-300>",
+            ayuda: "cambia el volumen de la alarma",
+            correr(args) {
+                const sl = document.getElementById("volAlarma");
+                if (!args.length) { ok(`Volumen de alarma: ${sl.value}%`); linea("  uso: vol <0-300>"); return; }
+                const n = leerNumero(args[0], 0, 300, "vol", "el volumen");
+                if (n === null) return;
+                sl.value = n;
+                sl.dispatchEvent(new Event("input", { bubbles: true })); // sin sonar la prueba
+                ok(n === 0 ? "Volumen de alarma: 0% (silencio)" : `Volumen de alarma: ${n}%`);
+            }
+        },
+
+        done: {
+            uso: "done",
+            ayuda: "marca ⚓ el tramo en curso (o el próximo pendiente)",
+            correr() {
+                if (typeof completarTramoActual !== "function") { error("done: no se encontró la acción"); return; }
+                const destino = completarTramoActual();
+                if (destino === null) {
+                    error("done: no hay ningún tramo pendiente");
+                    error("      calculá los viajes, o usá `complete` si querés marcar el viaje entero");
+                    return;
+                }
+                ok(`Tramo hacia ${destino} marcado como terminado.`);
+            }
+        },
+
+        eta: {
+            uso: "eta",
+            ayuda: "tiempos restantes por viaje y total",
+            correr() {
+                if (typeof resumenTiempos !== "function") { error("eta: no se encontró la acción"); return; }
+                const r = resumenTiempos();
+                if (!r) { error("eta: no hay viajes calculados"); return; }
+                r.viajes.forEach(v => {
+                    linea(v.completo
+                        ? `  Viaje ${v.n}: COMPLETADO   (${v.tramos} tramos, ${Navegacion.fmt(v.total)})`
+                        : `  Viaje ${v.n}: ${Navegacion.fmt(v.restante)} restantes de ${Navegacion.fmt(v.total)}   (${v.tramos} tramos)`);
+                });
+                linea("");
+                if (r.restante <= 0) ok(`Todo completado. Total del recorrido: ${Modelo.fmtHMS(r.total)}`);
+                else ok(`Restante: ${Modelo.fmtHMS(r.restante)}   ·   total: ${Modelo.fmtHMS(r.total)}`);
+            }
+        },
+
+        nota: {
+            uso: "nota [texto]",
+            ayuda: "agrega una línea con la hora a la Nota (sin texto, la muestra)",
+            correr(args) {
+                const ta = document.getElementById("nota");
+                if (!ta) { error("nota: no se encontró el panel de Nota"); return; }
+                if (!args.length) {
+                    const txt = ta.value.trim();
+                    if (!txt) { ok("La nota está vacía."); linea("  uso: nota <texto>"); return; }
+                    ok("Nota:");
+                    txt.split("\n").forEach(l => linea("  " + l));
+                    return;
+                }
+                const hora = new Date().toLocaleTimeString("es-AR",
+                    { hour: "2-digit", minute: "2-digit", hour12: false });
+                const nueva = `${hora}  ${args.join(" ")}`;
+                ta.value = ta.value.trim() ? ta.value.replace(/\s*$/, "") + "\n" + nueva : nueva;
+                ok("Agregado a la nota: " + nueva);
+                linea("  acordate de guardar con `save`");
+            }
+        },
+
+        ss: {
+            uso: "ss <nombre> | ss list",
+            ayuda: "guarda la ruta actual en un savestate, o lista los guardados",
+            correr(args) {
+                if (!args.length) {
+                    error("ss: falta el nombre del savestate");
+                    error("uso: ss <nombre>   ·   ss list para ver los guardados");
+                    return;
+                }
+                if (args.length === 1 && args[0].toLowerCase() === "list") {
                     listarSavestates();
                     return;
                 }
-                const nombre = args.join(" ");
-                const slots = SaveStates.leer()
-                    .map((s, i) => (s ? { slot: i, nombre: s.nombre } : null))
-                    .filter(Boolean);
-                if (!slots.length) {
-                    error(`load: no hay savestates guardados`);
-                    return;
-                }
-                const r = buscar(nombre, slots, s => s.nombre);
-                if (r.estado === "ninguno") {
-                    error(`load: ningún savestate coincide con "${nombre}"`);
+                const nombre = args.join(" ").trim();
+                const slots = SaveStates.leer();
+                // se pisa el que ya tenga ese nombre; si no, va al primer libre
+                let i = slots.findIndex(s => s && norm(s.nombre) === norm(nombre));
+                const pisando = i !== -1;
+                if (!pisando) i = slots.findIndex(s => !s);
+                if (i === -1) {
+                    error(`ss: no hay slots libres (${slots.length} ocupados)`);
+                    error("    borrá uno desde la lista, o usá el nombre de uno existente para pisarlo");
                     listarSavestates();
                     return;
                 }
-                if (r.estado === "ambiguo") {
-                    error(`load: "${nombre}" es ambiguo, coincide con ${r.candidatos.length} savestates:`);
-                    r.candidatos.forEach(s => linea(`  ${s.nombre}  (slot ${s.slot + 1})`));
+                if (!Ruta.planeados().length) {
+                    error("ss: la ruta planeada está vacía, no hay nada que guardar");
                     return;
                 }
-                SaveStates.cargar(r.valor.slot);
-                ok(`Cargado: ${r.valor.nombre}  (slot ${r.valor.slot + 1})`);
+                SaveStates.guardar(i, nombre, true);
+                ok(pisando
+                    ? `Savestate "${nombre}" actualizado (slot ${i + 1}).`
+                    : `Ruta guardada como "${nombre}" (slot ${i + 1}).`);
             }
         },
 
@@ -156,31 +453,50 @@ const Consola = (function () {
                     error("uso: goto <nodo>");
                     return;
                 }
-                if (typeof nodosDic === "undefined" || !Object.keys(nodosDic).length) {
-                    error("goto: todavía no se cargaron los nodos");
-                    return;
-                }
-                const nombre = args.join(" ");
-                const r = buscar(nombre, Object.keys(nodosDic));
-                if (r.estado === "ninguno") {
-                    error(`goto: nodo desconocido: "${nombre}"`);
-                    return;
-                }
-                if (r.estado === "ambiguo") {
-                    error(`goto: "${nombre}" es ambiguo, coincide con ${r.candidatos.length} nodos:`);
-                    linea("  " + r.candidatos.slice(0, 12).join(", ")
-                        + (r.candidatos.length > 12 ? ", …" : ""));
-                    return;
-                }
+                const titulo = resolverNodo(args.join(" "), "goto");
+                if (!titulo) return;
                 if (typeof centrarEnNodo !== "function") {
                     error("goto: el mapa todavía no está listo");
                     return;
                 }
-                centrarEnNodo(nodosDic[r.valor]);
-                ok(`Mapa centrado en ${r.valor}.`);
+                centrarEnNodo(nodosDic[titulo]);
+                ok(`Mapa centrado en ${titulo}.`);
             }
         }
     };
+
+    // Carga un savestate por nombre. Devuelve true si lo encontró y lo cargó.
+    // La comparte `load` con `loadr`, que además dispara el cálculo.
+    function cargarSavestate(args, cmd) {
+        if (!args.length) {
+            error(`${cmd}: falta el nombre de la ruta`);
+            error(`uso: ${cmd} <ruta>`);
+            listarSavestates();
+            return false;
+        }
+        const nombre = args.join(" ");
+        const slots = SaveStates.leer()
+            .map((s, i) => (s ? { slot: i, nombre: s.nombre } : null))
+            .filter(Boolean);
+        if (!slots.length) {
+            error(`${cmd}: no hay savestates guardados`);
+            return false;
+        }
+        const r = buscar(nombre, slots, s => s.nombre);
+        if (r.estado === "ninguno") {
+            error(`${cmd}: ningún savestate coincide con "${nombre}"`);
+            listarSavestates();
+            return false;
+        }
+        if (r.estado === "ambiguo") {
+            error(`${cmd}: "${nombre}" es ambiguo, coincide con ${r.candidatos.length} savestates:`);
+            r.candidatos.forEach(s => linea(`  ${s.nombre}  (slot ${s.slot + 1})`));
+            return false;
+        }
+        SaveStates.cargar(r.valor.slot);
+        ok(`Cargado: ${r.valor.nombre}  (slot ${r.valor.slot + 1})`);
+        return true;
+    }
 
     function listarSavestates() {
         const slots = SaveStates.leer();

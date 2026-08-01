@@ -59,11 +59,14 @@ const SaveStates = (function () {
         return b;
     }
 
-    function guardar(i, nombre) {
+    // sinPreguntar lo usa el comando `ss` de la consola: ahí el nombre se
+    // escribe a propósito, así que pedir confirmación estorba.
+    function guardar(i, nombre, sinPreguntar) {
         Ruta.sincronizar();
         const slots = leer();
-        if (slots[i] && !confirm(`¿Sobreescribir el savestate "${slots[i].nombre}" con la ruta actual?`)) {
-            return;
+        if (!sinPreguntar && slots[i]
+            && !confirm(`¿Sobreescribir el savestate "${slots[i].nombre}" con la ruta actual?`)) {
+            return false;
         }
         slots[i] = {
             nombre: (nombre || "").trim() || ("Slot " + (i + 1)),
@@ -76,6 +79,7 @@ const SaveStates = (function () {
         setCargada(slots[i].nombre, i);
         render();
         showMessageGuardando();
+        return true;
     }
 
     function cargar(i) {
@@ -129,7 +133,7 @@ const SaveStates = (function () {
         marcarSlotCargado();
     }
 
-    // leer/cargar salen afuera para el comando `load` de la consola
-    return { render, setCargada, limpiarCargada, nombreCargado, indiceCargado, leer, cargar };
+    // leer/cargar/guardar salen afuera para los comandos load, loadr y ss
+    return { render, setCargada, limpiarCargada, nombreCargado, indiceCargado, leer, cargar, guardar, MAX };
 })();
 window.SaveStates = SaveStates;
