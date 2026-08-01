@@ -5,6 +5,12 @@
 // MANEJADOR PRINCIPAL DE CÁLCULO
 // ============================================
 function calcularNodos() {
+
+    const chkShowPlaneamiento = document.getElementById("btnToggleRuta")
+    if(chkShowPlaneamiento.getAttribute("aria-expanded") === "true")
+        chkShowPlaneamiento.click();
+    
+
     resetearNodosColor();
     const modoManual = document.getElementById("chkManual").checked;
     dependenciasEncadenadas = !modoManual && (
