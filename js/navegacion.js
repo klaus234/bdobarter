@@ -100,38 +100,91 @@ const Navegacion = (function () {
         notasSonando = [];
     }
 
+    // ============================================
+    // DESBLOQUEO DEL AUDIO
+    // Los navegadores crean el AudioContext SUSPENDIDO hasta que hay un gesto
+    // del usuario. Si se creaba recién al llegar a destino —minutos después
+    // del último click— quedaba mudo, y por eso "se arreglaba" moviendo el
+    // slider de volumen: ese movimiento es el gesto que lo destraba. Acá se
+    // destraba con la primera interacción con la página, sea cual sea.
+    // ============================================
+    let avisarEstado = null; // callback para que la UI muestre cómo está
+
+    function crearCtx() {
+        if (audioCtx) return audioCtx;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+        audioCtx.onstatechange = () => { if (avisarEstado) avisarEstado(estadoAudio()); };
+        return audioCtx;
+    }
+
+    // "listo" | "bloqueado" | "sin-soporte"
+    function estadoAudio() {
+        if (!(window.AudioContext || window.webkitAudioContext)) return "sin-soporte";
+        if (!audioCtx) return "bloqueado";
+        return audioCtx.state === "running" ? "listo" : "bloqueado";
+    }
+
+    function alCambiarEstadoAudio(fn) { avisarEstado = fn; }
+
+    // Resuelve recién cuando el contexto quedó realmente corriendo.
+    function desbloquearAudio() {
+        const ctx = crearCtx();
+        if (!ctx) return Promise.reject(new Error("sin AudioContext"));
+        if (ctx.state === "running") return Promise.resolve(ctx);
+        return ctx.resume().then(() => {
+            if (avisarEstado) avisarEstado(estadoAudio());
+            return ctx;
+        });
+    }
+
+    // Se reintenta en cada gesto hasta que el navegador lo permita.
+    function desbloquearConGesto() {
+        desbloquearAudio().then(() => {
+            window.removeEventListener("pointerdown", desbloquearConGesto);
+            window.removeEventListener("keydown", desbloquearConGesto);
+        }).catch(() => { });
+    }
+    window.addEventListener("pointerdown", desbloquearConGesto);
+    window.addEventListener("keydown", desbloquearConGesto);
+
     // Campanita suave sintetizada (Do-Mi-Sol-Do-Mi), sin archivos.
     function sonarAlerta() {
-        try {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === "suspended") audioCtx.resume();
-            detenerAlerta(); // una alarma a la vez
-            const pico = Math.max(0.0002, volumenAlarma());
-            if (pico <= 0.0002) return; // volumen en 0: silencio
-            const notas = [523.25, 659.25, 783.99, 1046.50, 1318.51];
-            for (let rep = 0; rep < 2; rep++) {
-                notas.forEach((f, i) => {
-                    const t0 = audioCtx.currentTime + rep * 1.7 + i * 0.28;
-                    const osc = audioCtx.createOscillator();
-                    const gan = audioCtx.createGain();
-                    osc.type = "sine";
-                    osc.frequency.value = f;
-                    gan.gain.setValueAtTime(0.0001, t0);
-                    gan.gain.exponentialRampToValueAtTime(pico, t0 + 0.03);
-                    gan.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
-                    osc.connect(gan).connect(audioCtx.destination);
-                    osc.start(t0);
-                    osc.stop(t0 + 1);
-                    // registrar para poder cortarla, y soltarla al terminar
-                    const voz = { osc, gan };
-                    notasSonando.push(voz);
-                    osc.onended = () => {
-                        notasSonando = notasSonando.filter(v => v !== voz);
-                        try { osc.disconnect(); gan.disconnect(); } catch (e) { }
-                    };
-                });
-            }
-        } catch (e) { console.warn("Audio no disponible:", e); }
+        const pico = Math.max(0.0002, volumenAlarma());
+        if (pico <= 0.0002) return; // volumen en 0: silencio
+        // Hay que ESPERAR el resume: con el contexto suspendido currentTime
+        // está congelado y las notas se agendarían en un tiempo ya pasado.
+        desbloquearAudio()
+            .then(ctx => programarCampanita(ctx, pico))
+            .catch(e => console.warn("No se pudo reproducir la alarma:", e));
+    }
+
+    function programarCampanita(ctx, pico) {
+        detenerAlerta(); // una alarma a la vez
+        const notas = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        for (let rep = 0; rep < 2; rep++) {
+            notas.forEach((f, i) => {
+                const t0 = ctx.currentTime + rep * 1.7 + i * 0.28;
+                const osc = ctx.createOscillator();
+                const gan = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.value = f;
+                gan.gain.setValueAtTime(0.0001, t0);
+                gan.gain.exponentialRampToValueAtTime(pico, t0 + 0.03);
+                gan.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+                osc.connect(gan).connect(ctx.destination);
+                osc.start(t0);
+                osc.stop(t0 + 1);
+                // registrar para poder cortarla, y soltarla al terminar
+                const voz = { osc, gan };
+                notasSonando.push(voz);
+                osc.onended = () => {
+                    notasSonando = notasSonando.filter(v => v !== voz);
+                    try { osc.disconnect(); gan.disconnect(); } catch (e) { }
+                };
+            });
+        }
     }
 
     // ESC: primer toque detiene el reloj; el segundo cancela el viaje
@@ -276,6 +329,6 @@ const Navegacion = (function () {
         intervalo = setInterval(tick, 250);
     }
 
-    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, sonarAlerta, hablarLlegada, estimarSegundos, stats, statsCrudos, fmt };
+    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, sonarAlerta, hablarLlegada, estimarSegundos, stats, statsCrudos, fmt, estadoAudio, desbloquearAudio, alCambiarEstadoAudio };
 })();
 window.Navegacion = Navegacion;

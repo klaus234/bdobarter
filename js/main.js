@@ -267,6 +267,38 @@ window.onload = function () {
     const mostrarVol = () => { volAlarmaVal.innerText = volAlarma.value + "%"; };
     volAlarma.addEventListener("input", mostrarVol);
     volAlarma.addEventListener("change", () => { mostrarVol(); Navegacion.sonarAlerta(); });
+
+    // Estado del audio. El navegador no deja sonar nada hasta que hay un gesto
+    // del usuario, y antes eso se descubría recién al llegar a destino (la
+    // campanita no sonaba y había que mover el volumen para destrabarla).
+    // Ahora se destraba con el primer click en la página y acá se ve cómo está.
+    const estadoAlarma = document.getElementById("estadoAlarma");
+    const TEXTO_ESTADO = {
+        listo: "🔊 Alarma lista · probar",
+        bloqueado: "🔇 Alarma en espera · hacé click acá para habilitarla",
+        "sin-soporte": "🔇 Este navegador no permite reproducir la alarma"
+    };
+    function pintarEstadoAlarma() {
+        const e = Navegacion.estadoAudio();
+        estadoAlarma.className = "estado-alarma " + e;
+        estadoAlarma.innerText = TEXTO_ESTADO[e];
+        estadoAlarma.title = e === "listo"
+            ? "El aviso de llegada va a sonar solo. Click para escucharlo."
+            : "Hasta que no interactúes con la página el navegador bloquea el sonido.";
+    }
+    function probarAlarma() {
+        if (Navegacion.estadoAudio() === "sin-soporte") return;
+        Navegacion.desbloquearAudio()
+            .then(() => Navegacion.sonarAlerta())
+            .catch(() => { })
+            .then(pintarEstadoAlarma);
+    }
+    estadoAlarma.addEventListener("click", probarAlarma);
+    estadoAlarma.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); probarAlarma(); }
+    });
+    Navegacion.alCambiarEstadoAudio(pintarEstadoAlarma);
+    pintarEstadoAlarma();
     mostrarVol();
 
     // Alarma con voz: restaurar (por defecto apagada) y probarla al activarla

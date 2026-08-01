@@ -151,6 +151,26 @@ h2 a:hover {
     accent-color: var(--accent-gold);
 }
 
+/* aviso de si el navegador va a dejar sonar la alarma al llegar */
+.estado-alarma {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.estado-alarma.listo { color: var(--accent-green); }
+.estado-alarma.bloqueado { color: var(--accent-gold); }
+
+.estado-alarma.sin-soporte {
+    color: var(--accent-red);
+    cursor: default;
+}
+
+.estado-alarma:hover { text-decoration: underline; }
+.estado-alarma.sin-soporte:hover { text-decoration: none; }
+
 #volAlarmaVal {
     color: var(--accent-blue);
     font-weight: 600;
