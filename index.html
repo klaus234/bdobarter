@@ -22,6 +22,7 @@
     <script src="js/navegacion.js"></script>
     <script src="js/savestates.js"></script>
     <script src="js/atajos.js"></script>
+    <script src="js/consola.js"></script>
     <script src="js/main.js"></script>
 </head>
 <body>
@@ -192,6 +193,12 @@
                 <p class="hint">▶ en la lista de rutas = «zarpé hacia ese nodo»: cuenta regresiva y campanita al llegar. Se guarda con <svg class="ic"><use href="#ic-guardar"></use></svg> Guardar Estado.</p>
                 <p><a href="calculadora_retraso.html" target="_blank"><svg class="ic"><use href="#ic-grafico"></use></svg> Calculadora de Retraso</a> <span id="infoRetrasosLocales" class="hint"></span></p>
             </div>
+
+            <div id="notaPanel">
+                <h3><svg class="ic"><use href="#ic-texto"></use></svg> Nota</h3>
+                <textarea id="nota" placeholder="Anotá lo que quieras: precios, qué te falta, con qué barco medías…"></textarea>
+                <p class="hint">Se guarda con <svg class="ic"><use href="#ic-guardar"></use></svg> Guardar Estado. No forma parte de los savestates de rutas.</p>
+            </div>
         </div>
     </div>
     
@@ -201,6 +208,16 @@
         <span id="timerCuenta">0:00</span>
         <button type="button" id="timerCancelar" title="Cancelar aviso">✕</button>
     </div>
+    <!-- Consola: oculta hasta que se aprieta | (tecla a la izquierda del 1) -->
+    <div id="consola" aria-hidden="true">
+        <div id="consolaSalida" role="log" aria-live="polite"></div>
+        <div id="consolaLinea">
+            <span id="consolaPrompt">&gt;</span>
+            <input type="text" id="consolaEntrada" autocomplete="off" spellcheck="false"
+                   aria-label="Comando" placeholder="help">
+        </div>
+    </div>
+
     <script src="js/puntos_menu.js"></script>
 </body>
 </html>

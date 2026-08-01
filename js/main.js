@@ -112,6 +112,17 @@ function calcularNodos() {
     document.getElementById("totales").innerText = `${res.nodos} nodos · dist ${Math.round(res.dist)}`;
 }
 
+// Borra la ruta planeada y los viajes calculados, y suelta el savestate
+// cargado. Lo usan el slider "Borrar todo" y el comando `reset` de la consola.
+function borrarTodo() {
+    Ruta.limpiar();
+    SaveStates.limpiarCargada();  // ya no hay ruta cargada
+    limpiarViajesCalculados();    // y tampoco viajes generados
+    const chkManualH = document.getElementById("chkManual");
+    chkManualH.checked = false;   // desactivar modo manual
+    chkManualH.dispatchEvent(new Event("change")); // actualizar texto del botón
+}
+
 // Reemplaza las flechitas nativas de los <input type="number"> (distintas en
 // cada navegador y fuera del estilo de la página) por botones ▲▼ propios.
 function estilizarNumeros() {
@@ -208,6 +219,7 @@ window.onload = function () {
         localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
         localStorage.setItem("BarcoMaestria", document.getElementById("barcoMaestria").value);
         localStorage.setItem("DiarioManos", document.getElementById("chkDiarioManos").checked ? "1" : "0");
+        localStorage.setItem("Nota", document.getElementById("nota").value);
         localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
         localStorage.setItem("AnimBarco", document.getElementById("chkAnimBarco").checked ? "1" : "0");
         localStorage.setItem("FondoReal", document.getElementById("chkFondoReal").checked ? "1" : "0");
@@ -299,6 +311,13 @@ window.onload = function () {
     });
     Navegacion.alCambiarEstadoAudio(pintarEstadoAlarma);
     pintarEstadoAlarma();
+
+    // Nota libre (se guarda con Guardar Estado, aparte de los savestates)
+    const nota = document.getElementById("nota");
+    if (localStorage.getItem("Nota") !== null) nota.value = localStorage.getItem("Nota");
+
+    // Consola (se abre y cierra con la tecla | )
+    Consola.init();
     mostrarVol();
 
     // Alarma con voz: restaurar (por defecto apagada) y probarla al activarla
@@ -422,14 +441,7 @@ window.onload = function () {
         let posx = (e.touches ? e.touches[0].clientX : e.clientX) - currentXErase;
 
         if (posx < 4) posx = 4;
-        if (posx >= maxX) {
-            Ruta.limpiar();
-            SaveStates.limpiarCargada();  // ya no hay ruta cargada
-            limpiarViajesCalculados();    // y tampoco viajes generados
-            const chkManualH = document.getElementById("chkManual");
-            chkManualH.checked = false;  // desactivar modo manual
-            chkManualH.dispatchEvent(new Event("change"));  // actualizar texto del botón
-        }
+        if (posx >= maxX) borrarTodo();
         slideErase.style.left = posx + "px";
     };
 

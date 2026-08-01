@@ -129,6 +129,7 @@ const SaveStates = (function () {
         marcarSlotCargado();
     }
 
-    return { render, setCargada, limpiarCargada, nombreCargado, indiceCargado };
+    // leer/cargar salen afuera para el comando `load` de la consola
+    return { render, setCargada, limpiarCargada, nombreCargado, indiceCargado, leer, cargar };
 })();
 window.SaveStates = SaveStates;

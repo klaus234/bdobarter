@@ -140,6 +140,27 @@ function refrescarViajes() {
     actualizarTiempoRestante();
 }
 
+// Marca todos los tramos del viaje activo como terminados (⚓), igual que
+// hacer click derecho en cada ▶ uno por uno. Devuelve un resumen, o null si
+// no hay ningún viaje activo. Lo usa el comando `complete` de la consola.
+function completarViajeActivo() {
+    const ident = document.querySelector("#outputnodos .identificadorViaje.viajeActivo");
+    if (!ident) return null;
+    const btns = [...ident.closest("li").querySelectorAll(".btn-play")];
+    let cambiados = 0;
+    for (const b of btns) {
+        if (b.innerText.trim() === "⚓") continue;
+        if (Navegacion.botonActivo() === b) Navegacion.cancelar();
+        b.innerText = "⚓";
+        cambiados++;
+        const fila = b.closest(".cboxnodo");
+        const cbox = fila && fila.querySelector("input[type=checkbox]");
+        if (cbox && !cbox.checked) cbox.click(); // pinta el nodo en el mapa
+    }
+    actualizarTiempoRestante();
+    return { viaje: ident.validx + 1, cambiados: cambiados, total: btns.length };
+}
+
 // Nodos que todavía no están en el viaje (para el selector de "agregar")
 function nodosDisponiblesPara(viaje) {
     const usados = new Set(viaje.map(n => n.titulo));

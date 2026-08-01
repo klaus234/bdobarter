@@ -1508,3 +1508,140 @@ a.tiempoTramo:hover,
         word-break: break-word;
     }
 }
+
+/* ============================================================
+   NOTA
+   Bloc libre bajo Datos del Barco. Toma el color y el foco de los
+   inputs de texto (nodo inicial / agregar nodo), pero sin
+   text-transform: es prosa, no nombres de nodo.
+   ============================================================ */
+#notaPanel {
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+    padding: 15px;
+    border: 2px solid var(--border-accent);
+    border-radius: 12px;
+    margin-top: 15px;
+}
+
+#notaPanel h3 {
+    color: var(--accent-gold);
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#notaPanel textarea#nota {
+    width: 100%;
+    min-height: 160px;
+    background-color: rgba(15, 52, 96, 0.6);
+    color: var(--accent-blue);
+    border: 2px solid var(--border-accent);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+#notaPanel textarea#nota:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    background-color: rgba(15, 52, 96, 0.8);
+}
+
+#notaPanel textarea#nota::placeholder {
+    color: rgba(236, 240, 241, 0.4);
+    font-weight: 400;
+}
+
+#notaPanel .hint {
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* ============================================================
+   CONSOLA (tecla | )
+   ============================================================ */
+#consola {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 45vh;
+    min-height: 220px;
+    z-index: 2000;
+    background: rgba(10, 20, 40, 0.88);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    border-bottom: 2px solid var(--accent-gold);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    flex-direction: column;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+#consola.abierta {
+    display: flex;
+}
+
+#consolaSalida {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+    color: var(--text-light);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.consola-linea { line-height: 1.45; }
+.consola-linea.eco { color: var(--accent-gold); }
+.consola-linea.ok { color: var(--accent-green); }
+.consola-linea.error { color: #ff8a7a; }
+
+#consolaLinea {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-top: 1px solid rgba(212, 175, 55, 0.35);
+    background: rgba(0, 0, 0, 0.25);
+}
+
+#consolaPrompt {
+    color: var(--accent-gold);
+    font-weight: bold;
+    flex: none;
+}
+
+#consola input[type="text"]#consolaEntrada {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 2px 0;
+    color: var(--text-light);
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+#consola input[type="text"]#consolaEntrada:focus {
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    border: none;
+}
+
+#consola input[type="text"]#consolaEntrada::placeholder {
+    color: rgba(236, 240, 241, 0.3);
+}
