@@ -347,6 +347,46 @@ const Consola = (function () {
             }
         },
 
+        addr: {
+            uso: "addr <nodo>…",
+            ayuda: "agrega nodos a la ruta planeada (sep = separador de viaje) y genera el viaje",
+            completar: () => ["SEP"].concat(nombresNodos()),
+            correr(args) {
+                if (!args.length) {
+                    error("add: falta el nombre del nodo");
+                    error("uso: add <nodo>…   ·   varios nombres separados por coma");
+                    error("     add sep agrega un separador (corta el viaje en Modo Manual)");
+                    return;
+                }
+                const pedidos = args.join(" ").includes(",")
+                    ? args.join(" ").split(",").map(s => s.trim()).filter(Boolean)
+                    : args;
+                let sumados = 0, separadores = 0;
+                for (const p of pedidos) {
+                    // SEP no es un nodo: es el separador que corta el viaje
+                    if (norm(p) === "SEP") {
+                        Ruta.agregar("SEP");
+                        separadores++;
+                        continue;
+                    }
+                    const t = resolverNodo(p, "add");
+                    if (!t) continue;
+                    if (Ruta.planeados().includes(t)) { linea(`  ${t} ya estaba en la ruta`); continue; }
+                    Ruta.agregar(t);
+                    sumados++;
+                }
+                if (sumados || separadores) {
+                    const partes = [];
+                    if (sumados) partes.push(`${sumados} nodo${sumados > 1 ? "s" : ""}`);
+                    if (separadores) partes.push(`${separadores} separador${separadores > 1 ? "es" : ""}`);
+                    ok(`Agregado: ${partes.join(" y ")}. Ruta: ${Ruta.planeados().length} nodos.`);
+                }
+                const btn = document.getElementById("btnmateriales");
+                if (!btn) { error("addr: no se encontró el botón Calcular viaje/s"); return; }
+                btn.click();
+            }
+        },
+
         viajeadd: {
             uso: "viajeadd <n> <ant> <nuevo>",
             ayuda: "inserta un nodo en un viaje, después de otro (_ = al principio)",

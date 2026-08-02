@@ -14,9 +14,10 @@ const Navegacion = (function () {
     let notasSonando = []; // osciladores agendados, para poder cortarlos
     let pausado = false;
     let destinoActual = "";
-    let hookPausar = null;   // congela el tiempo restante del viaje activo
-    let hookReanudar = null; // retoma el countdown donde quedó
-    let hookAjustar = null;  // suma/resta segundos al viaje activo (flechas ←/→)
+    let hookPausar = null;    // congela el tiempo restante del viaje activo
+    let hookReanudar = null;  // retoma el countdown donde quedó
+    let hookAjustar = null;   // suma/resta segundos al viaje activo (flechas ←/→)
+    let hookReasignar = null; // engancha el viaje en curso a otro botón/fila
     const tituloOriginal = document.title;
 
     // Valores tal cual están en el panel, sin corregir. Los usa el link a la
@@ -236,6 +237,15 @@ const Navegacion = (function () {
         return filaActiva ? filaActiva.btn : null;
     }
 
+    // Mueve el viaje en curso a otro botón/checkbox. Lo usa la lista de viajes
+    // después de rehacerse, para no cortar la navegación por haber tocado otro
+    // viaje. Devuelve false si no había nada navegando.
+    function reasignarFila(nuevoBtn, nuevoCbox) {
+        if (!enViaje() || !nuevoBtn || !hookReasignar) return false;
+        hookReasignar(nuevoBtn, nuevoCbox || null);
+        return true;
+    }
+
     function cancelar() {
         pausado = false;
         if (typeof cancelarBarco === "function") cancelarBarco();
@@ -265,8 +275,11 @@ const Navegacion = (function () {
         // animación del barco en el mapa (se dibuja solo si el checkbox está activo)
         if (typeof iniciarBarco === "function") iniciarBarco(origen, destino, totalSeg);
 
+        // btn/cbox/fila no son fijos: si la lista de viajes se rehace (agregar,
+        // quitar o reordenar paradas), estos elementos dejan de existir y hay
+        // que apuntar a los nuevos sin cortar el viaje. Ver reasignarFila().
         filaActiva = { btn };
-        const fila = btn.closest(".cboxnodo");
+        let fila = btn.closest(".cboxnodo");
         if (fila) fila.classList.add("enNavegacion");
 
         const widget = document.getElementById("timerViaje");
@@ -303,6 +316,19 @@ const Navegacion = (function () {
             document.title = "⏱ " + fmt(rest) + " → " + destinoNombre;
             if (typeof actualizarTiempoRestante === "function") actualizarTiempoRestante();
         }
+        // Reengancha este viaje a los elementos nuevos que dejó un re-render
+        // de la lista, conservando la cuenta atrás.
+        hookReasignar = function (nuevoBtn, nuevoCbox) {
+            if (fila) fila.classList.remove("enNavegacion");
+            btn = nuevoBtn;
+            cbox = nuevoCbox;
+            fila = btn.closest(".cboxnodo");
+            if (fila) fila.classList.add("enNavegacion");
+            filaActiva = { btn };
+            btn.dataset.simbolo = btn.dataset.simbolo || "▶";
+            btn.innerText = fmt(pausado ? msRestantes / 1000 : (llegada - Date.now()) / 1000);
+        };
+
         // hooks de pausa/reanudación/ajuste para este viaje (cierran sobre llegada/tick)
         hookPausar = function () {
             msRestantes = llegada - Date.now();
@@ -329,6 +355,6 @@ const Navegacion = (function () {
         intervalo = setInterval(tick, 250);
     }
 
-    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, sonarAlerta, hablarLlegada, estimarSegundos, stats, statsCrudos, fmt, estadoAudio, desbloquearAudio, alCambiarEstadoAudio };
+    return { zarpar, cancelar, pausar, reanudar, ajustar, escTimer, enViaje, estaPausado, botonActivo, reasignarFila, sonarAlerta, hablarLlegada, estimarSegundos, stats, statsCrudos, fmt, estadoAudio, desbloquearAudio, alCambiarEstadoAudio };
 })();
 window.Navegacion = Navegacion;

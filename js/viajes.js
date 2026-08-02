@@ -127,17 +127,48 @@ function aplicarProgresoViajes(progreso) {
     });
 }
 
+// Dónde está el tramo que se está navegando, para poder volver a engancharlo
+// después de rehacer la lista. Se anota por viaje + nodo de destino, no por
+// posición, porque justamente las posiciones cambian al reordenar.
+function ubicarTramoActivo() {
+    const btn = typeof Navegacion !== "undefined" && Navegacion.botonActivo();
+    if (!btn) return null;
+    const fila = btn.closest(".cboxnodo");
+    const li = btn.closest("#outputnodos > li");
+    if (!fila || !li) return null;
+    return {
+        viaje: [...document.querySelectorAll("#outputnodos > li")].indexOf(li),
+        titulo: fila.dataset.titulo || null,
+        vuelta: fila.classList.contains("fila-vuelta")
+    };
+}
+
 // Rehace la lista después de tocar un viaje, conservando el progreso.
 function refrescarViajes() {
-    // el tramo en curso apunta a un botón que va a dejar de existir
-    if (typeof Navegacion !== "undefined" && Navegacion.enViaje()) Navegacion.cancelar();
+    // El tramo en curso apunta a un botón que va a dejar de existir. Antes se
+    // cancelaba el viaje entero, pero eso lo cortaba aunque se estuviera
+    // editando OTRO viaje: ahora se anota dónde está y se reengancha abajo.
+    const activo = ubicarTramoActivo();
     const progreso = leerProgresoViajes();
     const dom = document.getElementById("outputnodos");
     const res = renderizarViajes(resultadoViajes, dom);
     const tot = document.getElementById("totales");
     if (tot) tot.innerText = `${res.nodos} nodos · dist ${Math.round(res.dist)}`;
     aplicarProgresoViajes(progreso);
+    if (activo) reengancharTramoActivo(activo);
     actualizarTiempoRestante();
+}
+
+// Vuelve a atar el viaje en curso a la fila equivalente de la lista nueva.
+// Si esa parada ya no existe (se la quitó), recién ahí se cancela.
+function reengancharTramoActivo(ref) {
+    const li = [...document.querySelectorAll("#outputnodos > li")][ref.viaje];
+    const fila = li && (ref.vuelta
+        ? li.querySelector(".cboxnodo.fila-vuelta")
+        : [...li.querySelectorAll(".cboxnodo")].find(f => f.dataset.titulo === ref.titulo));
+    const btn = fila && fila.querySelector(".btn-play");
+    if (!btn) { Navegacion.cancelar(); return; }
+    Navegacion.reasignarFila(btn, fila.querySelector("input[type=checkbox]"));
 }
 
 // Marca todos los tramos del viaje activo como terminados (⚓), igual que
