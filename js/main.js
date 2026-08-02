@@ -358,6 +358,11 @@ window.onload = function () {
     chkDiarioManos.addEventListener("change", actualizarInfoBarco);
     actualizarInfoBarco();
 
+    // Barcos guardados: toma velocidad/aceleración de arriba como slot 1 la
+    // primera vez y después manda él. La maestría y el Diario quedan afuera
+    // a propósito: son del personaje, no del barco.
+    Barcos.init({ onCambio: actualizarInfoBarco });
+
     document.getElementById("timerCancelar").onclick = function () {
         Navegacion.cancelar();
     };

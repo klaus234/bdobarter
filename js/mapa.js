@@ -240,9 +240,11 @@ function mouseReleased(event) {
 function mousePressed(event) {
     if (mouseY < 0 || mouseY > height || mouseX < 0 || mouseX > width) return;
 
-    // el botón "seguir barco" se queda con el click antes que el mapa
-    if (event.buttons === 1 && enBotonSeguir(mouseX, mouseY)) {
-        seguirBarco = !seguirBarco;
+    // El botón "seguir barco" se come el click, sea cual sea el botón del
+    // mouse: si solo se atajaba el izquierdo, el click derecho encima del
+    // botón terminaba agregando el nodo que quedaba tapado debajo.
+    if (enBotonSeguir(mouseX, mouseY)) {
+        if (event.buttons === 1) seguirBarco = !seguirBarco;
         ultimoMovimiento = millis();
         return false;
     }
@@ -630,7 +632,8 @@ function draw() {
     // 2) Nodos (hover + marca de planeados)
     const dentro = mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height;
     hoverNodo = null;
-    if (dentro && !mouseMove) {
+    // tampoco se resalta el nodo que quede tapado por el botón
+    if (dentro && !mouseMove && !enBotonSeguir(mouseX, mouseY)) {
         for (let i = nodosM.length - 1; i >= 0; i--) {
             if (nodosM[i].bajoMouse()) { hoverNodo = nodosM[i]; break; }
         }

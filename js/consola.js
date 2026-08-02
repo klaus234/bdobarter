@@ -176,7 +176,7 @@ const Consola = (function () {
             correr() {
                 linea("Comandos disponibles:");
                 Object.keys(comandos).sort().forEach(n => {
-                    linea("  " + comandos[n].uso.padEnd(22) + comandos[n].ayuda);
+                    linea("  " + comandos[n].uso.padEnd(28) + comandos[n].ayuda);
                 });
                 linea("");
                 linea("TAB autocompleta comandos, nodos y savestates.");
@@ -312,26 +312,113 @@ const Consola = (function () {
 
         add: {
             uso: "add <nodo>…",
-            ayuda: "agrega nodos a la ruta planeada",
-            completar: nombresNodos,
+            ayuda: "agrega nodos a la ruta planeada (sep = separador de viaje)",
+            completar: () => ["SEP"].concat(nombresNodos()),
             correr(args) {
                 if (!args.length) {
                     error("add: falta el nombre del nodo");
                     error("uso: add <nodo>…   ·   varios nombres separados por coma");
+                    error("     add sep agrega un separador (corta el viaje en Modo Manual)");
                     return;
                 }
                 const pedidos = args.join(" ").includes(",")
                     ? args.join(" ").split(",").map(s => s.trim()).filter(Boolean)
                     : args;
-                let sumados = 0;
+                let sumados = 0, separadores = 0;
                 for (const p of pedidos) {
+                    // SEP no es un nodo: es el separador que corta el viaje
+                    if (norm(p) === "SEP") {
+                        Ruta.agregar("SEP");
+                        separadores++;
+                        continue;
+                    }
                     const t = resolverNodo(p, "add");
                     if (!t) continue;
                     if (Ruta.planeados().includes(t)) { linea(`  ${t} ya estaba en la ruta`); continue; }
                     Ruta.agregar(t);
                     sumados++;
                 }
-                if (sumados) ok(`Agregado${sumados > 1 ? "s" : ""} ${sumados} nodo${sumados > 1 ? "s" : ""}. Ruta: ${Ruta.planeados().length}.`);
+                if (sumados || separadores) {
+                    const partes = [];
+                    if (sumados) partes.push(`${sumados} nodo${sumados > 1 ? "s" : ""}`);
+                    if (separadores) partes.push(`${separadores} separador${separadores > 1 ? "es" : ""}`);
+                    ok(`Agregado: ${partes.join(" y ")}. Ruta: ${Ruta.planeados().length} nodos.`);
+                }
+            }
+        },
+
+        viajeadd: {
+            uso: "viajeadd <n> <ant> <nuevo>",
+            ayuda: "inserta un nodo en un viaje, después de otro (_ = al principio)",
+            completar: nombresNodos,
+            correr(args) {
+                const ayuda = () => {
+                    error("uso: viajeadd <n° viaje> <nodo anterior> <nodo nuevo>");
+                    error("     el nodo anterior puede ser _ para insertar al principio");
+                    error("     con nombres de varias palabras: viajeadd 1 ORFFS, SOLAS CHICO");
+                };
+                if (!args.length) { error("viajeadd: faltan argumentos"); ayuda(); return; }
+                if (typeof resultadoViajes === "undefined" || !resultadoViajes.length) {
+                    error("viajeadd: no hay viajes calculados");
+                    return;
+                }
+                const n = parseInt(args[0], 10);
+                if (isNaN(n)) {
+                    error(`viajeadd: "${args[0]}" no es un número de viaje`);
+                    ayuda();
+                    return;
+                }
+                if (n < 1 || n > resultadoViajes.length) {
+                    error(`viajeadd: el viaje ${n} no existe (hay ${resultadoViajes.length})`);
+                    return;
+                }
+
+                // los nombres pueden llevar espacios: con coma se parten ahí,
+                // y sin coma tienen que ser exactamente dos palabras
+                const resto = args.slice(1).join(" ");
+                const partes = resto.includes(",")
+                    ? resto.split(",").map(s => s.trim()).filter(Boolean)
+                    : args.slice(1);
+                if (partes.length !== 2) {
+                    error(`viajeadd: hacen falta el nodo anterior y el nuevo (recibí ${partes.length})`);
+                    ayuda();
+                    return;
+                }
+                const [anterior, nuevo] = partes;
+
+                const titulo = resolverNodo(nuevo, "viajeadd");
+                if (!titulo) return;
+                const v = resultadoViajes[n - 1];
+                if (v.some(x => x.titulo === titulo)) {
+                    error(`viajeadd: ${titulo} ya está en el viaje ${n}`);
+                    return;
+                }
+
+                // v = [inicial, parada1, …, paradaN, inicial]
+                const paradas = v.slice(1, v.length - 1);
+                let pos, dondeTexto;
+                if (anterior === "_") {
+                    pos = 1;
+                    dondeTexto = "al principio";
+                } else {
+                    const r = buscar(anterior, paradas.map(x => x.titulo));
+                    if (r.estado === "ninguno") {
+                        error(`viajeadd: "${anterior}" no es una parada del viaje ${n}`);
+                        linea("  paradas: " + (paradas.map(x => x.titulo).join(", ") || "(ninguna)"));
+                        return;
+                    }
+                    if (r.estado === "ambiguo") {
+                        error(`viajeadd: "${anterior}" es ambiguo dentro del viaje ${n}: ${r.candidatos.join(", ")}`);
+                        return;
+                    }
+                    // +1 por el nodo inicial, +1 más para quedar DESPUÉS de él
+                    pos = paradas.findIndex(x => x.titulo === r.valor) + 2;
+                    dondeTexto = "después de " + r.valor;
+                }
+
+                v.splice(pos, 0, nodosDic[titulo]);
+                refrescarViajes();
+                ok(`${titulo} agregado al viaje ${n}, ${dondeTexto}.`);
             }
         },
 

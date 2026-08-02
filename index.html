@@ -22,6 +22,7 @@
     <script src="js/navegacion.js"></script>
     <script src="js/savestates.js"></script>
     <script src="js/atajos.js"></script>
+    <script src="js/barcos.js"></script>
     <script src="js/consola.js"></script>
     <script src="js/main.js"></script>
 </head>
@@ -171,6 +172,13 @@
 
             <div id="barcoPanel">
                 <h3><svg class="ic"><use href="#ic-barco"></use></svg> Datos del Barco</h3>
+
+                <div class="barco-cabecera">
+                    <span id="barcoNombre">Barco 1</span>
+                    <button type="button" id="btnRenombrarBarco" class="btn-editar" title="Cambiar el nombre de este barco" aria-label="Cambiar el nombre de este barco">✎</button>
+                    <div id="barcoSlots" class="barco-slots" title="Barcos guardados: velocidad y aceleración de cada uno"></div>
+                </div>
+
                 <div class="barco-campos">
                     <div class="barco-campo">
                         <label for="barcoVel">Velocidad %</label>

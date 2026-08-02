@@ -260,7 +260,6 @@ button {
 button:hover {
     background: linear-gradient(135deg, var(--accent-gold) 0%, #c09d2a 100%);
     color: var(--primary-dark);
-    transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
 }
 
@@ -1823,4 +1822,94 @@ a.tiempoTramo:hover,
     background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
     border-radius: 5px 0 0 5px;
     transition: width 0.4s ease;
+}
+
+/* ============================================================
+   BARCOS GUARDADOS (Datos del Barco)
+   Título editable + 5 slots. Solo guardan velocidad y aceleración;
+   la maestría y el Diario de Manos son del personaje, no del barco.
+   ============================================================ */
+.barco-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+#barcoNombre {
+    color: var(--text-light);
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 1px;
+    min-width: 70px;
+    text-align: right;
+}
+
+.btn-editar {
+    background: transparent;
+    border: none;
+    color: var(--accent-gold);
+    cursor: pointer;
+    font-size: 14px;
+    width: auto;
+    margin: 0;
+    padding: 2px 4px;
+    line-height: 1;
+    flex: 0 0 auto;
+    opacity: 0.8;
+}
+
+.btn-editar:hover {
+    background: transparent;
+    box-shadow: none;
+    color: var(--accent-gold);
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+.barco-nombre-edit {
+    width: 150px;
+    padding: 3px 7px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    border-width: 1px !important;
+}
+
+.barco-slots {
+    display: flex;
+    gap: 5px;
+    margin-left: 6px;
+}
+
+.barco-slot {
+    width: 26px;
+    height: 26px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid var(--border-accent);
+    border-radius: 6px;
+    background: rgba(15, 52, 96, 0.7);
+    color: rgba(236, 240, 241, 0.6);
+    flex: 0 0 auto;
+    letter-spacing: 0;
+}
+
+.barco-slot:hover {
+    background: rgba(15, 52, 96, 1);
+    color: var(--accent-gold);
+    border-color: var(--accent-gold);
+    box-shadow: none;
+    transform: none;
+}
+
+.barco-slot.activo {
+    background: linear-gradient(135deg, var(--accent-gold) 0%, #c09d2a 100%);
+    border-color: var(--accent-gold);
+    color: var(--primary-dark);
 }
