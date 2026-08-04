@@ -37,23 +37,27 @@ propiedad geográfica del tramo (rodear continentes), independiente del barco.
 Consecuencia práctica: cambiar la velocidad mueve los ETA sin invalidar ninguna
 medición. Esto ya se usó para justificar dos cambios; no volver a discutirlo.
 
-### Bonos de navegación (sutil)
+### Bono de navegación (sutil)
 
 ```js
-vel_modelo = vel + (maestria - 11) + (diario ? 5 : 0)
+vel_modelo = vel + (diario ? 5 : 0)
 ```
 
-Los tramos se midieron **siempre con 11% de maestría fija y SIN el Diario de
-Manos**. Ese 11 quedó absorbido dentro de `V0/A0/K_RUTA/D_FIJA`, así que al
-modelo solo se le pasa lo que se *aparta* de 11. El diario, en cambio, no estaba
-al calibrar, así que suma sus 5 puntos enteros.
+**La maestría de navegación NO se pasa al modelo.** El juego ya la tiene
+aplicada dentro del % de velocidad/aceleración que muestra la ventana de *Info.
+de Barco* (al ponerse o sacarse un traje o accesorio de maestría, ese número
+grande cambia solo). Hubo un campo "Vel./Acel. maestría %" que la sumaba aparte:
+la contaba dos veces y se sacó (ago-2026). Si cambiás de equipo, se actualiza
+velocidad y aceleración, nada más.
 
-Ejemplo: 141% con maestría 11 y diario tildado → el modelo usa **146**, que son
-los 157 reales menos los 11 que la fórmula ya tiene adentro.
+El Diario de Manos sí suma sus 5 puntos: su bono no aparece en esa ventana y no
+estaba activo al calibrar. Los tramos se midieron con la velocidad tal cual la
+mostraba el juego, así que sacar la maestría no invalida ninguna medición ni las
+constantes.
 
 Todo pasa por `Navegacion.stats()` (`js/navegacion.js`), único punto por donde
 salen los ETA. `statsCrudos()` devuelve los valores sin corregir, para el link a
-la calculadora de retraso (que aplica el ajuste por su cuenta y no debe recibir
+la calculadora de retraso (que aplica el bono por su cuenta y no debe recibir
 el número ya sumado).
 
 ---
@@ -86,7 +90,7 @@ distribución. Dentro de un campo de texto la tecla se escribe normal (para pode
 usar `|` en la Nota), salvo en el propio campo de la consola.
 
 Comandos: `help clear reset save complete load loadr find dist add addr viajeadd
-rm ship mastery vol done eta nota ss goto`
+rm ship vol done eta nota ss goto`
 
 - **TAB** autocompleta. Si hay un solo candidato lo completa; si hay varios,
   completa el prefijo común **y además lista** (bash lista recién en el segundo
@@ -106,13 +110,13 @@ Hay **tres sistemas independientes**, y mezclarlos fue fuente de confusión:
 
 | sistema | claves | se guarda con |
 |---|---|---|
-| Estado general | `NodosR`, `ViajesCalc`, `BarcoVel`, `BarcoAcc`, `BarcoMaestria`, `DiarioManos`, `Nota`, `ModoManual`, `MaxNodos`, `NodoInicial`, `AnimBarco`, `FondoReal`, `VolAlarma`, `AlarmaVoz`, `RutaOculta`, `RutaCargada`, `RutaCargadaIdx` | botón **Guardar Estado** |
+| Estado general | `NodosR`, `ViajesCalc`, `BarcoVel`, `BarcoAcc`, `DiarioManos`, `Nota`, `ModoManual`, `MaxNodos`, `NodoInicial`, `AnimBarco`, `FondoReal`, `VolAlarma`, `AlarmaVoz`, `RutaOculta`, `RutaCargada`, `RutaCargadaIdx` | botón **Guardar Estado** |
 | Savestates de rutas | `SaveStates` (10 slots) | botones de la lista, o `ss <nombre>` |
 | **Barcos** | `Barcos` (5 slots), `BarcoActivo` | **solo, al tocarlos** |
 
-Los barcos (`js/barcos.js`) guardan **únicamente velocidad y aceleración**. La
-maestría y el Diario de Manos son del personaje, no del barco, y quedan afuera a
-propósito. El guardado tiene **debounce de 600 ms**: el objeto en memoria se
+Los barcos (`js/barcos.js`) guardan **únicamente velocidad y aceleración**. El
+Diario de Manos es del personaje, no del barco, y queda afuera a propósito.
+(`BarcoMaestria` era del campo que se sacó; `main.js` lo borra al arrancar.) El guardado tiene **debounce de 600 ms**: el objeto en memoria se
 actualiza en cada tecla, solo se difiere el volcado. Cambiar de slot o renombrar
 vuelca al instante, y hay flush en `pagehide` / `visibilitychange`.
 

@@ -933,7 +933,7 @@ input[type="number"]::-webkit-inner-spin-button {
     text-align: center;
 }
 
-/* checkbox del Diario de Manos, debajo de los tres campos numéricos */
+/* checkbox del Diario de Manos, debajo de los campos numéricos */
 #opcionDiario {
     justify-content: center;
     margin-top: 12px;
@@ -1827,7 +1827,7 @@ a.tiempoTramo:hover,
 /* ============================================================
    BARCOS GUARDADOS (Datos del Barco)
    Título editable + 5 slots. Solo guardan velocidad y aceleración;
-   la maestría y el Diario de Manos son del personaje, no del barco.
+   el Diario de Manos es del personaje, no del barco.
    ============================================================ */
 .barco-cabecera {
     display: flex;

@@ -24,23 +24,19 @@ const Navegacion = (function () {
     // Calculadora de Retraso, que aplica la corrección por su cuenta.
     function statsCrudos() {
         const chk = document.getElementById("chkDiarioManos");
-        const inpM = document.getElementById("barcoMaestria");
-        // campo vacío o sin el control = se asume el 11% de la calibración,
-        // que deja el ajuste en 0 (y no en -11, como haría un || 0)
-        const m = inpM ? parseFloat(inpM.value) : NaN;
         return {
             vel: parseFloat(document.getElementById("barcoVel").value) || 100,
             acc: parseFloat(document.getElementById("barcoAcc").value) || 100,
-            maestria: isNaN(m) ? Modelo.MAESTRIA_BASE : m,
             diario: !chk || chk.checked
         };
     }
 
-    // Velocidad y aceleración ya listas para el modelo: se les suma el ajuste
-    // por maestría y Diario de Manos (ver js/modelo.js).
+    // Velocidad y aceleración ya listas para el modelo: se les suma el bono del
+    // Diario de Manos (ver js/modelo.js). La maestría no entra: el % del panel
+    // ya viene con ella aplicada, tal como lo muestra el juego.
     function stats() {
         const c = statsCrudos();
-        const aj = Modelo.ajusteNavegacion(c.maestria, c.diario);
+        const aj = Modelo.ajusteNavegacion(c.diario);
         return { vel: c.vel + aj, acc: c.acc + aj };
     }
 

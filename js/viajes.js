@@ -36,8 +36,8 @@ function tiempoViajeXY(viaje) {
 // bloque de parámetros al final de calculadora_retraso.html).
 // El tiempo que va es el ESTIMADO: allá se reemplaza por el real medido.
 function urlCalculadoraRetraso(nodoA, nodoB, seg) {
-    // van los valores crudos del panel: la calculadora aplica el ajuste por
-    // maestría y diario con sus propios campos, no hay que mandarlo ya sumado
+    // van los valores crudos del panel: la calculadora aplica el bono del
+    // diario con su propio checkbox, no hay que mandarlo ya sumado
     const c = Navegacion.statsCrudos();
     return "calculadora_retraso.html?" + new URLSearchParams({
         nodoA: nodoA,
@@ -45,7 +45,6 @@ function urlCalculadoraRetraso(nodoA, nodoB, seg) {
         tiempo: Navegacion.fmt(seg),
         vel: c.vel,
         acc: c.acc,
-        maestria: c.maestria,
         diario: c.diario ? 1 : 0
     });
 }

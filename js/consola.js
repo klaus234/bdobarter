@@ -478,7 +478,7 @@ const Consola = (function () {
                 if (!args.length) {
                     const s = Navegacion.stats();
                     ok(`Barco: velocidad ${iv.value}%, aceleración ${ia.value}%`);
-                    linea(`  efectivas con maestría y diario: ${Math.round(s.vel)}% / ${Math.round(s.acc)}%`);
+                    linea(`  efectivas con el diario: ${Math.round(s.vel)}% / ${Math.round(s.acc)}%`);
                     linea("  uso: ship <vel> <acel>");
                     return;
                 }
@@ -497,25 +497,6 @@ const Consola = (function () {
                 const s = Navegacion.stats();
                 ok(`Barco: ${v}% / ${a}%  →  efectivas ${Math.round(s.vel)}% / ${Math.round(s.acc)}%`);
                 linea("  los viajes ya calculados no se rehacen: volvé a calcular para ver los tiempos nuevos");
-            }
-        },
-
-        mastery: {
-            uso: "mastery <n>",
-            ayuda: "cambia el % de maestría (se suma a vel y acel)",
-            correr(args) {
-                const inp = document.getElementById("barcoMaestria");
-                if (!args.length) {
-                    ok(`Maestría: ${inp.value}%   (la fórmula se calibró con ${Modelo.MAESTRIA_BASE}%)`);
-                    linea("  uso: mastery <n>");
-                    return;
-                }
-                const n = leerNumero(args[0], 0, 100, "mastery", "la maestría");
-                if (n === null) return;
-                inp.value = n;
-                inp.dispatchEvent(new Event("input", { bubbles: true }));
-                const s = Navegacion.stats();
-                ok(`Maestría: ${n}%  →  efectivas ${Math.round(s.vel)}% / ${Math.round(s.acc)}%`);
             }
         },
 
@@ -581,7 +562,9 @@ const Consola = (function () {
                 }
                 const hora = new Date().toLocaleTimeString("es-AR",
                     { hour: "2-digit", minute: "2-digit", hour12: false });
-                const nueva = `${hora}  ${args.join(" ")}`;
+                const dia = new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+                
+                const nueva = `${dia} ${hora}:  ${args.join(" ")}`;
                 ta.value = ta.value.trim() ? ta.value.replace(/\s*$/, "") + "\n" + nueva : nueva;
                 ok("Agregado a la nota: " + nueva);
                 linea("  acordate de guardar con `save`");

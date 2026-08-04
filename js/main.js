@@ -217,7 +217,6 @@ window.onload = function () {
         localStorage.setItem("NodosR", nmm.value);
         localStorage.setItem("BarcoVel", document.getElementById("barcoVel").value);
         localStorage.setItem("BarcoAcc", document.getElementById("barcoAcc").value);
-        localStorage.setItem("BarcoMaestria", document.getElementById("barcoMaestria").value);
         localStorage.setItem("DiarioManos", document.getElementById("chkDiarioManos").checked ? "1" : "0");
         localStorage.setItem("Nota", document.getElementById("nota").value);
         localStorage.setItem("ModoManual", document.getElementById("chkManual").checked ? "1" : "0");
@@ -335,11 +334,11 @@ window.onload = function () {
     // Datos del barco: restaurar y mostrar estimación de referencia
     const barcoVel = document.getElementById("barcoVel");
     const barcoAcc = document.getElementById("barcoAcc");
-    const barcoMaestria = document.getElementById("barcoMaestria");
     const chkDiarioManos = document.getElementById("chkDiarioManos");
     if (localStorage.getItem("BarcoVel")) barcoVel.value = localStorage.getItem("BarcoVel");
     if (localStorage.getItem("BarcoAcc")) barcoAcc.value = localStorage.getItem("BarcoAcc");
-    if (localStorage.getItem("BarcoMaestria")) barcoMaestria.value = localStorage.getItem("BarcoMaestria");
+    // sobra de cuando la maestría se sumaba aparte: el % del barco ya la trae
+    localStorage.removeItem("BarcoMaestria");
     if (localStorage.getItem("DiarioManos") !== null)
         chkDiarioManos.checked = localStorage.getItem("DiarioManos") === "1";
 
@@ -354,13 +353,12 @@ window.onload = function () {
     }
     barcoVel.addEventListener("input", actualizarInfoBarco);
     barcoAcc.addEventListener("input", actualizarInfoBarco);
-    barcoMaestria.addEventListener("input", actualizarInfoBarco);
     chkDiarioManos.addEventListener("change", actualizarInfoBarco);
     actualizarInfoBarco();
 
     // Barcos guardados: toma velocidad/aceleración de arriba como slot 1 la
-    // primera vez y después manda él. La maestría y el Diario quedan afuera
-    // a propósito: son del personaje, no del barco.
+    // primera vez y después manda él. El Diario queda afuera a propósito:
+    // es del personaje, no del barco.
     Barcos.init({ onCambio: actualizarInfoBarco });
 
     document.getElementById("timerCancelar").onclick = function () {

@@ -18,20 +18,18 @@ const Modelo = (function () {
     const K_RUTA = 3.511;
     const D_FIJA = 307;
 
-    // ---- Bonos de navegación ----
-    // Se suman en PUNTOS al % del barco (191 + 11 + 5 = 207), no multiplican.
-    // Los tramos se midieron siempre con 11% de maestría y SIN el Diario de
-    // Manos, así que ese 11 ya quedó absorbido en V0/A0/K_RUTA/D_FIJA: al
-    // modelo solo hay que pasarle lo que se APARTA de ese 11. El diario, en
-    // cambio, no estaba cuando se calibró, así que suma sus 5 puntos enteros.
-    // Ej: 141% con 11 de maestría y diario tildado -> el modelo usa 146
-    // (los 157 reales menos los 11 que la fórmula ya tiene adentro).
-    const MAESTRIA_BASE = 11;
+    // ---- Bono de navegación ----
+    // Se suma en PUNTOS al % del barco (191 + 5 = 196), no multiplica.
+    // La maestría NO va acá: el juego ya la tiene aplicada dentro del % de
+    // velocidad/aceleración que muestra la ventana del barco (al ponerse o
+    // sacarse un traje de maestría ese número grande cambia solo). Pasarla
+    // aparte era contarla dos veces. El Diario de Manos sí suma, porque su
+    // bono no aparece en esa ventana y no estaba activo al calibrar.
+    // Ej: 184.6% con el diario tildado -> el modelo usa 189.6.
     const DIARIO_BONO = 5;
 
-    function ajusteNavegacion(maestria, diario) {
-        const m = isNaN(parseFloat(maestria)) ? MAESTRIA_BASE : parseFloat(maestria);
-        return (m - MAESTRIA_BASE) + (diario ? DIARIO_BONO : 0);
+    function ajusteNavegacion(diario) {
+        return diario ? DIARIO_BONO : 0;
     }
 
     function velocidad(vel) { return V0 * vel / 100; }
@@ -72,7 +70,7 @@ const Modelo = (function () {
         return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
     }
 
-    return { V0, A0, K_RUTA, D_FIJA, MAESTRIA_BASE, DIARIO_BONO, ajusteNavegacion,
+    return { V0, A0, K_RUTA, D_FIJA, DIARIO_BONO, ajusteNavegacion,
         velocidad, aceleracion, distanciaModelo, estimarSegundos, distanciaMedida, fmt, fmtHMS };
 })();
 

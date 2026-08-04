@@ -4,9 +4,9 @@
 // clave de localStorage y NO entran ni en Guardar Estado ni en los savestates
 // de rutas: son del jugador, no de la ruta.
 //
-// Guardan SOLO velocidad y aceleración. La maestría y el Diario de Manos son
-// del personaje, no del barco, así que quedan afuera a propósito y no cambian
-// al alternar de barco.
+// Guardan SOLO velocidad y aceleración (los % tal cual los muestra el juego,
+// ya con la maestría adentro). El Diario de Manos es del personaje, no del
+// barco, así que queda afuera a propósito y no cambia al alternar de barco.
 //
 // Se sigue escribiendo BarcoVel / BarcoAcc en localStorage porque
 // calculadora_retraso.html los lee de ahí.
