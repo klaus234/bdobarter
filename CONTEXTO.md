@@ -60,6 +60,65 @@ salen los ETA. `statsCrudos()` devuelve los valores sin corregir, para el link a
 la calculadora de retraso (que aplica el bono por su cuenta y no debe recibir
 el número ya sumado).
 
+### La alarma de llegada va AGENDADA en el hilo de audio
+
+**Con la pestaña oculta, Chrome estrangula los `setInterval`.** Medido en este
+proyecto (ago-2026): el tick de 250 ms pasa a 1 s a los pocos segundos y a
+**uno por minuto** a los ~40 s de ocultar la pestaña (13 ticks en 346 s;
+`requestAnimationFrame`, 1 sola vez). La documentación de Chrome habla de 5
+minutos para ese régimen; acá arranca mucho antes.
+
+Por eso la campanita **no** sale del tick: `agendarAlerta()` la programa al
+zarpar con `osc.start(ctx.currentTime + faltan)`. El reloj del `AudioContext`
+corre en el hilo de audio y no lo toca ese estrangulamiento, así que suena a
+horario aunque el JS de la página esté congelado.
+
+**El tick quedó de respaldo y gana el que llegue primero.** No alcanza con
+confiar en el reloj de audio: en el navegador del panel de preview, que no tiene
+placa de sonido, `ctx.currentTime` avanza al **65%** del tiempo real (medido:
+5,19 s de audio cada 8,01 s de pared), y ahí la agendada llegaría tardísimo. Si
+el tick entra y la campanita todavía no arrancó (`agendadaYaSono()` compara
+contra el reloj de audio), se la calla y suena en el acto; si ya sonó, no se
+repite. Nunca suena dos veces.
+
+Consecuencias que hay que respetar al tocar `js/navegacion.js`:
+
+- La agendada está clavada a una hora del reloj de audio y **no se entera de
+  pausas ni de las flechas ←/→**: pausar, reanudar y ajustar tienen que
+  reprogramarla (`cancelarAlertaAgendada()` / `agendarAlerta()`).
+- Hay **dos listas de osciladores** (`notasSonando` y `notasAgendadas`) a
+  propósito. Con una sola, probar el volumen a mitad de viaje borraba la
+  campanita ya agendada, porque `programarCampanita` corta lo anterior.
+- Al llegar, si la agendada ya sonó se usa `soltarAlertaAgendada()`, que **no**
+  corta las notas: con la pestaña a la vista el tick entra 250 ms después de que
+  la campanita arrancó y la habría silenciado.
+- La voz sale solo si el tick llegó a horario (`ATRASO_TOLERADO`, 10 s): si
+  corrió un minuto tarde, avisar por voz sería un aviso fuera de hora.
+- El volumen de la agendada queda fijado al zarpar; mover el slider después
+  cambia la prueba y los avisos siguientes, no el que ya está en vuelo.
+- Un `visibilitychange` fuerza un tick al volver a la pestaña, para que el
+  widget, el título y el ⚓ no queden hasta un minuto atrasados.
+
+### Notificación del sistema
+
+Segundo aviso, además de la campanita: la campanita se pierde si los parlantes
+están bajos o hay otra cosa sonando, y el aviso del sistema queda en pantalla y
+en el centro de notificaciones. Checkbox `chkNotif`, apagado por default.
+
+- **El permiso se pide SOLO al tildar el checkbox.** Chrome descarta los
+  `requestPermission()` que no salen de un gesto del usuario, y pedirlo al
+  cargar la página es invasivo. Al concederlo se muestra una de prueba.
+- **El permiso real le gana a lo guardado**: se puede revocar desde el navegador
+  sin avisarle a la página, así que `pintarNotif()` destilda el checkbox si el
+  permiso no está en `granted`, aunque `AlarmaNotif` diga que sí.
+- Solo se notifica **si la pestaña no está a la vista**: mirándola ya se ve el ⚓.
+- A diferencia de la voz, acá no se filtra por atraso: un aviso tardío sigue
+  sirviendo (dice a qué nodo llegaste y queda en el historial del sistema).
+
+**Lo que sigue sin resolverse**: el viaje en curso vive solo en memoria (no se
+guarda la hora de llegada), así que si Chrome descarta la pestaña por memoria,
+al volver no hay ni cuenta regresiva ni alarma.
+
 ---
 
 ## 3. Mapa
@@ -110,7 +169,7 @@ Hay **tres sistemas independientes**, y mezclarlos fue fuente de confusión:
 
 | sistema | claves | se guarda con |
 |---|---|---|
-| Estado general | `NodosR`, `ViajesCalc`, `BarcoVel`, `BarcoAcc`, `DiarioManos`, `Nota`, `ModoManual`, `MaxNodos`, `NodoInicial`, `AnimBarco`, `FondoReal`, `VolAlarma`, `AlarmaVoz`, `RutaOculta`, `RutaCargada`, `RutaCargadaIdx` | botón **Guardar Estado** |
+| Estado general | `NodosR`, `ViajesCalc`, `BarcoVel`, `BarcoAcc`, `DiarioManos`, `Nota`, `ModoManual`, `MaxNodos`, `NodoInicial`, `AnimBarco`, `FondoReal`, `VolAlarma`, `AlarmaVoz`, `AlarmaNotif`, `RutaOculta`, `RutaCargada`, `RutaCargadaIdx` | botón **Guardar Estado** |
 | Savestates de rutas | `SaveStates` (10 slots) | botones de la lista, o `ss <nombre>` |
 | **Barcos** | `Barcos` (5 slots), `BarcoActivo` | **solo, al tocarlos** |
 

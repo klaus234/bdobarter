@@ -224,6 +224,7 @@ window.onload = function () {
         localStorage.setItem("FondoReal", document.getElementById("chkFondoReal").checked ? "1" : "0");
         localStorage.setItem("VolAlarma", document.getElementById("volAlarma").value);
         localStorage.setItem("AlarmaVoz", document.getElementById("chkVoz").checked ? "1" : "0");
+        localStorage.setItem("AlarmaNotif", document.getElementById("chkNotif").checked ? "1" : "0");
         localStorage.setItem("RutaCargada", SaveStates.nombreCargado());
         localStorage.setItem("RutaCargadaIdx", SaveStates.indiceCargado());
         localStorage.setItem("MaxNodos", document.getElementById("viajes").value);
@@ -330,6 +331,34 @@ window.onload = function () {
         window.speechSynthesis.getVoices();
         window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     }
+
+    // Notificación del sistema al llegar. El permiso se pide recién al tildar
+    // el checkbox: Chrome descarta los pedidos que no salen de un gesto, y el
+    // permiso se puede revocar desde el navegador sin avisarle a la página,
+    // así que el estado real manda por sobre lo guardado.
+    const chkNotif = document.getElementById("chkNotif");
+    const notifAviso = document.getElementById("notifAviso");
+    function pintarNotif() {
+        const e = Navegacion.estadoNotif();
+        if (e !== "granted") chkNotif.checked = false;
+        notifAviso.innerText =
+            e === "sin-soporte" ? "· este navegador no las soporta"
+                : e === "denied" ? "· bloqueadas para este sitio, habilitalas desde el candado de la barra de direcciones"
+                    : "";
+    }
+    chkNotif.checked = localStorage.getItem("AlarmaNotif") === "1";
+    pintarNotif();
+    chkNotif.addEventListener("change", function () {
+        if (!this.checked) return;
+        Navegacion.pedirPermisoNotif().then(function () {
+            pintarNotif();
+            if (Navegacion.estadoNotif() === "granted") {
+                chkNotif.checked = true;
+                Navegacion.notificar("⚓ Aviso de llegada activado",
+                    "Así se va a ver cuando el barco llegue a destino.");
+            }
+        });
+    });
 
     // Datos del barco: restaurar y mostrar estimación de referencia
     const barcoVel = document.getElementById("barcoVel");

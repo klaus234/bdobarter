@@ -159,6 +159,11 @@
                     <input type="checkbox" id="chkVoz">
                     <label for="chkVoz" style="margin-bottom: 0; cursor: pointer;"><svg class="ic"><use href="#ic-voz"></use></svg> Reproducir alarma con voz</label>
                 </div>
+                <div class="opcion-inline" title="Al llegar, además de la campanita, aparece un aviso del sistema.">
+                    <input type="checkbox" id="chkNotif">
+                    <label for="chkNotif" style="margin-bottom: 0; cursor: pointer;"><svg class="ic"><use href="#ic-campana"></use></svg> Notificación del sistema al llegar</label>
+                    <span id="notifAviso" class="hint"></span>
+                </div>
                 <div class="opcion-inline" title="Volumen de la campanita y de la voz. Al soltar se reproduce una prueba.">
                     <label for="volAlarma" style="margin-bottom: 0;"><svg class="ic"><use href="#ic-campana"></use></svg> Volumen de alarma</label>
                     <input type="range" id="volAlarma" min="0" max="300" step="10" value="100">
